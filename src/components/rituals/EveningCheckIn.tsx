@@ -1,0 +1,70 @@
+'use client';
+
+import { useState } from 'react';
+import { motion } from 'framer-motion';
+import { Haptics, ImpactStyle } from '@capacitor/haptics';
+import { useRitualStore } from '@/store/useRitualStore';
+
+export default function EveningCheckIn() {
+  const [win, setWin] = useState('');
+  const [parkingLot, setParkingLot] = useState('');
+  
+  const completeEveningCheckIn = useRitualStore((state) => state.completeEveningCheckIn);
+
+  const handleComplete = async () => {
+    if (!win.trim()) return; // Win is mandatory
+    
+    try {
+      await Haptics.impact({ style: ImpactStyle.Light });
+    } catch (e) {
+      // web fallback
+    }
+    
+    completeEveningCheckIn(win, parkingLot);
+  };
+
+  return (
+    <motion.div 
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="p-6 mx-6 mt-8 rounded-2xl bg-surface border border-muted shadow-sm mb-8"
+    >
+      <h3 className="text-ink-primary font-medium mb-6">Evening Wind-down</h3>
+      
+      {/* Parking Lot */}
+      <div className="mb-6">
+        <label className="text-ink-secondary text-sm mb-2 block">
+          Park tomorrow's thoughts
+        </label>
+        <textarea
+          value={parkingLot}
+          onChange={(e) => setParkingLot(e.target.value)}
+          placeholder="Get it out of your head..."
+          className="w-full bg-canvas border border-muted rounded-xl p-3 text-sm text-ink-primary placeholder:text-ink-tertiary focus:outline-none focus:border-accent-teal transition-colors min-h-[80px]"
+        />
+      </div>
+
+      {/* Daily Win */}
+      <div className="mb-8">
+        <label className="text-ink-secondary text-sm mb-2 block">
+          One win today <span className="text-error">*</span>
+        </label>
+        <input
+          type="text"
+          value={win}
+          onChange={(e) => setWin(e.target.value)}
+          placeholder="What went right?"
+          className="w-full bg-canvas border border-muted rounded-xl p-3 text-sm text-ink-primary placeholder:text-ink-tertiary focus:outline-none focus:border-accent-teal transition-colors"
+        />
+      </div>
+
+      <button
+        onClick={handleComplete}
+        disabled={!win.trim()}
+        className={`w-full py-3 rounded-xl font-medium transition-all ${win.trim() ? 'bg-ink-primary text-surface' : 'bg-muted text-ink-tertiary'}`}
+      >
+        Close the Day
+      </button>
+    </motion.div>
+  );
+}
