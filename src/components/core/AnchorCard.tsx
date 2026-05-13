@@ -13,43 +13,73 @@ export default function AnchorCard({ anchor }: { anchor: Anchor }) {
     } catch (e) {
       // web fallback
     }
-    toggleAnchor(anchor.id);
+    toggleAnchor(anchor.id, false);
+  };
+
+  const handleBaseline = async () => {
+    try {
+      await Haptics.impact({ style: ImpactStyle.Medium });
+    } catch (e) {
+      // web fallback
+    }
+    toggleAnchor(anchor.id, true);
   };
 
   return (
-    <motion.button
-      onClick={handleTap}
-      whileTap={{ scale: 0.98 }}
-      className={`w-full flex items-center justify-between p-4 mb-3 rounded-2xl border transition-colors ${
+    <div
+      className={`p-4 rounded-xl border mb-3 transition-colors ${
         anchor.completed 
-          ? 'bg-canvas border-success/30' 
-          : 'bg-surface border-muted shadow-sm hover:shadow-md'
+          ? (anchor.usedBaseline ? 'bg-accent-amber/5 border-accent-amber/20' : 'bg-success/5 border-success/20') 
+          : 'bg-canvas border-muted'
       }`}
     >
-      <div className="flex flex-col items-start">
-        <span className={`text-sm font-medium transition-colors ${
-          anchor.completed ? 'text-success' : 'text-ink-primary'
-        }`}>
-          {anchor.title}
-        </span>
-        <span className="text-xs text-ink-tertiary uppercase tracking-widest mt-1">
-          {anchor.category}
-        </span>
+      <div className="flex items-center justify-between">
+        <div>
+          <p className={`text-sm font-medium ${
+            anchor.completed 
+              ? (anchor.usedBaseline ? 'text-accent-amber' : 'text-success line-through') 
+              : 'text-ink-primary'
+          }`}>
+            {anchor.title}
+          </p>
+          <p className="text-[10px] uppercase tracking-widest text-ink-tertiary mt-1">
+            {anchor.category} {anchor.usedBaseline && '• BASELINE ACHIEVED'}
+          </p>
+        </div>
+        
+        <motion.button
+          whileTap={{ scale: 0.9 }}
+          onClick={handleTap}
+          className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-colors ${
+            anchor.completed 
+              ? (anchor.usedBaseline ? 'bg-accent-amber border-accent-amber' : 'bg-success border-success') 
+              : 'border-muted hover:border-accent-teal/50'
+          }`}
+        >
+          {anchor.completed && (
+            <motion.span 
+              initial={{ scale: 0 }} 
+              animate={{ scale: 1 }} 
+              className="text-surface text-sm"
+            >
+              ✓
+            </motion.span>
+          )}
+        </motion.button>
       </div>
 
-      <div className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-colors ${
-        anchor.completed ? 'bg-success border-success' : 'border-muted'
-      }`}>
-        {anchor.completed && (
-          <motion.span 
-            initial={{ scale: 0 }} 
-            animate={{ scale: 1 }} 
-            className="text-surface text-sm"
+      {/* Baseline Dropdown Trigger */}
+      {!anchor.completed && anchor.baselineTitle && (
+        <div className="mt-3 pt-3 border-t border-muted/50 flex justify-between items-center">
+          <span className="text-xs text-ink-tertiary italic">Hard day?</span>
+          <button 
+            onClick={handleBaseline}
+            className="text-xs text-accent-amber hover:text-accent-amber/80 font-medium transition-colors flex items-center gap-1"
           >
-            ✓
-          </motion.span>
-        )}
-      </div>
-    </motion.button>
+            ↳ Drop to Baseline: {anchor.baselineTitle}
+          </button>
+        </div>
+      )}
+    </div>
   );
 }

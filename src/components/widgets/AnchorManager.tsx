@@ -9,13 +9,15 @@ export default function AnchorManager({ onClose }: { onClose: () => void }) {
   const { anchors, addAnchor, removeAnchor } = useRitualStore();
   const [newTitle, setNewTitle] = useState('');
   const [newCategory, setNewCategory] = useState<'body' | 'mind'>('body');
+  const [newBaseline, setNewBaseline] = useState('');
 
   const handleAdd = async () => {
     if (!newTitle.trim()) return;
     try { await Haptics.impact({ style: ImpactStyle.Light }); } catch (e) {}
     
-    addAnchor(newTitle.trim(), newCategory);
+    addAnchor(newTitle.trim(), newCategory, newBaseline.trim() || undefined);
     setNewTitle('');
+    setNewBaseline('');
   };
 
   const handleRemove = async (id: string) => {
@@ -52,6 +54,9 @@ export default function AnchorManager({ onClose }: { onClose: () => void }) {
                 <div>
                   <p className="text-sm font-medium text-ink-primary">{anchor.title}</p>
                   <p className="text-xs uppercase tracking-widest text-ink-tertiary">{anchor.category}</p>
+                  {anchor.baselineTitle && (
+                    <p className="text-xs text-accent-amber/70 mt-1">↳ {anchor.baselineTitle}</p>
+                  )}
                 </div>
                 <button 
                   onClick={() => handleRemove(anchor.id)}
@@ -75,6 +80,13 @@ export default function AnchorManager({ onClose }: { onClose: () => void }) {
             value={newTitle}
             onChange={(e) => setNewTitle(e.target.value)}
             placeholder="e.g., 3.5L Water, Box Breathing"
+            className="w-full bg-canvas border border-muted rounded-xl p-3 text-sm text-ink-primary placeholder:text-ink-tertiary focus:outline-none focus:border-accent-teal mb-3"
+          />
+          <input
+            type="text"
+            value={newBaseline}
+            onChange={(e) => setNewBaseline(e.target.value)}
+            placeholder="Baseline (e.g., Just put on running shoes)"
             className="w-full bg-canvas border border-muted rounded-xl p-3 text-sm text-ink-primary placeholder:text-ink-tertiary focus:outline-none focus:border-accent-teal mb-4"
           />
           <div className="flex gap-2 mb-4">

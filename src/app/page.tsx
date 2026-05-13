@@ -16,12 +16,14 @@ import WidgetManager from '@/components/widgets/WidgetManager';
 import DiscomfortLog from '@/components/widgets/DiscomfortLog';
 import FoodDiversity from '@/components/widgets/FoodDiversity';
 import MovementLog from '@/components/widgets/MovementLog';
+import VisionPriming from '@/components/widgets/VisionPriming';
+import NotesOfLife from '@/components/widgets/NotesOfLife';
 
 export default function Dashboard() {
   const { 
     feetOnFloorLogged, morningCheckInDone, sleepScore, moodScore, anchors, eveningCheckInDone,
     isSupplementWidgetEnabled, isGutWidgetEnabled, isDiscomfortWidgetEnabled,
-    isFoodWidgetEnabled, isMovementWidgetEnabled
+    isFoodWidgetEnabled, isMovementWidgetEnabled, isVisionEnabled, isNotesEnabled
   } = useRitualStore();
   const [showEvening, setShowEvening] = useState(false);
   const [isManagingAnchors, setIsManagingAnchors] = useState(false);
@@ -44,7 +46,7 @@ export default function Dashboard() {
       <header className="h-16 flex items-center justify-between px-6 border-b border-muted/50">
         <div className="w-8"></div> {/* Spacer for centering */}
         <h1 className="text-ink-secondary text-sm font-medium tracking-widest uppercase">
-          Ethos
+          TRELIS
         </h1>
         <button 
           onClick={() => setIsManagingWidgets(true)}
@@ -67,6 +69,10 @@ export default function Dashboard() {
             ) : (
               <div className="animate-in slide-in-from-bottom-2 fade-in duration-500 flex flex-col items-center">
                  <PulseScore score={calculatePulse()} />
+
+                 <div className="w-full px-6">
+                   {isVisionEnabled && <VisionPriming />}
+                 </div>
                  
                  <div className="w-full px-6 mt-4">
                     <div className="flex justify-between items-center mb-4 ml-1">
@@ -100,6 +106,9 @@ export default function Dashboard() {
                    )}
                    {isMovementWidgetEnabled && (
                      <MovementLog />
+                   )}
+                   {isNotesEnabled && (
+                     <NotesOfLife />
                    )}
                  </div>
 

@@ -1,10 +1,17 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Ethos Life',
-  description: 'Your Life Operating System',
-  viewport: 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0', // Crucial for PWA mobile feel
+  title: 'Trelis Life',
+  description: 'Structure for a better life.',
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  themeColor: '#F7F6F2', // bg-canvas color
 };
 
 export default function RootLayout({

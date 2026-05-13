@@ -4,11 +4,11 @@
 This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
 <!-- END:nextjs-agent-rules -->
 
-# ETHOS LIFE - MASTER ENGINEERING RULES
+# TRELIS LIFE - MASTER ENGINEERING RULES
 
 ## 1. PROJECT IDENTITY & MISSION
-- **Name:** Ethos Life
-- **Core Philosophy:** "Not a Health App. A Life Operating System."
+- **Name:** Trelis Life
+- **Core Philosophy:** "Not a Health App. A Life Operating System. Structure for a better life."
 - **Execution Mode:** Surgical precision, zero destructive errors, highest order of operations.
 
 ## 2. TECH STACK (STRICTLY ENFORCED)
@@ -24,7 +24,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - **Migration Protocol:** All database changes must be additive (e.g., adding new columns). Protect the user's streaks and historical data at all costs.
 - **Row Level Security (RLS):** All tables must have strict RLS policies ensuring users can only access their own data via `auth.uid() = user_id`.
 
-## 4. UI/UX DESIGN SYSTEM: "Calm. Clear. Alive."
+## 4. UI/UX DESIGN SYSTEM: "Calm. Clear. Alive. Structure for a better life."
 Every component must follow these exact Tailwind principles:
 - **Mobile-First:** Design exclusively for mobile dimensions first.
 - **Color Tokens:**

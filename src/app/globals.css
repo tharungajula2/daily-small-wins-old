@@ -13,8 +13,10 @@
   --color-ink-inverse: #FFFFFF;
   
   --color-accent-teal: #2A7F7F;
+  --color-accent-amber: #C4841D;
   
   --color-success: #3D7A55;
+  --color-error: #D14343;
   --color-muted: #EEEDE8;
 }
 

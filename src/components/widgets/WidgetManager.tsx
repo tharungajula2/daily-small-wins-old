@@ -10,7 +10,9 @@ export default function WidgetManager({ onClose }: { onClose: () => void }) {
     isGutWidgetEnabled, toggleGutWidget,
     isDiscomfortWidgetEnabled, toggleDiscomfortWidget,
     isFoodWidgetEnabled, toggleFoodWidget,
-    isMovementWidgetEnabled, toggleMovementWidget
+    isMovementWidgetEnabled, toggleMovementWidget,
+    isVisionEnabled, toggleVision,
+    isNotesEnabled, toggleNotes
   } = useRitualStore();
 
   const handleToggle = async (action: () => void) => {
@@ -57,6 +59,13 @@ export default function WidgetManager({ onClose }: { onClose: () => void }) {
           <h4 className="text-ink-secondary text-xs uppercase tracking-widest mb-4">Active Modules</h4>
           
           <ToggleSwitch 
+            label="Vision Priming" 
+            desc="Your daily psychological anchor."
+            isEnabled={isVisionEnabled} 
+            onToggle={() => handleToggle(toggleVision)} 
+          />
+          
+          <ToggleSwitch 
             label="Supplement Stack" 
             desc="Track AM/PM supplement protocols."
             isEnabled={isSupplementWidgetEnabled} 
@@ -89,6 +98,13 @@ export default function WidgetManager({ onClose }: { onClose: () => void }) {
             desc="Log daily physical sessions and techniques."
             isEnabled={isMovementWidgetEnabled} 
             onToggle={() => handleToggle(toggleMovementWidget)} 
+          />
+          
+          <ToggleSwitch 
+            label="Notes of Life" 
+            desc="Permanent ledger for quotes and insights."
+            isEnabled={isNotesEnabled} 
+            onToggle={() => handleToggle(toggleNotes)} 
           />
         </div>
 

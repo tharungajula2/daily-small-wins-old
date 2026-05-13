@@ -5,8 +5,10 @@ import { supabase } from '@/lib/supabase/client';
 export interface Anchor {
   id: string;
   title: string;
-  category: string;
+  category: 'body' | 'mind';
   completed: boolean;
+  baselineTitle?: string;
+  usedBaseline?: boolean;
 }
 
 export interface Supplement {
@@ -40,12 +42,16 @@ interface RitualState {
   isMovementWidgetEnabled: boolean;
   weeklyPlantCount: number;
   dailyMovementNote: string;
+  isVisionEnabled: boolean;
+  visionText: string;
+  isNotesEnabled: boolean;
+  lifeNotes: Array<{ id: string; content: string; attribution: string; date: string }>;
   
   markFeetOnFloor: (time: string) => void;
   setStreak: (streak: number) => void;
   completeMorningCheckIn: (sleep: number, mood: number, bedTime: string, duration: number) => Promise<void>;
-  toggleAnchor: (id: string) => void;
-  addAnchor: (title: string, category: string) => void;
+  toggleAnchor: (id: string, asBaseline?: boolean) => void;
+  addAnchor: (title: string, category: string, baseline?: string) => void;
   removeAnchor: (id: string) => void;
   toggleSupplement: (id: string) => void;
   addSupplement: (name: string, timing: 'AM' | 'PM' | 'Evening') => void;
@@ -62,6 +68,11 @@ interface RitualState {
   toggleMovementWidget: () => void;
   incrementPlantCount: () => void;
   logMovement: (note: string) => void;
+  toggleVision: () => void;
+  setVisionText: (text: string) => void;
+  toggleNotes: () => void;
+  addLifeNote: (content: string, attribution: string) => void;
+  removeLifeNote: (id: string) => void;
 }
 
 export const useRitualStore = create<RitualState>()(
@@ -76,9 +87,9 @@ export const useRitualStore = create<RitualState>()(
       bedTime: null,
       sleepDuration: null,
       anchors: [
-        { id: 'default-a1', title: 'Hydration (3 Liters)', category: 'body', completed: false },
-        { id: 'default-a2', title: 'Morning Sunlight / Walk', category: 'body', completed: false },
-        { id: 'default-a3', title: 'Silence / Breathwork', category: 'mind', completed: false }
+        { id: 'default-a1', title: 'Hydration (3 Liters)', category: 'body', completed: false, baselineTitle: 'Drink 1 large glass' },
+        { id: 'default-a2', title: 'Morning Sunlight / Walk', category: 'body', completed: false, baselineTitle: 'Step outside for 2 mins' },
+        { id: 'default-a3', title: 'Silence / Breathwork', category: 'mind', completed: false, baselineTitle: '3 deep breaths' }
       ],
       eveningCheckInDone: false,
       winOfTheDay: '',
@@ -97,6 +108,10 @@ export const useRitualStore = create<RitualState>()(
       isMovementWidgetEnabled: false,
       weeklyPlantCount: 0,
       dailyMovementNote: '',
+      isVisionEnabled: true,
+      visionText: "I am building the structure for a better life.",
+      isNotesEnabled: false,
+      lifeNotes: [],
       
       markFeetOnFloor: (time: string) => 
         set({ feetOnFloorLogged: true, wakeTime: time }),
@@ -147,16 +162,22 @@ export const useRitualStore = create<RitualState>()(
         }
       },
       
-      toggleAnchor: (id: string) => 
+      toggleAnchor: (id: string, asBaseline: boolean = false) => 
         set((state) => ({
-          anchors: state.anchors.map(a => 
-            a.id === id ? { ...a, completed: !a.completed } : a
-          )
+          anchors: state.anchors.map(a => {
+            if (a.id !== id) return a;
+            const willComplete = !a.completed;
+            return {
+              ...a,
+              completed: willComplete,
+              usedBaseline: willComplete ? asBaseline : false
+            };
+          })
         })),
 
-      addAnchor: (title: string, category: string) => 
+      addAnchor: (title: string, category: string, baseline?: string) => 
         set((state) => ({
-          anchors: [...state.anchors, { id: crypto.randomUUID(), title, category, completed: false }]
+          anchors: [...state.anchors, { id: crypto.randomUUID(), title, category: category as 'body' | 'mind', completed: false, baselineTitle: baseline || undefined }]
         })),
         
       removeAnchor: (id: string) => 
@@ -226,7 +247,7 @@ export const useRitualStore = create<RitualState>()(
           moodScore: null,
           bedTime: null,
           sleepDuration: null,
-          anchors: state.anchors.map(a => ({ ...a, completed: false })),
+          anchors: state.anchors.map(a => ({ ...a, completed: false, usedBaseline: false })),
           eveningCheckInDone: false,
           winOfTheDay: '',
           parkingLotNotes: '',
@@ -256,9 +277,27 @@ export const useRitualStore = create<RitualState>()(
       incrementPlantCount: () => set((state) => ({ weeklyPlantCount: Math.min(state.weeklyPlantCount + 1, 30) })),
       
       logMovement: (note: string) => set({ dailyMovementNote: note }),
+      
+      toggleVision: () => set((state) => ({ isVisionEnabled: !state.isVisionEnabled })),
+      setVisionText: (text: string) => set({ visionText: text }),
+      
+      toggleNotes: () => set((state) => ({ isNotesEnabled: !state.isNotesEnabled })),
+      
+      addLifeNote: (content: string, attribution: string) => 
+        set((state) => ({
+          lifeNotes: [
+            { id: crypto.randomUUID(), content, attribution, date: new Date().toISOString() },
+            ...state.lifeNotes
+          ]
+        })),
+        
+      removeLifeNote: (id: string) => 
+        set((state) => ({
+          lifeNotes: state.lifeNotes.filter(n => n.id !== id)
+        })),
     }),
     {
-      name: 'ethos-life-ritual-storage',
+      name: 'trelis-life-ritual-storage',
     }
   )
 );
