@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { supabase } from '@/lib/supabase/client';
+import { createClient } from '@/lib/supabase/client';
 
 export interface Anchor {
   id: string;
@@ -132,6 +132,7 @@ export const useRitualStore = create<RitualState>()(
         const state = get();
         
         // 2. Sync to Supabase
+        const supabase = createClient();
         try {
           const { data: { session } } = await supabase.auth.getSession();
           
@@ -214,6 +215,7 @@ export const useRitualStore = create<RitualState>()(
         const state = get();
         
         try {
+          const supabase = createClient();
           const { data: { session } } = await supabase.auth.getSession();
           
           if (!session?.user) {
