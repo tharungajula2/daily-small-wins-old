@@ -62,8 +62,8 @@ export default function FeetOnFloor() {
         whileTap={!feetOnFloorLogged ? { scale: 0.95 } : {}}
         animate={feetOnFloorLogged ? { 
           scale: [1, 1.05, 1],
-          backgroundColor: '#3D7A55', // success
-          borderColor: '#3D7A55'
+          backgroundColor: '#2A7F7F', // success
+          borderColor: '#2A7F7F'
         } : {
           backgroundColor: '#FFFFFF', // surface
           borderColor: '#EEEDE8'      // muted

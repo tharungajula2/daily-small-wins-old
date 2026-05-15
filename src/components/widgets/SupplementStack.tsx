@@ -29,9 +29,14 @@ export default function SupplementStack({ onEdit }: { onEdit: () => void }) {
                 sup.taken ? 'bg-canvas border-success/30' : 'bg-surface border-muted hover:border-accent-teal/50'
               }`}
             >
-              <span className={`text-sm transition-colors text-left ${sup.taken ? 'text-success line-through opacity-70' : 'text-ink-primary'}`}>
-                {sup.name}
-              </span>
+              <div>
+                <span className={`text-sm transition-colors text-left ${sup.taken ? 'text-success line-through opacity-70' : 'text-ink-primary'}`}>
+                  {sup.name}{sup.dosage ? ` ${sup.dosage}` : ''}
+                </span>
+                {sup.instruction && (
+                  <p className="text-[10px] text-ink-tertiary uppercase tracking-widest mt-1">{sup.instruction}</p>
+                )}
+              </div>
               <div className={`shrink-0 ml-3 w-5 h-5 rounded-md border-2 flex items-center justify-center transition-colors ${
                 sup.taken ? 'bg-success border-success' : 'border-muted'
               }`}>
@@ -44,11 +49,13 @@ export default function SupplementStack({ onEdit }: { onEdit: () => void }) {
     );
   };
 
+  const hasPending = supplements.length > 0 && supplements.some(s => !s.taken);
+
   return (
-    <div className="w-full p-5 mt-6 rounded-2xl bg-surface border border-muted shadow-sm">
+    <div className={`w-full p-5 rounded-2xl bg-surface border shadow-sm ${hasPending ? 'border-l-2 border-accent-teal border-y-muted border-r-muted' : 'border-muted'}`}>
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <h3 className="text-ink-primary font-medium">Supplement Stack</h3>
+          <h3 className="text-ink-primary text-xs font-semibold tracking-widest uppercase ml-1">Supplement Stack</h3>
           <button 
             onClick={onEdit}
             className="text-ink-tertiary hover:text-accent-teal text-xs uppercase tracking-widest transition-colors"

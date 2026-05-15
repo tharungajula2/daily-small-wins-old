@@ -21,7 +21,9 @@ export default function LoginPage() {
       const { error } = await supabase.auth.signInWithOtp({
         email,
         options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
+          emailRedirectTo: location.origin.includes('localhost')
+            ? `${location.origin}/`
+            : `${location.origin}/auth/callback`,
         },
       });
 
@@ -64,7 +66,7 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Enter your email"
-                className="w-full bg-canvas border border-muted rounded-xl p-4 text-sm text-ink-primary placeholder:text-ink-tertiary focus:outline-none focus:border-accent-teal transition-colors"
+                className="w-full bg-canvas border border-muted rounded-xl p-4 text-sm text-ink-primary placeholder:text-ink-tertiary focus:outline-none focus:ring-1 focus:ring-accent-teal focus:border-accent-teal transition-colors"
                 disabled={status === 'loading'}
               />
             </div>

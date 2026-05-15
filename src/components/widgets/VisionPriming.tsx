@@ -6,7 +6,7 @@ import { Haptics, ImpactStyle } from '@capacitor/haptics';
 import { useRitualStore } from '@/store/useRitualStore';
 
 export default function VisionPriming() {
-  const { visionText, setVisionText } = useRitualStore();
+  const { visionText, setVisionText, hasSeenVisionTooltip, dismissTooltip } = useRitualStore();
   const [isEditing, setIsEditing] = useState(false);
   const [inputValue, setInputValue] = useState(visionText);
 
@@ -29,6 +29,20 @@ export default function VisionPriming() {
           </button>
         )}
       </div>
+
+      {!hasSeenVisionTooltip && (
+        <div className="mb-4 p-3 bg-accent-teal/5 border border-accent-teal/10 rounded-lg flex items-start justify-between gap-3">
+          <p className="text-xs text-ink-secondary leading-relaxed">
+            Reading your vision every morning rewires your brain to prioritize what matters most to you.
+          </p>
+          <button 
+            onClick={() => dismissTooltip('hasSeenVisionTooltip')}
+            className="text-ink-tertiary hover:text-ink-primary p-1"
+          >
+            ✕
+          </button>
+        </div>
+      )}
 
       <AnimatePresence mode="wait">
         {isEditing ? (

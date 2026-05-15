@@ -7,7 +7,7 @@ import { useRitualStore } from '@/store/useRitualStore';
 const SCALE = [1, 2, 3, 4, 5];
 
 export default function GutJournal() {
-  const { morningGut, eveningGut, logMorningGut, logEveningGut } = useRitualStore();
+  const { morningGut, eveningGut, logMorningGut, logEveningGut, hasSeenGutTooltip, dismissTooltip } = useRitualStore();
 
   const handleTap = async (type: 'morning' | 'evening', score: number) => {
     try { await Haptics.impact({ style: ImpactStyle.Light }); } catch (e) {}
@@ -47,11 +47,27 @@ export default function GutJournal() {
     </div>
   );
 
+  const hasPending = morningGut === null || eveningGut === null;
+
   return (
-    <div className="w-full p-5 mt-6 rounded-2xl bg-surface border border-muted shadow-sm">
-      <h3 className="text-ink-secondary text-xs uppercase tracking-widest mb-5 ml-1">
+    <div className={`w-full p-5 rounded-2xl bg-surface border shadow-sm ${hasPending ? 'border-l-2 border-accent-teal border-y-muted border-r-muted' : 'border-muted'}`}>
+      <h3 className="text-ink-primary text-xs font-semibold tracking-widest uppercase mb-5 ml-1">
         Gut-Brain Axis
       </h3>
+
+      {!hasSeenGutTooltip && (
+        <div className="mb-4 p-3 bg-accent-teal/5 border border-accent-teal/10 rounded-lg flex items-start justify-between gap-3">
+          <p className="text-xs text-ink-secondary leading-relaxed">
+            Your gut and brain are connected. Tracking both helps you spot what affects your digestion and mood.
+          </p>
+          <button 
+            onClick={() => dismissTooltip('hasSeenGutTooltip')}
+            className="text-ink-tertiary hover:text-ink-primary p-1"
+          >
+            ✕
+          </button>
+        </div>
+      )}
       
       {renderScale(
         'morning', 

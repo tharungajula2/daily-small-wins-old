@@ -1,19 +1,35 @@
 'use client';
 
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
 import { Anchor, useRitualStore } from '@/store/useRitualStore';
 
 export default function AnchorCard({ anchor }: { anchor: Anchor }) {
   const toggleAnchor = useRitualStore((state) => state.toggleAnchor);
+  const anchors = useRitualStore((state) => state.anchors);
+  const [justCompleted, setJustCompleted] = useState(false);
 
   const handleTap = async () => {
+    const isCompleting = !anchor.completed;
+    const willCompleteAll = isCompleting && anchors.filter(a => a.id !== anchor.id).every(a => a.completed);
+
     try {
-      await Haptics.impact({ style: ImpactStyle.Light });
+      if (willCompleteAll) {
+        await Haptics.impact({ style: ImpactStyle.Medium });
+      } else {
+        await Haptics.impact({ style: ImpactStyle.Light });
+      }
     } catch (e) {
       // web fallback
     }
+    
     toggleAnchor(anchor.id, false);
+
+    if (isCompleting) {
+      setJustCompleted(true);
+      setTimeout(() => setJustCompleted(false), 200);
+    }
   };
 
   const handleBaseline = async () => {
@@ -26,7 +42,14 @@ export default function AnchorCard({ anchor }: { anchor: Anchor }) {
   };
 
   return (
-    <div
+    <motion.div
+      whileTap={{ scale: 0.98 }}
+      animate={
+        justCompleted 
+          ? { scale: [1, 1.02, 1], backgroundColor: ['rgba(42, 127, 127, 0)', 'rgba(42, 127, 127, 0.1)', 'rgba(42, 127, 127, 0)'] }
+          : {}
+      }
+      transition={{ duration: 0.2 }}
       className={`p-4 rounded-xl border mb-3 transition-colors ${
         anchor.completed 
           ? (anchor.usedBaseline ? 'bg-accent-amber/5 border-accent-amber/20' : 'bg-success/5 border-success/20') 
@@ -80,6 +103,6 @@ export default function AnchorCard({ anchor }: { anchor: Anchor }) {
           </button>
         </div>
       )}
-    </div>
+    </motion.div>
   );
 }

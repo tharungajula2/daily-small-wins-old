@@ -1,12 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import FeetOnFloor from '@/components/rituals/FeetOnFloor';
 import MorningCheckIn from '@/components/rituals/MorningCheckIn';
 import PulseScore from '@/components/core/PulseScore';
 import AnchorCard from '@/components/core/AnchorCard';
 import EveningCheckIn from '@/components/rituals/EveningCheckIn';
 import { useRitualStore } from '@/store/useRitualStore';
+import { syncPullInitialState } from '@/lib/supabase/syncEngine';
 import { motion, AnimatePresence } from 'framer-motion';
 import AnchorManager from '@/components/widgets/AnchorManager';
 import SupplementStack from '@/components/widgets/SupplementStack';
@@ -18,6 +20,8 @@ import FoodDiversity from '@/components/widgets/FoodDiversity';
 import MovementLog from '@/components/widgets/MovementLog';
 import VisionPriming from '@/components/widgets/VisionPriming';
 import NotesOfLife from '@/components/widgets/NotesOfLife';
+import PulseSparkline from '@/components/core/PulseSparkline';
+import SundayReviewModal from '@/components/core/SundayReviewModal';
 
 export default function Dashboard() {
   const { 
@@ -30,6 +34,11 @@ export default function Dashboard() {
   const [isManagingSupplements, setIsManagingSupplements] = useState(false);
   const [isManagingWidgets, setIsManagingWidgets] = useState(false);
 
+  useEffect(() => {
+    // Silently sync missing cloud data to local store on boot
+    syncPullInitialState(useRitualStore.getState(), useRitualStore.setState);
+  }, []);
+
   const calculatePulse = () => {
     let base = 50;
     if (morningCheckInDone) base += 20;
@@ -40,14 +49,26 @@ export default function Dashboard() {
     return Math.min(base, 100);
   };
 
+  const allCompleted = anchors.length > 0 && anchors.every(a => a.completed);
+
   return (
     <main className="flex flex-col min-h-screen max-w-md mx-auto relative shadow-sm bg-surface sm:border-x sm:border-muted">
+      <SundayReviewModal />
       
       <header className="h-16 flex items-center justify-between px-6 border-b border-muted/50">
         <div className="w-8"></div> {/* Spacer for centering */}
-        <h1 className="text-ink-secondary text-sm font-medium tracking-widest uppercase">
-          TRELIS
-        </h1>
+        <div className="flex items-center gap-2">
+          <Image 
+            src="/logo-transparent.png" 
+            alt="Trelis Life Logo" 
+            width={28} 
+            height={28} 
+            className="object-contain"
+          />
+          <h1 className="text-xl font-bold tracking-widest text-ink-primary uppercase">
+            Trelis
+          </h1>
+        </div>
         <button 
           onClick={() => setIsManagingWidgets(true)}
           className="w-8 h-8 flex items-center justify-center text-ink-tertiary hover:text-ink-primary transition-colors"
@@ -67,31 +88,36 @@ export default function Dashboard() {
                  <MorningCheckIn />
                </>
             ) : (
-              <div className="animate-in slide-in-from-bottom-2 fade-in duration-500 flex flex-col items-center">
-                 <PulseScore score={calculatePulse()} />
-
+              <div className="animate-in slide-in-from-bottom-2 fade-in duration-500 flex flex-col items-center gap-6 py-6 w-full">
                  <div className="w-full px-6">
-                   {isVisionEnabled && <VisionPriming />}
+                   <PulseScore score={calculatePulse()} />
+                   <PulseSparkline />
                  </div>
+
+                 {isVisionEnabled && (
+                   <div className="w-full px-6">
+                     <VisionPriming />
+                   </div>
+                 )}
                  
-                 <div className="w-full px-6 mt-4">
-                    <div className="flex justify-between items-center mb-4 ml-1">
-                      <h3 className="text-ink-secondary text-xs uppercase tracking-widest">
-                        Today's Anchors
-                      </h3>
-                      <button 
-                        onClick={() => setIsManagingAnchors(true)}
-                        className="text-ink-tertiary hover:text-accent-teal text-xs uppercase tracking-widest transition-colors"
-                      >
-                        Edit
-                      </button>
-                    </div>
-                    {anchors.map(anchor => (
-                      <AnchorCard key={anchor.id} anchor={anchor} />
-                    ))}
-                 </div>
+                 <div className="w-full px-6 flex flex-col gap-6">
+                   <div className={`w-full p-5 rounded-2xl bg-surface border shadow-sm ${!anchors.every(a => a.completed) ? 'border-l-2 border-accent-teal border-y-muted border-r-muted' : 'border-muted'}`}>
+                     <div className="flex justify-between items-center mb-4 ml-1">
+                       <h3 className={`text-xs font-semibold tracking-widest uppercase ${allCompleted ? 'text-accent-teal' : 'text-ink-primary'}`}>
+                         {allCompleted ? 'ALL ANCHORS SET ✓' : "TODAY'S ANCHORS"}
+                       </h3>
+                       <button 
+                         onClick={() => setIsManagingAnchors(true)}
+                         className="text-ink-tertiary hover:text-accent-teal text-xs uppercase tracking-widest transition-colors"
+                       >
+                         Edit
+                       </button>
+                     </div>
+                     {anchors.map(anchor => (
+                       <AnchorCard key={anchor.id} anchor={anchor} />
+                     ))}
+                   </div>
 
-                 <div className="w-full px-6">
                    {isSupplementWidgetEnabled && (
                      <SupplementStack onEdit={() => setIsManagingSupplements(true)} />
                    )}

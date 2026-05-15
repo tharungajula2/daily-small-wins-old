@@ -12,7 +12,7 @@ export default function PulseScore({ score }: { score: number }) {
   const getColor = (s: number) => {
     if (s < 40) return '#C0564A'; // pulse.low
     if (s < 70) return '#C8923A'; // pulse.mid
-    return '#3D7A55';             // pulse.high
+    return '#2A7F7F';             // pulse.high
   };
 
   const color = getColor(score);

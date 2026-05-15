@@ -1,95 +1,129 @@
-# TRELIS LIFE: MASTER SYSTEM STATE & CONTEXT
-*This document serves as the absolute single source of truth for the Trelis Life project. Providing this file to any LLM will give it complete context of the architecture, codebase, and business logic built so far.*
+# TRELIS LIFE - PHASE 1 STATE & MASTER ARCHITECTURE
 
-## 1. PROJECT IDENTITY & CORE PHILOSOPHY
-- **Name:** Trelis Life
-- **Mission:** "Not a Health App. A Life Operating System. Structure for a better life." It is designed to build psychological resilience and biological stability without the anxiety of traditional health trackers.
-- **Design System:** "Calm. Clear. Alive. Structure for a better life."
-  - **Colors:** `bg-canvas` (#F7F6F2), `bg-surface` (#FFFFFF), `text-ink-primary` (#1C1C1E), `text-ink-secondary` (#5C5C5E), `bg-accent-teal` (#2A7F7F), `bg-accent-amber` (#D97706), `bg-success` (#10B981).
-  - **Typography:** Strict limits on font weights (400 and 600 only) using modern sans-serif.
-  - **System 1 Design:** Frictionless, one-tap interactions. Never force a user to type if a tap will do.
-  - **"Blank Slate" & "Smart Defaults":** No prescriptive medical protocols. New users get universal baseline defaults (e.g., Hydration, Morning Sunlight) that they can later customize or delete to avoid "Blank Canvas Paralysis".
+**Last Updated:** May 2026
+**Project Status:** Phase 1 Complete
 
-## 2. STRICT TECH STACK
-- **Frontend:** Next.js 15 (App Router).
-- **Styling:** Tailwind CSS v4 + Framer Motion (for purposeful transitions, slide-ups, fade-ins).
-- **State Management:** Zustand + `persist` middleware. This creates an **Offline-First** architecture. The app works flawlessly without the internet.
-- **Backend/DB:** Supabase (PostgreSQL + Auth + RLS).
-- **Mobile Wrapper:** Capacitor 6 (specifically using `@capacitor/haptics` for native tactile feedback, utilizing `ImpactStyle.Light` and `ImpactStyle.Medium`).
+---
 
-## 3. THE DAILY FOGG BEHAVIORAL LOOP (UI FLOW)
-The main interface (`src/app/page.tsx`) acts as a dynamic state machine that conditionally renders components based on the user's progress through the day:
-1. **Wake Up:** The user sees a single, massive button: `<FeetOnFloor />`. Tapping it logs the exact wake time.
-2. **Morning Check-In:** The user is immediately routed to `<MorningCheckIn />`. Here, they log detailed sleep metrics (Bedtime, Duration in hours), a 1-5 emoji Sleep Quality score, a 1-5 emoji Mood score, and check off a 30-minute "Morning Ritual" box.
-3. **The Dashboard (Widget OS):** Once the morning is cleared, the main dashboard unlocks. It features the `<PulseScore />` at the top, followed by the Daily Anchors and the active biological/psychological widgets.
-4. **Evening Wind-Down:** At the bottom, the user can trigger `<EveningCheckIn />` to log the "Win of the Day" and "Parking Lot Notes" (brain dump for sleep). Completing this locks the dashboard and shows a "Day Complete" moon screen until tomorrow.
+## 1. Executive Summary
+**Mission:** Not a Health App. A Life Operating System. Structure for a better life.
+**Execution Model:** Surgical precision, zero destructive errors, highest order of operations.
+**Phase 1 Goal:** Establish an offline-first, mobile-optimized UI with persistent local state and robust PKCE-compliant authentication, setting the foundation for the Phase 2 cloud sync engine.
 
-## 4. ZUSTAND STORE: THE BRAIN (`useRitualStore.ts`)
-All data lives in a single local persisted store. Here is the exact schema of everything tracked:
+---
 
-### Core Loop & Sleep Metrics
-- `feetOnFloorLogged: boolean`, `wakeTime: string | null`
-- `morningCheckInDone: boolean`, `eveningCheckInDone: boolean`
-- `currentStreak: number`
-- `sleepScore: number | null` (1-5), `moodScore: number | null` (1-5)
-- `bedTime: string | null` (e.g., '22:30'), `sleepDuration: number | null` (e.g., 7.5)
+## 2. Design System: "Calm. Clear. Alive."
+The UI is strictly governed by the following design system parameters. The aesthetic prioritizes minimal cognitive load, tactile mobile-first dimensions, and selective haptic feedback.
 
-### Custom Anchors (Habits)
-- **State:** `anchors: Anchor[]` (Interface: `id`, `title`, `category` (body/mind), `completed`)
-- **Actions:** `toggleAnchor(id)`, `addAnchor(title, category)`, `removeAnchor(id)`
-- *Note:* New anchors generate IDs using `crypto.randomUUID()`.
+### Color Palette (Tailwind v4 tokens in `globals.css`)
+*   **Canvas** (`bg-canvas` / `#F7F6F2`): Primary background. Soft off-white to reduce eye strain.
+*   **Surface** (`bg-surface` / `#FFFFFF`): Elevated cards and interactive component backgrounds.
+*   **Ink Primary** (`text-ink-primary` / `#1C1C1E`): High-contrast text for core readability.
+*   **Ink Secondary** (`text-ink-secondary` / `#5C5C5E`): Supporting descriptive text and subtitles.
+*   **Ink Tertiary** (`text-ink-tertiary` / `#9C9C9E`): Placeholders, metadata, and subtle interactive states.
+*   **Ink Inverse** (`text-ink-inverse` / `#FFFFFF`): Text rendered inside dark backgrounds.
+*   **Accent Teal** (`accent-teal` / `#2A7F7F`): Positive health moments, active focus states, and primary actions.
+*   **Accent Amber** (`accent-amber` / `#C4841D`): Warning states and Baseline ("Minimum Viable Effort") completions.
+*   **Success** (`success` / `#2A7F7F`): Completed actions, streaks, and full anchor completions.
+*   **Error** (`error` / `#D14343`): Destructive actions or missed targets.
+*   **Muted** (`muted` / `#EEEDE8`): Borders, dividers, and disabled interactive states.
 
-### Custom Supplements
-- **State:** `supplements: Supplement[]` (Interface: `id`, `name`, `timing` ('AM'|'PM'|'Evening'), `taken`)
-- **Actions:** `toggleSupplement(id)`, `addSupplement(name, timing)`, `removeSupplement(id)`
+### Typography & Layout
+*   **Fonts**: Custom `var(--font-geist-sans)` for general UI, `var(--font-geist-mono)` for numbers/metrics.
+*   **Hierarchy**: Strict 2-weight system (`font-normal` 400 and `font-medium` 500). Headers often use `uppercase tracking-widest text-xs`.
+*   **Layout Constraint**: Mobile-first wrapper via `max-w-md mx-auto` to strictly emulate a native app structure, even on desktop browsers.
 
-### Gut-Brain Journal
-- **State:** `morningGut: number | null`, `eveningGut: number | null`
-- **Actions:** `logMorningGut(score)`, `logEveningGut(score)`
-- *Note:* Universal terminology used (e.g., "Digestion & Calm", "Vagal Tone / Comfort").
+### Shapes & Shadows
+*   **Border Radius**: Heavily relies on `rounded-xl` (12px) and `rounded-2xl` (16px) for cards, `rounded-full` for toggle switches and the primary ignition button.
+*   **Borders**: Delicate outlines using `border border-muted` on almost all surfaces to create subtle depth without heavy drop shadows.
+*   **Shadows**: Minimalist approach utilizing only `shadow-sm` on elevated surfaces.
 
-### Discomfort Log
-- **State:** `dailyDiscomfortLog: string`
-- **Actions:** `logDiscomfort(log)`
-- *Note:* Tracks voluntary hardship to build psychological resilience.
+### UX/UI Interaction Principles
+*   **Animation**: `framer-motion` exclusively used for meaningful state transitions (e.g., `fade-in`, `slide-up`, `AnimatePresence` for mounting/unmounting). No decorative or infinite animations.
+*   **Haptics**: `@capacitor/haptics` integration (`ImpactStyle.Light` for toggles/checks, `ImpactStyle.Medium` for major actions like FeetOnFloor or destructive actions).
+*   **System 1 Design**: One-tap completion where possible. Input fields default to disabled/hidden until explicitly requested.
 
-### Food Diversity
-- **State:** `weeklyPlantCount: number` (Max 30)
-- **Actions:** `incrementPlantCount()`
-- *Note:* Resets weekly, NOT daily. A framer-motion progress bar gamifies plant intake without calorie counting.
+---
 
-### Movement Log
-- **State:** `dailyMovementNote: string`
-- **Actions:** `logMovement(note)`
-- *Note:* Tracks martial arts techniques or Zone 2 cardio sessions.
+## 3. Tech Stack & Infrastructure
+*   **Framework:** Next.js 16.2.6 (App Router, Turbopack).
+*   **Frontend Libraries:** React 19.2.4, Tailwind CSS v4, Framer Motion ^12.38.0.
+*   **State Management:** Zustand ^5.0.13 with `persist` middleware for offline-first capabilities.
+*   **Mobile Wrapper:** Capacitor 6 (specifically utilizing `@capacitor/haptics`).
+*   **Backend & Auth:** Supabase PostgreSQL.
+*   **Authentication Flow:** 
+    *   Strict PKCE flow via `@supabase/ssr` (^0.10.3).
+    *   `src/lib/supabase/client.ts` uses `createBrowserClient`.
+    *   `src/middleware.ts` acts as the active Auth Guard, leveraging `createServerClient` in `src/utils/supabase/middleware.ts` for session refreshing and route protection.
+    *   Magic link callback handled securely at `src/app/auth/callback/route.ts`.
 
-### Widget OS Toggles (Master Config)
-- **States:** `isSupplementWidgetEnabled`, `isGutWidgetEnabled`, `isDiscomfortWidgetEnabled`, `isFoodWidgetEnabled`, `isMovementWidgetEnabled`.
-- **Actions:** Functions to toggle each boolean.
-- *Note:* Users configure their dashboard via the `<WidgetManager />` overlay summoned by the ⚙️ icon.
+---
 
-### Reset Protocol
-- `resetDaily()` purges ephemeral data (scores, check-ins, logs, anchor/supplement completions) but deliberately **retains** the `weeklyPlantCount` and the user's custom arrays (the actual lists of anchors and supplements).
+## 4. Zustand Store Map (`useRitualStore.ts`)
+The entire application state is managed by a single Zustand store, persisted locally under the key `trelis-life-ritual-storage`.
 
-## 5. COMPONENT LIBRARY INVENTORY
-Everything is built and fully functional in `src/components/`:
-- **Core:** `PulseScore.tsx` (Calculates dynamically: Base 50 + 20 for check-in + (sleep-1)*5 + (mood-1)*5 + (anchors*10). Max 100), `AnchorCard.tsx`.
-- **Rituals:** `FeetOnFloor.tsx`, `MorningCheckIn.tsx`, `EveningCheckIn.tsx`.
-- **Widgets:** 
-  - `AnchorManager.tsx` (CRUD overlay for anchors)
-  - `SupplementManager.tsx` (CRUD overlay for supplements)
-  - `SupplementStack.tsx` (Renders supplements filtered by timing)
-  - `GutJournal.tsx` (1-5 biological scale)
-  - `DiscomfortLog.tsx` (Edit/View state text input for hardship)
-  - `FoodDiversity.tsx` (Progress bar out of 30)
-  - `MovementLog.tsx` (Edit/View state for physical training)
-  - `WidgetManager.tsx` (OS Configuration panel with iOS-style pill toggles)
+### Ephemeral State (Resets Daily)
+These values track the current day's progress and are cleared when `resetDaily` is triggered:
+*   `feetOnFloorLogged` (boolean) & `wakeTime` (string | null)
+*   `morningCheckInDone` (boolean)
+*   `sleepScore`, `moodScore` (number | null)
+*   `bedTime` (string | null), `sleepDuration` (number | null)
+*   `anchors`: `completed` and `usedBaseline` flags are reset to `false`.
+*   `supplements`: `taken` flags are reset to `false`.
+*   `eveningCheckInDone` (boolean)
+*   `winOfTheDay`, `parkingLotNotes` (string)
+*   `morningGut`, `eveningGut` (number | null)
+*   `dailyDiscomfortLog` (string)
+*   `dailyMovementNote` (string)
 
-## 6. SUPABASE & DATABASE SYNC STATUS (EDGE OF PHASE 2)
-The application has a robust optimistic UI architecture. 
-- The `completeMorningCheckIn` and `completeEveningCheckIn` actions in Zustand instantly update the local UI and then attempt an async `upsert` to Supabase's `daily_rituals` table.
-- **"Test Mode" Failsafe:** Because authentication is not yet built, the system catches the `null` session via `supabase.auth.getSession()` and gracefully exits the database sync, relying entirely on the local Zustand persist. The app does not crash.
+### Permanent State (Persists Across Days)
+These values define the user's OS configuration and long-term data. They are explicitly protected from `resetDaily`:
+*   `currentStreak` (number)
+*   `weeklyPlantCount` (number) - Resets on a weekly basis, not daily.
+*   **Widget Configurations:** `isSupplementWidgetEnabled`, `isGutWidgetEnabled`, `isDiscomfortWidgetEnabled`, `isFoodWidgetEnabled`, `isMovementWidgetEnabled`, `isVisionEnabled`, `isNotesEnabled`.
+*   **Anchor & Supplement Definitions:** The actual array items (id, title, category, baselineTitle, timing).
+*   `visionText` (string): The user's permanent psychological anchor.
+*   `lifeNotes` (Array): Persistent ledger for quotes and insights (`{ id, content, attribution, date }`).
 
-### IMMEDIATE NEXT STEPS FOR PHASE 2:
-1. **Supabase Auth Integration:** Build out `/(auth)` routes (Login/Signup) to generate valid user sessions.
-2. **Database Schema Migrations:** The Supabase PostgreSQL database currently lacks columns for the vast majority of our newly built features (e.g., `bed_time`, `sleep_duration`, `daily_discomfort_log`, `weekly_plant_count`, `daily_movement_note`, and the arrays/JSONB for custom anchors and supplements). We MUST execute DDL migrations before the backend sync will function.
+---
+
+## 5. Component Library & Widgets
+The UI is modular, with widgets conditionally rendered on `src/app/page.tsx` based on the Zustand configuration.
+
+*   **FeetOnFloor:** The ignition switch. A large haptic button to log wake time. Unlocks the Morning Check-in.
+*   **MorningCheckIn:** Collects detailed sleep metrics (Bedtime, Hours), a 1-5 Sleep Quality score, a 1-5 Mood score, and confirms completion of a 30-min morning routine.
+*   **PulseScore:** A dynamic, animated SVG ring calculating a daily health score based on check-ins and completed anchors. Color shifts from red -> amber -> green based on score.
+*   **Baseline Anchor Logic (`AnchorCard` / `AnchorManager`):** Allows users to define a "Minimum Viable Effort" (Baseline). UI reflects three states: Uncompleted, Baseline (Amber), Full Completion (Green/Strikethrough).
+*   **SupplementStack / SupplementManager:** Tracks AM, PM, and Evening protocols with simple toggle interactions.
+*   **GutJournal:** Tracks the gut-brain axis with a 1-5 scale. Morning evaluates Digestion & Calm; Evening evaluates Vagal Tone & Comfort.
+*   **DiscomfortLog:** Tracks voluntary hardship (e.g., cold showers, fasting). Grants a psychological "Resilience +1".
+*   **FoodDiversity:** A weekly progress bar tracking 30 unique plant sources for microbiome health.
+*   **MovementLog:** A text-based logger for daily martial arts and physical sessions.
+*   **VisionPriming:** A permanent, daily psychological anchor where users read their ultimate life vision. Fully editable inline.
+*   **NotesOfLife:** A persistent notebook widget for quotes and insights. Entries feature content, optional attribution, Framer Motion animations, and hover-to-delete functionality.
+*   **EveningCheckIn:** The shutdown sequence. Requires "One win today" (mandatory) and offers a "Parking Lot" to dump thoughts before sleep.
+
+---
+
+## 6. Supabase Schema & RLS
+The PostgreSQL database has been successfully migrated to mirror the required state. Row Level Security (RLS) is **ACTIVE** on all tables, ensuring users can only access data where `auth.uid() = user_id`.
+
+**Migrated Tables:**
+1.  `profiles`: User metadata and `current_streak`.
+2.  `daily_rituals`: Core daily logs (`wake_time`, `sleep_quality`, `morning_mood`, `win_of_the_day`, `pulse_score`, `bed_time`, `sleep_duration`, `morning/evening_gut`, `daily_discomfort_log`, `daily_movement_note`).
+3.  `user_anchors`: Definitions of habits (`title`, `category`, baseline support pending schema addition).
+4.  `anchor_logs`: Daily completion tracking.
+5.  `weekly_stats`: Tracks `weekly_plant_count`.
+6.  `user_supplements`: Supplement definitions (`timing: AM/PM/Evening`).
+7.  `supplement_logs`: Daily taken status.
+8.  `user_vision`: Stores the permanent `vision_text`.
+9.  `notes_of_life`: Stores individual notes (`content`, `attribution`).
+
+---
+
+## 7. The Phase 2 Boundary
+**Phase 1 is complete.** 
+We possess a beautiful, highly functional, offline-capable UI with persistent local state, strict design token adherence, and fully operational Supabase Authentication using Next.js 16 Server Component middleware.
+
+**Immediate Next Step (Phase 2, Step 1): Building the "Sync Engine"**
+Currently, `useRitualStore.ts` captures data locally. While `completeMorningCheckIn` and `completeEveningCheckIn` have skeleton logic for Supabase updates, the immediate Phase 2 objective is to build a robust, bidirectional Sync Engine. This engine must reliably push the complex Zustand state (Anchors, Notes, Supplements, Widgets, and Daily Logs) to the Supabase PostgreSQL tables whenever an authenticated user is online, without overwriting local offline progress.

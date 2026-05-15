@@ -1,6 +1,11 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { createClient } from '@/lib/supabase/client';
+import { 
+  syncPushDailyRitual, syncPushAnchors, syncPushAnchorLog,
+  syncPushSupplements, syncPushSupplementLog, syncPushNote,
+  syncPushVision, syncPushWeeklyPlantCount
+} from '@/lib/supabase/syncEngine';
 
 export interface Anchor {
   id: string;
@@ -16,6 +21,8 @@ export interface Supplement {
   name: string;
   timing: 'AM' | 'PM' | 'Evening';
   taken: boolean;
+  dosage?: string;
+  instruction?: string;
 }
 
 interface RitualState {
@@ -47,6 +54,15 @@ interface RitualState {
   isNotesEnabled: boolean;
   lifeNotes: Array<{ id: string; content: string; attribution: string; date: string }>;
   
+  hasSeenFoodTooltip: boolean;
+  hasSeenDiscomfortTooltip: boolean;
+  hasSeenGutTooltip: boolean;
+  hasSeenVisionTooltip: boolean;
+
+  // Weekly History (7-day sparkline)
+  weeklyHistory: any[];
+  lastWeeklyReviewDate: string | null;
+
   markFeetOnFloor: (time: string) => void;
   setStreak: (streak: number) => void;
   completeMorningCheckIn: (sleep: number, mood: number, bedTime: string, duration: number) => Promise<void>;
@@ -54,7 +70,7 @@ interface RitualState {
   addAnchor: (title: string, category: string, baseline?: string) => void;
   removeAnchor: (id: string) => void;
   toggleSupplement: (id: string) => void;
-  addSupplement: (name: string, timing: 'AM' | 'PM' | 'Evening') => void;
+  addSupplement: (name: string, timing: 'AM' | 'PM' | 'Evening', dosage?: string, instruction?: string) => void;
   removeSupplement: (id: string) => void;
   logMorningGut: (score: number) => void;
   logEveningGut: (score: number) => void;
@@ -73,6 +89,10 @@ interface RitualState {
   toggleNotes: () => void;
   addLifeNote: (content: string, attribution: string) => void;
   removeLifeNote: (id: string) => void;
+  toggleWidget: (widgetKey: string) => void;
+  dismissTooltip: (tooltip: string) => void;
+  setWeeklyHistory: (history: any[]) => void;
+  completeWeeklyReview: () => void;
 }
 
 export const useRitualStore = create<RitualState>()(
@@ -112,9 +132,19 @@ export const useRitualStore = create<RitualState>()(
       visionText: "I am building the structure for a better life.",
       isNotesEnabled: false,
       lifeNotes: [],
+
+      hasSeenFoodTooltip: false,
+      hasSeenDiscomfortTooltip: false,
+      hasSeenGutTooltip: false,
+      hasSeenVisionTooltip: false,
+
+      weeklyHistory: [],
+      lastWeeklyReviewDate: null,
       
-      markFeetOnFloor: (time: string) => 
-        set({ feetOnFloorLogged: true, wakeTime: time }),
+      markFeetOnFloor: (time: string) => {
+        set({ feetOnFloorLogged: true, wakeTime: time });
+        syncPushDailyRitual(get());
+      },
         
       setStreak: (streak: number) => 
         set({ currentStreak: streak }),
@@ -129,41 +159,10 @@ export const useRitualStore = create<RitualState>()(
           sleepDuration: duration
         });
         
-        const state = get();
-        
-        // 2. Sync to Supabase
-        const supabase = createClient();
-        try {
-          const { data: { session } } = await supabase.auth.getSession();
-          
-          if (!session?.user) {
-             console.log("TEST MODE: Morning ritual safely stored in Zustand.");
-             return;
-          }
-
-          // Note: We are deliberately NOT sending bed_time and sleep_duration to Supabase yet 
-          // because the columns do not exist in the database. We will run a migration later.
-          const { error } = await supabase
-            .from('daily_rituals')
-            .upsert({ 
-              user_id: session.user.id,
-              date: new Date().toISOString().split('T')[0],
-              wake_time: state.wakeTime,
-              feet_on_floor_logged: state.feetOnFloorLogged,
-              sleep_quality: sleep + 1,
-              morning_mood: mood + 1,
-              morning_ritual_done: true
-            }, { onConflict: 'user_id, date' });
-
-          if (error) throw error;
-          console.log("Morning ritual synced to Supabase successfully.");
-
-        } catch (error) {
-          console.error("Failed to sync morning ritual:", error);
-        }
+        syncPushDailyRitual(get());
       },
       
-      toggleAnchor: (id: string, asBaseline: boolean = false) => 
+      toggleAnchor: (id: string, asBaseline: boolean = false) => {
         set((state) => ({
           anchors: state.anchors.map(a => {
             if (a.id !== id) return a;
@@ -174,70 +173,67 @@ export const useRitualStore = create<RitualState>()(
               usedBaseline: willComplete ? asBaseline : false
             };
           })
-        })),
+        }));
+        const anchor = get().anchors.find(a => a.id === id);
+        if (anchor) {
+          syncPushAnchorLog(anchor.id, anchor.completed, anchor.usedBaseline || false);
+        }
+      },
 
-      addAnchor: (title: string, category: string, baseline?: string) => 
+      addAnchor: (title: string, category: string, baseline?: string) => {
         set((state) => ({
           anchors: [...state.anchors, { id: crypto.randomUUID(), title, category: category as 'body' | 'mind', completed: false, baselineTitle: baseline || undefined }]
-        })),
+        }));
+        syncPushAnchors(get().anchors);
+      },
         
-      removeAnchor: (id: string) => 
+      removeAnchor: (id: string) => {
         set((state) => ({
           anchors: state.anchors.filter(a => a.id !== id)
-        })),
+        }));
+        syncPushAnchors(get().anchors);
+      },
 
-      toggleSupplement: (id: string) => 
+      toggleSupplement: (id: string) => {
         set((state) => ({
           supplements: state.supplements.map(s => 
             s.id === id ? { ...s, taken: !s.taken } : s
           )
-        })),
+        }));
+        const supplement = get().supplements.find(s => s.id === id);
+        if (supplement) {
+          syncPushSupplementLog(supplement.id, supplement.taken);
+        }
+      },
 
-      addSupplement: (name: string, timing: 'AM' | 'PM' | 'Evening') => 
+      addSupplement: (name: string, timing: 'AM' | 'PM' | 'Evening', dosage?: string, instruction?: string) => {
         set((state) => ({
-          supplements: [...state.supplements, { id: crypto.randomUUID(), name, timing, taken: false }]
-        })),
+          supplements: [...state.supplements, { id: crypto.randomUUID(), name, timing, taken: false, dosage, instruction }]
+        }));
+        syncPushSupplements(get().supplements);
+      },
         
-      removeSupplement: (id: string) => 
+      removeSupplement: (id: string) => {
         set((state) => ({
           supplements: state.supplements.filter(s => s.id !== id)
-        })),
+        }));
+        syncPushSupplements(get().supplements);
+      },
 
-      logMorningGut: (score: number) => 
-        set({ morningGut: score }),
+      logMorningGut: (score: number) => {
+        set({ morningGut: score });
+        syncPushDailyRitual(get());
+      },
         
-      logEveningGut: (score: number) => 
-        set({ eveningGut: score }),
+      logEveningGut: (score: number) => {
+        set({ eveningGut: score });
+        syncPushDailyRitual(get());
+      },
 
       completeEveningCheckIn: async (win: string, parkingLot: string) => {
         set({ eveningCheckInDone: true, winOfTheDay: win, parkingLotNotes: parkingLot });
         
-        const state = get();
-        
-        try {
-          const supabase = createClient();
-          const { data: { session } } = await supabase.auth.getSession();
-          
-          if (!session?.user) {
-             console.log("TEST MODE: Evening ritual stored locally. Will sync when Auth is live.");
-             return;
-          }
-
-          const { error } = await supabase
-            .from('daily_rituals')
-            .upsert({ 
-              user_id: session.user.id,
-              date: new Date().toISOString().split('T')[0],
-              win_of_the_day: win,
-              parking_lot_notes: parkingLot
-            }, { onConflict: 'user_id, date' });
-
-          if (error) throw error;
-          console.log("Evening ritual synced to Supabase.");
-
-        } catch (error) {
-          console.error("Failed to sync evening ritual:", error);
-        }
+        syncPushDailyRitual(get());
       },
         
       resetDaily: () => 
@@ -269,34 +265,63 @@ export const useRitualStore = create<RitualState>()(
       toggleDiscomfortWidget: () => 
         set((state) => ({ isDiscomfortWidgetEnabled: !state.isDiscomfortWidgetEnabled })),
         
-      logDiscomfort: (log: string) => 
-        set({ dailyDiscomfortLog: log }),
+      logDiscomfort: (log: string) => {
+        set({ dailyDiscomfortLog: log });
+        syncPushDailyRitual(get());
+      },
         
       toggleFoodWidget: () => set((state) => ({ isFoodWidgetEnabled: !state.isFoodWidgetEnabled })),
       
       toggleMovementWidget: () => set((state) => ({ isMovementWidgetEnabled: !state.isMovementWidgetEnabled })),
       
-      incrementPlantCount: () => set((state) => ({ weeklyPlantCount: Math.min(state.weeklyPlantCount + 1, 30) })),
+      incrementPlantCount: () => {
+        set((state) => ({ weeklyPlantCount: Math.min(state.weeklyPlantCount + 1, 30) }));
+        syncPushWeeklyPlantCount(get().weeklyPlantCount);
+      },
       
-      logMovement: (note: string) => set({ dailyMovementNote: note }),
+      logMovement: (note: string) => {
+        set({ dailyMovementNote: note });
+        syncPushDailyRitual(get());
+      },
       
       toggleVision: () => set((state) => ({ isVisionEnabled: !state.isVisionEnabled })),
-      setVisionText: (text: string) => set({ visionText: text }),
+      setVisionText: (text: string) => {
+        set({ visionText: text });
+        syncPushVision(text);
+      },
       
       toggleNotes: () => set((state) => ({ isNotesEnabled: !state.isNotesEnabled })),
       
-      addLifeNote: (content: string, attribution: string) => 
+      addLifeNote: (content: string, attribution: string) => {
+        const newNote = { id: crypto.randomUUID(), content, attribution, date: new Date().toISOString() };
         set((state) => ({
           lifeNotes: [
-            { id: crypto.randomUUID(), content, attribution, date: new Date().toISOString() },
+            newNote,
             ...state.lifeNotes
           ]
-        })),
+        }));
+        syncPushNote(newNote);
+      },
         
       removeLifeNote: (id: string) => 
         set((state) => ({
           lifeNotes: state.lifeNotes.filter(n => n.id !== id)
         })),
+
+      setWeeklyHistory: (history: any[]) => set({ weeklyHistory: history }),
+
+      completeWeeklyReview: () => {
+        const today = new Date().toISOString().split('T')[0];
+        set({ 
+          lastWeeklyReviewDate: today,
+          weeklyPlantCount: 0 
+        });
+      },
+
+      toggleWidget: (widgetKey) => 
+        set((state) => ({ [widgetKey]: !state[widgetKey as keyof RitualState] })),
+
+      dismissTooltip: (tooltip) => set({ [tooltip]: true }),
     }),
     {
       name: 'trelis-life-ritual-storage',
