@@ -1,14 +1,15 @@
-# TRELIS LIFE - PHASE 1 STATE & MASTER ARCHITECTURE
+# TRELIS LIFE - MASTER STATE & ARCHITECTURE (PHASE 1 & 2 COMPLETE)
 
 **Last Updated:** May 2026
-**Project Status:** Phase 1 Complete
+**Project Status:** Phase 2 Complete / Native Android Built
 
 ---
 
 ## 1. Executive Summary
 **Mission:** Not a Health App. A Life Operating System. Structure for a better life.
 **Execution Model:** Surgical precision, zero destructive errors, highest order of operations.
-**Phase 1 Goal:** Establish an offline-first, mobile-optimized UI with persistent local state and robust PKCE-compliant authentication, setting the foundation for the Phase 2 cloud sync engine.
+**Phase 1 Goal:** Establish an offline-first, mobile-optimized UI with persistent local state.
+**Phase 2 Goal:** Build the bidirectional Sync Engine, stabilize the cloud architecture, and wrap the app for Native Android.
 
 ---
 
@@ -49,13 +50,12 @@ The UI is strictly governed by the following design system parameters. The aesth
 *   **Framework:** Next.js 16.2.6 (App Router, Turbopack).
 *   **Frontend Libraries:** React 19.2.4, Tailwind CSS v4, Framer Motion ^12.38.0.
 *   **State Management:** Zustand ^5.0.13 with `persist` middleware for offline-first capabilities.
-*   **Mobile Wrapper:** Capacitor 6 (specifically utilizing `@capacitor/haptics`).
-*   **Backend & Auth:** Supabase PostgreSQL.
+*   **Mobile Wrapper:** Capacitor 6 (utilizing `@capacitor/haptics`).
+*   **Backend & Auth:** Supabase PostgreSQL with RLS enabled.
 *   **Authentication Flow:** 
-    *   Strict PKCE flow via `@supabase/ssr` (^0.10.3).
-    *   `src/lib/supabase/client.ts` uses `createBrowserClient`.
-    *   `src/middleware.ts` acts as the active Auth Guard, leveraging `createServerClient` in `src/utils/supabase/middleware.ts` for session refreshing and route protection.
-    *   Magic link callback handled securely at `src/app/auth/callback/route.ts`.
+    *   Client-side PKCE flow via `@supabase/ssr`.
+    *   Magic link callback handled via client-side page at `src/app/auth/callback/page.tsx` for static build compatibility.
+    *   `src/lib/supabase/client.ts` provides the browser client singleton.
 
 ---
 
@@ -79,11 +79,13 @@ These values track the current day's progress and are cleared when `resetDaily` 
 ### Permanent State (Persists Across Days)
 These values define the user's OS configuration and long-term data. They are explicitly protected from `resetDaily`:
 *   `currentStreak` (number)
-*   `weeklyPlantCount` (number) - Resets on a weekly basis, not daily.
+*   `weeklyPlantCount` (number) - Resets on a weekly basis via `completeWeeklyReview`.
+*   `lastWeeklyReviewDate` (string | null) - Tracks the last Sunday review completion.
 *   **Widget Configurations:** `isSupplementWidgetEnabled`, `isGutWidgetEnabled`, `isDiscomfortWidgetEnabled`, `isFoodWidgetEnabled`, `isMovementWidgetEnabled`, `isVisionEnabled`, `isNotesEnabled`.
-*   **Anchor & Supplement Definitions:** The actual array items (id, title, category, baselineTitle, timing).
+*   **Anchor & Supplement Definitions:** The actual array items (id, title, category, baselineTitle, timing, dosage, instruction).
 *   `visionText` (string): The user's permanent psychological anchor.
 *   `lifeNotes` (Array): Persistent ledger for quotes and insights (`{ id, content, attribution, date }`).
+*   `weeklyHistory` (Array): Historical metrics pulled from Supabase for momentum visualization.
 
 ---
 
@@ -93,9 +95,11 @@ The UI is modular, with widgets conditionally rendered on `src/app/page.tsx` bas
 *   **FeetOnFloor:** The ignition switch. A large haptic button to log wake time. Unlocks the Morning Check-in.
 *   **MorningCheckIn:** Collects detailed sleep metrics (Bedtime, Hours), a 1-5 Sleep Quality score, a 1-5 Mood score, and confirms completion of a 30-min morning routine.
 *   **PulseScore:** A dynamic, animated SVG ring calculating a daily health score based on check-ins and completed anchors. Color shifts from red -> amber -> green based on score.
-*   **Baseline Anchor Logic (`AnchorCard` / `AnchorManager`):** Allows users to define a "Minimum Viable Effort" (Baseline). UI reflects three states: Uncompleted, Baseline (Amber), Full Completion (Green/Strikethrough).
-*   **SupplementStack / SupplementManager:** Tracks AM, PM, and Evening protocols with simple toggle interactions.
-*   **GutJournal:** Tracks the gut-brain axis with a 1-5 scale. Morning evaluates Digestion & Calm; Evening evaluates Vagal Tone & Comfort.
+*   **PulseSparkline:** A minimal 7-day momentum bar chart positioned under the Hero section. It visualizes daily Pulse Scores over the last week.
+*   **SundayReviewModal:** An intercepting, full-screen overlay that appears only on Sundays. Forces a weekly debrief and plant count reset.
+*   **Baseline Anchor Logic:** UI reflects three states: Uncompleted, Baseline (Amber), Full Completion (Green/Strikethrough).
+*   **SupplementStack / SupplementManager:** Tracks AM, PM, and Evening protocols with simple toggle interactions. Upgraded to show dosage and instructions.
+*   **GutJournal:** Tracks the gut-brain axis with a 1-5 scale.
 *   **DiscomfortLog:** Tracks voluntary hardship (e.g., cold showers, fasting). Grants a psychological "Resilience +1".
 *   **FoodDiversity:** A weekly progress bar tracking 30 unique plant sources for microbiome health.
 *   **MovementLog:** A text-based logger for daily martial arts and physical sessions.
@@ -121,9 +125,38 @@ The PostgreSQL database has been successfully migrated to mirror the required st
 
 ---
 
-## 7. The Phase 2 Boundary
-**Phase 1 is complete.** 
-We possess a beautiful, highly functional, offline-capable UI with persistent local state, strict design token adherence, and fully operational Supabase Authentication using Next.js 16 Server Component middleware.
+## 7. Phase 2 Completion Summary
+**Phase 2 is officially complete.**
+The application has transitioned from a local prototype to a robust, cloud-synchronized Native Android application. The core architectural challenge—bidirectional state synchronization between a persistent local store and a relational database—has been resolved via the Sync Engine.
 
-**Immediate Next Step (Phase 2, Step 1): Building the "Sync Engine"**
-Currently, `useRitualStore.ts` captures data locally. While `completeMorningCheckIn` and `completeEveningCheckIn` have skeleton logic for Supabase updates, the immediate Phase 2 objective is to build a robust, bidirectional Sync Engine. This engine must reliably push the complex Zustand state (Anchors, Notes, Supplements, Widgets, and Daily Logs) to the Supabase PostgreSQL tables whenever an authenticated user is online, without overwriting local offline progress.
+---
+
+## 8. Phase 2 Accomplishments & Architecture
+
+### Track A: The Sync Engine (`syncEngine.ts`)
+*   **Architecture**: A bidirectional, offline-first synchronization system built on top of Supabase PostgREST.
+*   **UPSERT Pattern**: Uses flat UPSERT patterns for all logs, ensuring that network interruptions do not result in duplicate entries.
+*   **Conflict Resolution**: **Local Wins.** The Zustand store acts as the primary authority during a session. On boot, `syncPullInitialState` performs a reconciliation, pulling missing cloud data to hydrate the local store while preserving un-synced local changes.
+*   **Coverage**: Synchronizes 8 distinct data domains including Daily Rituals, Anchor Definitions, Anchor Logs, Supplement Metadata/Logs, Vision Text, Notes of Life, and Weekly Momentum.
+
+### Track B: UI/UX Resurrection
+*   **Three-Layer Card System**:
+    *   **Primary Widgets**: Feature a dynamic `accent-teal` left-border indicator for pending tasks, providing a clear visual priority queue.
+    *   **Secondary Widgets**: (Food Diversity, Discomfort, Notes, Movement) converted into **Collapsible Accordions** using Framer Motion to maximize vertical space and minimize cognitive noise.
+*   **Emotional Rewards**: 
+    *   Native Haptics (`ImpactStyle.Light`) triggered on successful anchor completions.
+    *   Micro-animations (scale and color flashes) provide immediate dopamine feedback for completed habits.
+*   **"Why This Matters" Tooltips**: Persistent, dismissible educational overlays for every major widget, explaining the biological and psychological rationale behind each habit (e.g., Vagal tone, Microbiome diversity).
+*   **Supplement Upgrade**: UI now exposes `dosage` and `instruction` metadata, transforming the stack from a simple checkbox list into a professional protocol manager.
+
+### Track C: Gamification & Reflection
+*   **Pulse Sparkline**: A minimal 7-day momentum bar chart positioned under the Hero section. It visualizes daily Pulse Scores over the last week by pulling a rolling history window on startup.
+*   **The Sunday Weekly Review**: An intercepting, full-screen overlay that appears only on Sundays. It forces a weekly pause to:
+    *   Calculate an "Average Pulse" for the week.
+    *   Reflect on "Notes of Life."
+    *   Manually "Close Out" the week, which resets the plant diversity count and marks the review as complete.
+
+### Track D: Physical Native Build
+*   **Capacitor 6**: The application is wrapped for Android, providing access to native haptics and a full-screen mobile experience.
+*   **Static Export**: `next.config.ts` is optimized for `output: export`, removing server dependencies and ensuring high performance on mobile devices.
+*   **Custom Branding**: A custom-generated Lattice Ring logo has been integrated as the primary Android app icon and within the navigation header, cementing the Trelis Life identity.
