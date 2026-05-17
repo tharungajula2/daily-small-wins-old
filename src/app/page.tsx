@@ -10,28 +10,30 @@ import EveningCheckIn from '@/components/rituals/EveningCheckIn';
 import { useRitualStore } from '@/store/useRitualStore';
 import { syncPullInitialState } from '@/lib/supabase/syncEngine';
 import { motion, AnimatePresence } from 'framer-motion';
+import { SlidersHorizontal } from 'lucide-react';
 import AnchorManager from '@/components/widgets/AnchorManager';
-import SupplementStack from '@/components/widgets/SupplementStack';
-import SupplementManager from '@/components/widgets/SupplementManager';
-import GutJournal from '@/components/widgets/GutJournal';
 import WidgetManager from '@/components/widgets/WidgetManager';
-import DiscomfortLog from '@/components/widgets/DiscomfortLog';
-import FoodDiversity from '@/components/widgets/FoodDiversity';
-import MovementLog from '@/components/widgets/MovementLog';
 import VisionPriming from '@/components/widgets/VisionPriming';
 import NotesOfLife from '@/components/widgets/NotesOfLife';
 import PulseSparkline from '@/components/core/PulseSparkline';
 import SundayReviewModal from '@/components/core/SundayReviewModal';
 
+const PILLAR_METADATA: Record<string, { title: string; icon: string }> = {
+  nutrition: { title: 'Nutrition', icon: '🥑' },
+  movement: { title: 'Movement', icon: '💪' },
+  sleep: { title: 'Sleep', icon: '🌙' },
+  stress_mental: { title: 'Stress & Mental', icon: '🧘' },
+  social: { title: 'Social Connection', icon: '🤝' },
+  environment: { title: 'Environment', icon: '🌱' },
+};
+
 export default function Dashboard() {
   const { 
     feetOnFloorLogged, morningCheckInDone, sleepScore, moodScore, anchors, eveningCheckInDone,
-    isSupplementWidgetEnabled, isGutWidgetEnabled, isDiscomfortWidgetEnabled,
-    isFoodWidgetEnabled, isMovementWidgetEnabled, isVisionEnabled, isNotesEnabled
+    isVisionEnabled, isNotesEnabled
   } = useRitualStore();
   const [showEvening, setShowEvening] = useState(false);
   const [isManagingAnchors, setIsManagingAnchors] = useState(false);
-  const [isManagingSupplements, setIsManagingSupplements] = useState(false);
   const [isManagingWidgets, setIsManagingWidgets] = useState(false);
 
   useEffect(() => {
@@ -40,13 +42,43 @@ export default function Dashboard() {
   }, []);
 
   const calculatePulse = () => {
-    let base = 50;
-    if (morningCheckInDone) base += 20;
-    if (sleepScore !== null && sleepScore > 1) base += (sleepScore - 1) * 5;
-    if (moodScore !== null && moodScore > 1) base += (moodScore - 1) * 5;
-    const completedAnchors = anchors.filter(a => a.completed).length;
-    base += (completedAnchors * 10);
-    return Math.min(base, 100);
+    const morningScore = morningCheckInDone ? 10 : 0;
+    const eveningScore = eveningCheckInDone ? 20 : 0;
+
+    // Group anchors by pillarId to determine active pillars
+    const pillarsMap: Record<string, typeof anchors> = {};
+    anchors.forEach(anchor => {
+      if (!pillarsMap[anchor.pillarId]) {
+        pillarsMap[anchor.pillarId] = [];
+      }
+      pillarsMap[anchor.pillarId].push(anchor);
+    });
+
+    const activePillarIds = Object.keys(pillarsMap);
+    let engineScore = 0;
+
+    if (activePillarIds.length > 0) {
+      let totalPillarsCompletion = 0;
+
+      activePillarIds.forEach(pId => {
+        const pillarAnchors = pillarsMap[pId];
+        let completedValueSum = 0;
+
+        pillarAnchors.forEach(a => {
+          if (a.completed) {
+            completedValueSum += a.usedBaseline ? 0.5 : 1.0;
+          }
+        });
+
+        const pillarCompletion = completedValueSum / pillarAnchors.length;
+        totalPillarsCompletion += pillarCompletion;
+      });
+
+      const averagePillarCompletion = totalPillarsCompletion / activePillarIds.length;
+      engineScore = averagePillarCompletion * 70;
+    }
+
+    return Math.round(morningScore + eveningScore + engineScore);
   };
 
   const allCompleted = anchors.length > 0 && anchors.every(a => a.completed);
@@ -71,9 +103,9 @@ export default function Dashboard() {
         </div>
         <button 
           onClick={() => setIsManagingWidgets(true)}
-          className="w-8 h-8 flex items-center justify-center text-ink-tertiary hover:text-ink-primary transition-colors"
+          className="w-8 h-8 flex items-center justify-center text-ink-secondary hover:text-ink-primary transition-colors"
         >
-          <span className="text-lg">⚙️</span>
+          <SlidersHorizontal className="w-5 h-5" />
         </button>
       </header>
 
@@ -101,41 +133,42 @@ export default function Dashboard() {
                  )}
                  
                  <div className="w-full px-6 flex flex-col gap-6">
-                   <div className={`w-full p-5 rounded-2xl bg-surface border shadow-sm ${!anchors.every(a => a.completed) ? 'border-l-2 border-accent-teal border-y-muted border-r-muted' : 'border-muted'}`}>
-                     <div className="flex justify-between items-center mb-4 ml-1">
-                       <h3 className={`text-xs font-semibold tracking-widest uppercase ${allCompleted ? 'text-accent-teal' : 'text-ink-primary'}`}>
-                         {allCompleted ? 'ALL ANCHORS SET ✓' : "TODAY'S ANCHORS"}
-                       </h3>
-                       <button 
-                         onClick={() => setIsManagingAnchors(true)}
-                         className="text-ink-tertiary hover:text-accent-teal text-xs uppercase tracking-widest transition-colors"
-                       >
-                         Edit
-                       </button>
-                     </div>
-                     {anchors.map(anchor => (
-                       <AnchorCard key={anchor.id} anchor={anchor} />
-                     ))}
-                   </div>
+                    {/* Header with Edit Button */}
+                    <div className="flex justify-between items-center ml-1">
+                      <h3 className="text-xs font-semibold tracking-widest uppercase text-ink-secondary">
+                        {allCompleted ? 'ALL ANCHORS SET ✓' : 'DAILY ANCHOR ENGINE'}
+                      </h3>
+                      <button 
+                        onClick={() => setIsManagingAnchors(true)}
+                        className="text-ink-tertiary hover:text-accent-teal text-xs uppercase tracking-widest transition-colors flex items-center gap-1 font-semibold"
+                      >
+                        ⚡ Edit Anchors
+                      </button>
+                    </div>
 
-                   {isSupplementWidgetEnabled && (
-                     <SupplementStack onEdit={() => setIsManagingSupplements(true)} />
-                   )}
-                   {isGutWidgetEnabled && (
-                     <GutJournal />
-                   )}
-                   {isDiscomfortWidgetEnabled && (
-                     <DiscomfortLog />
-                   )}
-                   {isFoodWidgetEnabled && (
-                     <FoodDiversity />
-                   )}
-                   {isMovementWidgetEnabled && (
-                     <MovementLog />
-                   )}
-                   {isNotesEnabled && (
-                     <NotesOfLife />
-                   )}
+                    {/* Grouped Pillars */}
+                    {['nutrition', 'movement', 'sleep', 'stress_mental', 'social', 'environment'].map(pId => {
+                      const meta = PILLAR_METADATA[pId];
+                      const pillarAnchors = anchors.filter(a => a.pillarId === pId);
+                      if (pillarAnchors.length === 0) return null;
+                      return (
+                        <div key={pId} className="w-full p-4 rounded-2xl bg-canvas border border-muted shadow-sm flex flex-col gap-1">
+                          <div className="flex items-center gap-2 mb-3 ml-1">
+                            <span className="text-base">{meta.icon}</span>
+                            <h4 className="text-xs font-semibold tracking-widest uppercase text-ink-primary">
+                              {meta.title}
+                            </h4>
+                          </div>
+                          {pillarAnchors.map(anchor => (
+                            <AnchorCard key={anchor.id} anchor={anchor} />
+                          ))}
+                        </div>
+                      );
+                    })}
+
+                    {isNotesEnabled && (
+                      <NotesOfLife />
+                    )}
                  </div>
 
                  {!showEvening ? (
@@ -170,9 +203,6 @@ export default function Dashboard() {
       
       <AnimatePresence>
         {isManagingAnchors && <AnchorManager onClose={() => setIsManagingAnchors(false)} />}
-      </AnimatePresence>
-      <AnimatePresence>
-        {isManagingSupplements && <SupplementManager onClose={() => setIsManagingSupplements(false)} />}
       </AnimatePresence>
       <AnimatePresence>
         {isManagingWidgets && <WidgetManager onClose={() => setIsManagingWidgets(false)} />}

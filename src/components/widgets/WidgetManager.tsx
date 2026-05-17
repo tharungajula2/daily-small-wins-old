@@ -6,11 +6,6 @@ import { Haptics, ImpactStyle } from '@capacitor/haptics';
 
 export default function WidgetManager({ onClose }: { onClose: () => void }) {
   const { 
-    isSupplementWidgetEnabled, toggleSupplementWidget,
-    isGutWidgetEnabled, toggleGutWidget,
-    isDiscomfortWidgetEnabled, toggleDiscomfortWidget,
-    isFoodWidgetEnabled, toggleFoodWidget,
-    isMovementWidgetEnabled, toggleMovementWidget,
     isVisionEnabled, toggleVision,
     isNotesEnabled, toggleNotes
   } = useRitualStore();
@@ -63,41 +58,6 @@ export default function WidgetManager({ onClose }: { onClose: () => void }) {
             desc="Your daily psychological anchor."
             isEnabled={isVisionEnabled} 
             onToggle={() => handleToggle(toggleVision)} 
-          />
-          
-          <ToggleSwitch 
-            label="Supplement Stack" 
-            desc="Track AM/PM supplement protocols."
-            isEnabled={isSupplementWidgetEnabled} 
-            onToggle={() => handleToggle(toggleSupplementWidget)} 
-          />
-          
-          <ToggleSwitch 
-            label="Gut-Brain Journal" 
-            desc="Track digestion and vagal tone daily."
-            isEnabled={isGutWidgetEnabled} 
-            onToggle={() => handleToggle(toggleGutWidget)} 
-          />
-          
-          <ToggleSwitch 
-            label="Discomfort Log" 
-            desc="Track voluntary hardship for resilience."
-            isEnabled={isDiscomfortWidgetEnabled} 
-            onToggle={() => handleToggle(toggleDiscomfortWidget)} 
-          />
-          
-          <ToggleSwitch 
-            label="Food Diversity" 
-            desc="Track 30 weekly plant sources."
-            isEnabled={isFoodWidgetEnabled} 
-            onToggle={() => handleToggle(toggleFoodWidget)} 
-          />
-          
-          <ToggleSwitch 
-            label="Martial Arts & Movement" 
-            desc="Log daily physical sessions and techniques."
-            isEnabled={isMovementWidgetEnabled} 
-            onToggle={() => handleToggle(toggleMovementWidget)} 
           />
           
           <ToggleSwitch 

@@ -1,28 +1,34 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { createClient } from '@/lib/supabase/client';
 import { 
   syncPushDailyRitual, syncPushAnchors, syncPushAnchorLog,
-  syncPushSupplements, syncPushSupplementLog, syncPushNote,
-  syncPushVision, syncPushWeeklyPlantCount
+  syncPushNote, syncPushVision
 } from '@/lib/supabase/syncEngine';
+
+export type PillarId = 'nutrition' | 'movement' | 'sleep' | 'stress_mental' | 'social' | 'environment';
+export type AnchorType = 'action' | 'reflection';
 
 export interface Anchor {
   id: string;
   title: string;
-  category: 'body' | 'mind';
+  pillarId: PillarId;
+  type: AnchorType;
+  prompt?: string; // for Type B reflection anchors
   completed: boolean;
   baselineTitle?: string;
   usedBaseline?: boolean;
+  reflectionText?: string; // for Type B reflection completions
 }
 
-export interface Supplement {
-  id: string;
-  name: string;
-  timing: 'AM' | 'PM' | 'Evening';
-  taken: boolean;
-  dosage?: string;
-  instruction?: string;
+export interface AnchorLog {
+  id?: string;
+  userId?: string;
+  anchorId: string;
+  date?: string;
+  completed: boolean;
+  usedBaseline: boolean;
+  reflectionText?: string;
+  completedAt?: string;
 }
 
 interface RitualState {
@@ -38,52 +44,27 @@ interface RitualState {
   eveningCheckInDone: boolean;
   winOfTheDay: string;
   parkingLotNotes: string;
-  supplements: Supplement[];
-  morningGut: number | null;
-  eveningGut: number | null;
-  isSupplementWidgetEnabled: boolean;
-  isGutWidgetEnabled: boolean;
-  isDiscomfortWidgetEnabled: boolean;
-  dailyDiscomfortLog: string;
-  isFoodWidgetEnabled: boolean;
-  isMovementWidgetEnabled: boolean;
-  weeklyPlantCount: number;
-  dailyMovementNote: string;
   isVisionEnabled: boolean;
   visionText: string;
   isNotesEnabled: boolean;
   lifeNotes: Array<{ id: string; content: string; attribution: string; date: string }>;
   
-  hasSeenFoodTooltip: boolean;
-  hasSeenDiscomfortTooltip: boolean;
-  hasSeenGutTooltip: boolean;
   hasSeenVisionTooltip: boolean;
 
   // Weekly History (7-day sparkline)
   weeklyHistory: any[];
   lastWeeklyReviewDate: string | null;
+  lastActiveDate: string | null;
+  setLastActiveDate: (date: string) => void;
 
   markFeetOnFloor: (time: string) => void;
   setStreak: (streak: number) => void;
   completeMorningCheckIn: (sleep: number, mood: number, bedTime: string, duration: number) => Promise<void>;
-  toggleAnchor: (id: string, asBaseline?: boolean) => void;
-  addAnchor: (title: string, category: string, baseline?: string) => void;
+  toggleAnchor: (id: string, asBaseline?: boolean, reflectionText?: string, prompt?: string) => void;
+  addAnchor: (title: string, pillarId: PillarId, type: AnchorType, baseline?: string, prompt?: string) => void;
   removeAnchor: (id: string) => void;
-  toggleSupplement: (id: string) => void;
-  addSupplement: (name: string, timing: 'AM' | 'PM' | 'Evening', dosage?: string, instruction?: string) => void;
-  removeSupplement: (id: string) => void;
-  logMorningGut: (score: number) => void;
-  logEveningGut: (score: number) => void;
   completeEveningCheckIn: (win: string, parkingLot: string) => Promise<void>;
   resetDaily: () => void;
-  toggleSupplementWidget: () => void;
-  toggleGutWidget: () => void;
-  toggleDiscomfortWidget: () => void;
-  logDiscomfort: (log: string) => void;
-  toggleFoodWidget: () => void;
-  toggleMovementWidget: () => void;
-  incrementPlantCount: () => void;
-  logMovement: (note: string) => void;
   toggleVision: () => void;
   setVisionText: (text: string) => void;
   toggleNotes: () => void;
@@ -107,39 +88,52 @@ export const useRitualStore = create<RitualState>()(
       bedTime: null,
       sleepDuration: null,
       anchors: [
-        { id: 'default-a1', title: 'Hydration (3 Liters)', category: 'body', completed: false, baselineTitle: 'Drink 1 large glass' },
-        { id: 'default-a2', title: 'Morning Sunlight / Walk', category: 'body', completed: false, baselineTitle: 'Step outside for 2 mins' },
-        { id: 'default-a3', title: 'Silence / Breathwork', category: 'mind', completed: false, baselineTitle: '3 deep breaths' }
+        { 
+          id: 'default-a1', 
+          title: 'Hydration (3 Liters)', 
+          pillarId: 'nutrition', 
+          type: 'action', 
+          completed: false, 
+          baselineTitle: 'Drink 1 large glass' 
+        },
+        { 
+          id: 'default-a2', 
+          title: 'Morning Sunlight / Walk', 
+          pillarId: 'environment', 
+          type: 'action', 
+          completed: false, 
+          baselineTitle: 'Step outside for 2 mins' 
+        },
+        { 
+          id: 'default-a3', 
+          title: 'Silence / Breathwork', 
+          pillarId: 'stress_mental', 
+          type: 'action', 
+          completed: false, 
+          baselineTitle: '3 deep breaths' 
+        },
+        {
+          id: 'default-a4',
+          title: 'Daily Reflection',
+          pillarId: 'stress_mental',
+          type: 'reflection',
+          prompt: 'What was the most meaningful part of today?',
+          completed: false
+        }
       ],
       eveningCheckInDone: false,
       winOfTheDay: '',
       parkingLotNotes: '',
-      supplements: [
-        { id: 'default-s1', name: 'Vitamin D3', timing: 'AM', taken: false },
-        { id: 'default-s2', name: 'Magnesium', timing: 'Evening', taken: false }
-      ],
-      morningGut: null,
-      eveningGut: null,
-      isSupplementWidgetEnabled: true,
-      isGutWidgetEnabled: true,
-      isDiscomfortWidgetEnabled: false,
-      dailyDiscomfortLog: '',
-      isFoodWidgetEnabled: false,
-      isMovementWidgetEnabled: false,
-      weeklyPlantCount: 0,
-      dailyMovementNote: '',
       isVisionEnabled: true,
       visionText: "I am building the structure for a better life.",
       isNotesEnabled: false,
       lifeNotes: [],
 
-      hasSeenFoodTooltip: false,
-      hasSeenDiscomfortTooltip: false,
-      hasSeenGutTooltip: false,
       hasSeenVisionTooltip: false,
 
       weeklyHistory: [],
       lastWeeklyReviewDate: null,
+      lastActiveDate: null,
       
       markFeetOnFloor: (time: string) => {
         set({ feetOnFloorLogged: true, wakeTime: time });
@@ -162,7 +156,7 @@ export const useRitualStore = create<RitualState>()(
         syncPushDailyRitual(get());
       },
       
-      toggleAnchor: (id: string, asBaseline: boolean = false) => {
+      toggleAnchor: (id: string, asBaseline: boolean = false, reflectionText?: string, prompt?: string) => {
         set((state) => ({
           anchors: state.anchors.map(a => {
             if (a.id !== id) return a;
@@ -170,19 +164,32 @@ export const useRitualStore = create<RitualState>()(
             return {
               ...a,
               completed: willComplete,
-              usedBaseline: willComplete ? asBaseline : false
+              usedBaseline: willComplete ? asBaseline : false,
+              reflectionText: willComplete ? reflectionText : undefined,
+              prompt: willComplete ? (prompt || a.prompt) : a.prompt
             };
           })
         }));
         const anchor = get().anchors.find(a => a.id === id);
         if (anchor) {
-          syncPushAnchorLog(anchor.id, anchor.completed, anchor.usedBaseline || false);
+          syncPushAnchorLog(anchor.id, anchor.completed, anchor.usedBaseline || false, anchor.reflectionText);
         }
       },
 
-      addAnchor: (title: string, category: string, baseline?: string) => {
+      addAnchor: (title: string, pillarId: PillarId, type: AnchorType, baseline?: string, prompt?: string) => {
         set((state) => ({
-          anchors: [...state.anchors, { id: crypto.randomUUID(), title, category: category as 'body' | 'mind', completed: false, baselineTitle: baseline || undefined }]
+          anchors: [
+            ...state.anchors, 
+            { 
+              id: crypto.randomUUID(), 
+              title, 
+              pillarId, 
+              type, 
+              completed: false, 
+              baselineTitle: baseline || undefined,
+              prompt: prompt || undefined
+            }
+          ]
         }));
         syncPushAnchors(get().anchors);
       },
@@ -192,42 +199,6 @@ export const useRitualStore = create<RitualState>()(
           anchors: state.anchors.filter(a => a.id !== id)
         }));
         syncPushAnchors(get().anchors);
-      },
-
-      toggleSupplement: (id: string) => {
-        set((state) => ({
-          supplements: state.supplements.map(s => 
-            s.id === id ? { ...s, taken: !s.taken } : s
-          )
-        }));
-        const supplement = get().supplements.find(s => s.id === id);
-        if (supplement) {
-          syncPushSupplementLog(supplement.id, supplement.taken);
-        }
-      },
-
-      addSupplement: (name: string, timing: 'AM' | 'PM' | 'Evening', dosage?: string, instruction?: string) => {
-        set((state) => ({
-          supplements: [...state.supplements, { id: crypto.randomUUID(), name, timing, taken: false, dosage, instruction }]
-        }));
-        syncPushSupplements(get().supplements);
-      },
-        
-      removeSupplement: (id: string) => {
-        set((state) => ({
-          supplements: state.supplements.filter(s => s.id !== id)
-        }));
-        syncPushSupplements(get().supplements);
-      },
-
-      logMorningGut: (score: number) => {
-        set({ morningGut: score });
-        syncPushDailyRitual(get());
-      },
-        
-      logEveningGut: (score: number) => {
-        set({ eveningGut: score });
-        syncPushDailyRitual(get());
       },
 
       completeEveningCheckIn: async (win: string, parkingLot: string) => {
@@ -245,45 +216,15 @@ export const useRitualStore = create<RitualState>()(
           moodScore: null,
           bedTime: null,
           sleepDuration: null,
-          anchors: state.anchors.map(a => ({ ...a, completed: false, usedBaseline: false })),
+          anchors: state.anchors.map(a => ({ ...a, completed: false, usedBaseline: false, reflectionText: undefined })),
           eveningCheckInDone: false,
           winOfTheDay: '',
           parkingLotNotes: '',
-          supplements: state.supplements.map(s => ({ ...s, taken: false })),
-          morningGut: null,
-          eveningGut: null,
-          dailyDiscomfortLog: '',
-          dailyMovementNote: ''
+          lastActiveDate: new Date().toLocaleDateString('en-CA'),
         })),
 
-      toggleSupplementWidget: () => 
-        set((state) => ({ isSupplementWidgetEnabled: !state.isSupplementWidgetEnabled })),
-        
-      toggleGutWidget: () => 
-        set((state) => ({ isGutWidgetEnabled: !state.isGutWidgetEnabled })),
-        
-      toggleDiscomfortWidget: () => 
-        set((state) => ({ isDiscomfortWidgetEnabled: !state.isDiscomfortWidgetEnabled })),
-        
-      logDiscomfort: (log: string) => {
-        set({ dailyDiscomfortLog: log });
-        syncPushDailyRitual(get());
-      },
-        
-      toggleFoodWidget: () => set((state) => ({ isFoodWidgetEnabled: !state.isFoodWidgetEnabled })),
-      
-      toggleMovementWidget: () => set((state) => ({ isMovementWidgetEnabled: !state.isMovementWidgetEnabled })),
-      
-      incrementPlantCount: () => {
-        set((state) => ({ weeklyPlantCount: Math.min(state.weeklyPlantCount + 1, 30) }));
-        syncPushWeeklyPlantCount(get().weeklyPlantCount);
-      },
-      
-      logMovement: (note: string) => {
-        set({ dailyMovementNote: note });
-        syncPushDailyRitual(get());
-      },
-      
+      setLastActiveDate: (date: string) => set({ lastActiveDate: date }),
+
       toggleVision: () => set((state) => ({ isVisionEnabled: !state.isVisionEnabled })),
       setVisionText: (text: string) => {
         set({ visionText: text });
@@ -313,8 +254,7 @@ export const useRitualStore = create<RitualState>()(
       completeWeeklyReview: () => {
         const today = new Date().toISOString().split('T')[0];
         set({ 
-          lastWeeklyReviewDate: today,
-          weeklyPlantCount: 0 
+          lastWeeklyReviewDate: today
         });
       },
 

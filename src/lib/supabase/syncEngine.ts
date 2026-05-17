@@ -62,20 +62,7 @@ export async function syncPullInitialState(localState: any, setLocalState: (part
       .eq('user_id', userId)
       .eq('date', today);
 
-    // 5. Pull Supplements
-    const { data: userSupplements } = await supabase
-      .from('user_supplements')
-      .select('*')
-      .eq('user_id', userId);
-
-    // 6. Pull Today's Supplement Logs
-    const { data: supplementLogs } = await supabase
-      .from('supplement_logs')
-      .select('*')
-      .eq('user_id', userId)
-      .eq('log_date', today);
-
-    // 7. Pull Notes of Life
+    // 5. Pull Notes of Life
     const { data: notesOfLife } = await supabase
       .from('notes_of_life')
       .select('*')
@@ -99,11 +86,6 @@ export async function syncPullInitialState(localState: any, setLocalState: (part
         updates.winOfTheDay = dailyRitual.win_of_the_day;
         updates.parkingLotNotes = dailyRitual.parking_lot_notes || '';
       }
-      // Apply missing gut/movement logs if local is empty
-      if (!localState.morningGut && dailyRitual.morning_gut) updates.morningGut = dailyRitual.morning_gut;
-      if (!localState.eveningGut && dailyRitual.evening_gut) updates.eveningGut = dailyRitual.evening_gut;
-      if (!localState.dailyDiscomfortLog && dailyRitual.daily_discomfort_log) updates.dailyDiscomfortLog = dailyRitual.daily_discomfort_log;
-      if (!localState.dailyMovementNote && dailyRitual.daily_movement_note) updates.dailyMovementNote = dailyRitual.daily_movement_note;
     }
 
     if (userVision && userVision.vision_text) {
@@ -119,10 +101,12 @@ export async function syncPullInitialState(localState: any, setLocalState: (part
         updates.anchors = userAnchors.map((a: any) => ({
           id: a.id,
           title: a.title,
-          category: a.category,
-          baselineTitle: a.baseline_title,
+          pillarId: a.pillar_id,
+          type: a.type,
+          prompt: a.prompt || undefined,
           completed: false,
-          usedBaseline: false
+          usedBaseline: false,
+          reflectionText: undefined
         }));
       }
     }
@@ -144,6 +128,10 @@ export async function syncPullInitialState(localState: any, setLocalState: (part
             newAnchor.usedBaseline = true;
             modified = true;
           }
+          if (log.reflection_text !== undefined && newAnchor.reflectionText !== log.reflection_text) {
+            newAnchor.reflectionText = log.reflection_text || undefined;
+            modified = true;
+          }
           if (modified) {
             anchorsChanged = true;
             return newAnchor;
@@ -154,36 +142,6 @@ export async function syncPullInitialState(localState: any, setLocalState: (part
 
       if (anchorsChanged) {
         updates.anchors = mappedAnchors;
-      }
-    }
-
-    if (userSupplements && userSupplements.length > 0) {
-      const isLocalEmptyOrDefault = !localState.supplements || localState.supplements.length === 0 || (localState.supplements.length > 0 && localState.supplements[0].id.startsWith('default-'));
-      if (isLocalEmptyOrDefault) {
-        updates.supplements = userSupplements.map((s: any) => ({
-          id: s.id,
-          name: s.name,
-          timing: s.timing,
-          dosage: s.dosage || undefined,
-          instruction: s.instruction || undefined,
-          taken: false
-        }));
-      }
-    }
-
-    if (supplementLogs && supplementLogs.length > 0) {
-      const currentSupplements = updates.supplements || localState.supplements || [];
-      let suppsChanged = false;
-      const mappedSupplements = currentSupplements.map((supp: any) => {
-        const log = supplementLogs.find((l: any) => l.supplement_id === supp.id);
-        if (log && !supp.taken && log.taken) {
-          suppsChanged = true;
-          return { ...supp, taken: true };
-        }
-        return supp;
-      });
-      if (suppsChanged) {
-        updates.supplements = mappedSupplements;
       }
     }
 
@@ -241,10 +199,6 @@ export async function syncPushDailyRitual(state: any) {
       parking_lot_notes: state.parkingLotNotes || null,
       bed_time: state.bedTime || null,
       sleep_duration: state.sleepDuration || null,
-      morning_gut: state.morningGut || null,
-      evening_gut: state.eveningGut || null,
-      daily_discomfort_log: state.dailyDiscomfortLog || null,
-      daily_movement_note: state.dailyMovementNote || null,
     };
 
     const { error } = await supabase
@@ -284,7 +238,9 @@ export async function syncPushAnchors(anchors: any[]) {
       id: a.id,
       user_id: userId,
       title: a.title,
-      category: a.category,
+      pillar_id: a.pillarId,
+      type: a.type,
+      prompt: a.prompt || null,
       baseline_title: a.baselineTitle || null,
       is_active: true
     }));
@@ -306,7 +262,12 @@ export async function syncPushAnchors(anchors: any[]) {
  * Pushes an individual anchor log (completion status) to anchor_logs.
  * Uses UPSERT on user_id, anchor_id, date.
  */
-export async function syncPushAnchorLog(anchorId: string, completed: boolean, usedBaseline: boolean) {
+export async function syncPushAnchorLog(
+  anchorId: string, 
+  completed: boolean, 
+  usedBaseline: boolean,
+  reflectionText?: string
+) {
   const supabase = createClient();
   
   try {
@@ -327,7 +288,8 @@ export async function syncPushAnchorLog(anchorId: string, completed: boolean, us
       anchor_id: anchorId,
       date: today,
       completed,
-      used_baseline: usedBaseline
+      used_baseline: usedBaseline,
+      reflection_text: reflectionText || null
     };
 
     const { error } = await supabase
@@ -338,75 +300,6 @@ export async function syncPushAnchorLog(anchorId: string, completed: boolean, us
     console.log(`Sync Engine: Push Anchor Log (${anchorId}) Successful`);
   } catch (error: any) {
     console.error("Sync Engine: Push Anchor Log Error", error.message || error);
-  }
-}
-
-/**
- * Bulk UPSERT to user_supplements
- */
-export async function syncPushSupplements(supplements: any[]) {
-  const supabase = createClient();
-  try {
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-    if (sessionError) throw sessionError;
-    if (!session?.user) return;
-    
-    const userId = session.user.id;
-
-    // Filter out supplements with non-UUID IDs (e.g., default-s1)
-    const syncableSupplements = supplements.filter(s => isValidUUID(s.id));
-    if (syncableSupplements.length === 0) {
-      console.log("Sync Engine: No syncable supplements (all have local-only IDs).");
-      return;
-    }
-
-    const payload = syncableSupplements.map(s => ({
-      id: s.id,
-      user_id: userId,
-      name: s.name,
-      timing: s.timing,
-      dosage: s.dosage || null,
-      instruction: s.instruction || null,
-      is_active: true
-    }));
-
-    const { error } = await supabase.from('user_supplements').upsert(payload, { onConflict: 'id' });
-    if (error) throw error;
-    console.log("Sync Engine: Push Supplements Successful");
-  } catch (error) {
-    console.error("Sync Engine: Push Supplements Error", error);
-  }
-}
-
-/**
- * UPSERT to supplement_logs
- */
-export async function syncPushSupplementLog(supplementId: string, taken: boolean) {
-  const supabase = createClient();
-  try {
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-    if (sessionError) throw sessionError;
-    if (!session?.user) return;
-
-    // Skip sync for supplements with non-UUID IDs (default/offline-generated)
-    if (!isValidUUID(supplementId)) {
-      console.log(`Sync Engine: Skipping supplement log push for non-UUID supplement (${supplementId}).`);
-      return;
-    }
-    
-    const today = new Date().toISOString().split('T')[0];
-    const payload = {
-      user_id: session.user.id,
-      supplement_id: supplementId,
-      log_date: today,
-      taken
-    };
-
-    const { error } = await supabase.from('supplement_logs').upsert(payload, { onConflict: 'user_id,supplement_id,log_date' });
-    if (error) throw error;
-    console.log(`Sync Engine: Push Supplement Log (${supplementId}) Successful`);
-  } catch (error: any) {
-    console.error("Sync Engine: Push Supplement Log Error", error.message || error);
   }
 }
 
@@ -457,35 +350,5 @@ export async function syncPushVision(visionText: string) {
     console.log("Sync Engine: Push Vision Successful");
   } catch (error) {
     console.error("Sync Engine: Push Vision Error", error);
-  }
-}
-
-/**
- * UPSERT to weekly_stats
- */
-export async function syncPushWeeklyPlantCount(count: number) {
-  const supabase = createClient();
-  try {
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-    if (sessionError) throw sessionError;
-    if (!session?.user) return;
-    
-    const now = new Date();
-    const day = now.getDay();
-    const diff = now.getDate() - day + (day === 0 ? -6 : 1); 
-    const monday = new Date(now.setDate(diff));
-    const weekStartDate = monday.toISOString().split('T')[0];
-
-    const payload = {
-      user_id: session.user.id,
-      week_start: weekStartDate,
-      weekly_plant_count: count
-    };
-
-    const { error } = await supabase.from('weekly_stats').upsert(payload, { onConflict: 'user_id, week_start' });
-    if (error) throw error;
-    console.log("Sync Engine: Push Weekly Plant Count Successful");
-  } catch (error) {
-    console.error("Sync Engine: Push Weekly Plant Count Error", error);
   }
 }

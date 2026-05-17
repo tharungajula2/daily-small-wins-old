@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
+import AppLifecycleManager from '@/components/core/AppLifecycleManager';
 
 export const metadata: Metadata = {
   title: 'Trelis Life',
@@ -22,6 +23,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="bg-canvas text-ink-primary antialiased min-h-screen">
+        <AppLifecycleManager />
         {children}
       </body>
     </html>

@@ -7,8 +7,7 @@ export default function SundayReviewModal() {
   const { 
     lastWeeklyReviewDate, 
     completeWeeklyReview, 
-    weeklyHistory, 
-    weeklyPlantCount 
+    weeklyHistory 
   } = useRitualStore();
 
   const today = new Date();
@@ -33,7 +32,7 @@ export default function SundayReviewModal() {
       )
     : 0;
 
-  const plantDiversityPercent = Math.min(Math.round((weeklyPlantCount / 30) * 100), 100);
+  const daysLoggedPercent = Math.min(Math.round((weeklyHistory.length / 7) * 100), 100);
 
   return (
     <AnimatePresence>
@@ -75,12 +74,12 @@ export default function SundayReviewModal() {
               transition={{ delay: 0.4 }}
               className="bg-surface p-5 rounded-2xl border border-muted shadow-sm flex flex-col items-center"
             >
-              <span className="text-ink-secondary text-[10px] uppercase tracking-widest mb-2">Plants</span>
-              <span className="text-3xl font-mono text-ink-primary">{weeklyPlantCount}</span>
+              <span className="text-ink-secondary text-[10px] uppercase tracking-widest mb-2">Consistency</span>
+              <span className="text-3xl font-mono text-ink-primary">{weeklyHistory.length}/7 Days</span>
               <div className="w-full h-1 bg-muted rounded-full mt-3 overflow-hidden">
                 <div 
                   className="h-full bg-accent-teal transition-all duration-1000" 
-                  style={{ width: `${plantDiversityPercent}%` }}
+                  style={{ width: `${daysLoggedPercent}%` }}
                 />
               </div>
             </motion.div>

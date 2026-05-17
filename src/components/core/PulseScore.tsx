@@ -10,9 +10,9 @@ export default function PulseScore({ score }: { score: number }) {
 
   // Determine color based on score thresholds
   const getColor = (s: number) => {
-    if (s < 40) return '#C0564A'; // pulse.low
-    if (s < 70) return '#C8923A'; // pulse.mid
-    return '#2A7F7F';             // pulse.high
+    if (s < 40) return '#C0564A'; // Red (<40)
+    if (s < 80) return '#C8923A'; // Amber (40-79)
+    return '#2A7F7F';             // Green (80+)
   };
 
   const color = getColor(score);
