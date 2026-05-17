@@ -21,6 +21,60 @@ export default function AnchorManager({ onClose }: { onClose: () => void }) {
   const [newType, setNewType] = useState<AnchorType>('action');
   const [newPrompt, setNewPrompt] = useState('');
   const [newBaseline, setNewBaseline] = useState('');
+  
+  // Phase 3.5 State Additions
+  const [frequency, setFrequency] = useState<string[]>(['all']);
+  const [subItems, setSubItems] = useState<{ id: string; title: string }[]>([]);
+  const [subItemInput, setSubItemInput] = useState('');
+
+  const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+  const toggleDay = (day: string) => {
+    if (frequency.includes('all')) {
+      setFrequency([day]);
+    } else {
+      if (frequency.includes(day)) {
+        const next = frequency.filter(d => d !== day);
+        if (next.length === 0) {
+          setFrequency(['all']);
+        } else {
+          setFrequency(next);
+        }
+      } else {
+        const next = [...frequency, day];
+        if (next.length === 7) {
+          setFrequency(['all']);
+        } else {
+          setFrequency(next);
+        }
+      }
+    }
+  };
+
+  const setEveryday = () => {
+    setFrequency(['all']);
+  };
+
+  const addSubItem = () => {
+    if (!subItemInput.trim()) return;
+    const newItem = {
+      id: crypto.randomUUID(),
+      title: subItemInput.trim()
+    };
+    setSubItems([...subItems, newItem]);
+    setSubItemInput('');
+  };
+
+  const removeSubItem = (id: string) => {
+    setSubItems(subItems.filter(item => item.id !== id));
+  };
+
+  const handleSubItemKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      addSubItem();
+    }
+  };
 
   const handleAdd = async () => {
     if (!newTitle.trim()) return;
@@ -31,11 +85,17 @@ export default function AnchorManager({ onClose }: { onClose: () => void }) {
       newPillarId,
       newType,
       newBaseline.trim() || undefined,
-      newType === 'reflection' ? (newPrompt.trim() || undefined) : undefined
+      newType === 'reflection' ? (newPrompt.trim() || undefined) : undefined,
+      subItems.length > 0 ? subItems : undefined,
+      frequency
     );
+
+    // Reset Forms
     setNewTitle('');
     setNewBaseline('');
     setNewPrompt('');
+    setSubItems([]);
+    setFrequency(['all']);
   };
 
   const handleRemove = async (id: string) => {
@@ -76,6 +136,12 @@ export default function AnchorManager({ onClose }: { onClose: () => void }) {
                   </p>
                   {anchor.prompt && (
                     <p className="text-xs text-ink-secondary italic mt-0.5">Prompt: "{anchor.prompt}"</p>
+                  )}
+                  {anchor.subItems && anchor.subItems.length > 0 && (
+                    <p className="text-xs text-accent-teal/70 font-semibold mt-0.5">↳ Checklist ({anchor.subItems.length} items)</p>
+                  )}
+                  {anchor.frequency && anchor.frequency.length > 0 && !anchor.frequency.includes('all') && (
+                    <p className="text-[10px] text-ink-secondary mt-0.5">Days: {anchor.frequency.join(', ')}</p>
                   )}
                   {anchor.baselineTitle && (
                     <p className="text-xs text-accent-amber/70 mt-1">↳ {anchor.baselineTitle}</p>
@@ -123,13 +189,13 @@ export default function AnchorManager({ onClose }: { onClose: () => void }) {
           <div className="flex gap-2 mb-3">
             <button
               onClick={() => setNewType('action')}
-              className={`flex-1 py-2 rounded-lg text-sm transition-colors ${newType === 'action' ? 'bg-accent-teal text-surface' : 'bg-muted text-ink-secondary'}`}
+              className={`flex-1 py-2 rounded-lg text-sm transition-colors ${newType === 'action' ? 'bg-accent-teal text-surface font-semibold' : 'bg-muted text-ink-secondary'}`}
             >
               Action
             </button>
             <button
               onClick={() => setNewType('reflection')}
-              className={`flex-1 py-2 rounded-lg text-sm transition-colors ${newType === 'reflection' ? 'bg-accent-teal text-surface' : 'bg-muted text-ink-secondary'}`}
+              className={`flex-1 py-2 rounded-lg text-sm transition-colors ${newType === 'reflection' ? 'bg-accent-teal text-surface font-semibold' : 'bg-muted text-ink-secondary'}`}
             >
               Reflection
             </button>
@@ -148,19 +214,119 @@ export default function AnchorManager({ onClose }: { onClose: () => void }) {
             </>
           )}
 
-          <label className="block text-xs uppercase tracking-widest text-ink-tertiary mb-1 ml-1">Baseline Title (Optional)</label>
-          <input
-            type="text"
-            value={newBaseline}
-            onChange={(e) => setNewBaseline(e.target.value)}
-            placeholder="Baseline fallback (e.g., Read 1 page)"
-            className="w-full bg-canvas border border-muted rounded-xl p-3 text-sm text-ink-primary placeholder:text-ink-tertiary focus:outline-none focus:border-accent-teal mb-4"
-          />
+          {newType === 'action' && (
+            <label className="block text-xs uppercase tracking-widest text-ink-tertiary mb-1 ml-1">Baseline Title (Optional)</label>
+          )}
+          {newType === 'action' && (
+            <input
+              type="text"
+              value={newBaseline}
+              onChange={(e) => setNewBaseline(e.target.value)}
+              placeholder="Baseline fallback (e.g., Read 1 page)"
+              className="w-full bg-canvas border border-muted rounded-xl p-3 text-sm text-ink-primary placeholder:text-ink-tertiary focus:outline-none focus:border-accent-teal mb-4"
+            />
+          )}
+
+          {/* Phase 3.5: Frequency Selection UI */}
+          <label className="block text-xs uppercase tracking-widest text-ink-tertiary mb-2 ml-1">Schedule Frequency</label>
+          <div className="bg-canvas border border-muted rounded-xl p-3 mb-4">
+            <div className="flex items-center justify-between mb-3 pb-2 border-b border-muted/50">
+              <span className="text-xs text-ink-secondary font-medium">Active Days</span>
+              <button
+                type="button"
+                onClick={setEveryday}
+                className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                  frequency.includes('all')
+                    ? 'bg-accent-teal/10 text-accent-teal border border-accent-teal/20'
+                    : 'bg-muted text-ink-secondary border border-transparent hover:bg-canvas'
+                }`}
+              >
+                Everyday
+              </button>
+            </div>
+            <div className="flex justify-between items-center px-1">
+              {DAYS.map((day) => {
+                const isSelected = frequency.includes('all') || frequency.includes(day);
+                const isAllActive = frequency.includes('all');
+                return (
+                  <button
+                    key={day}
+                    type="button"
+                    onClick={() => toggleDay(day)}
+                    className={`w-9 h-9 rounded-full text-xs font-semibold flex items-center justify-center transition-all ${
+                      isSelected
+                        ? isAllActive 
+                          ? 'bg-accent-teal/5 text-accent-teal/50 border border-accent-teal/20 cursor-not-allowed'
+                          : 'bg-accent-teal text-white shadow-sm'
+                        : 'bg-canvas border border-muted text-ink-secondary hover:border-ink-secondary/35'
+                    }`}
+                    disabled={isAllActive}
+                  >
+                    {day[0]}
+                  </button>
+                );
+              })}
+            </div>
+            <p className="text-[10px] text-ink-tertiary text-center mt-2.5">
+              {frequency.includes('all') 
+                ? 'Active every day of the week.' 
+                : `Active on: ${frequency.join(', ')}`}
+            </p>
+          </div>
+
+          {/* Phase 3.5: Sub-Items (Checklist) dynamic list UI */}
+          {newType === 'action' && (
+            <div className="bg-canvas border border-muted rounded-xl p-3 mb-4">
+              <label className="block text-xs uppercase tracking-widest text-ink-tertiary mb-2">Sub-Items / Stack (Optional)</label>
+              
+              <div className="flex gap-2 mb-3">
+                <input
+                  type="text"
+                  value={subItemInput}
+                  onChange={(e) => setSubItemInput(e.target.value)}
+                  onKeyDown={handleSubItemKeyDown}
+                  placeholder="e.g., Take creatine, Drink 500ml water"
+                  className="flex-1 bg-surface border border-muted rounded-lg p-2.5 text-xs text-ink-primary placeholder:text-ink-tertiary focus:outline-none focus:border-accent-teal"
+                />
+                <button
+                  type="button"
+                  onClick={addSubItem}
+                  disabled={!subItemInput.trim()}
+                  className={`px-4 rounded-lg text-xs font-semibold transition-colors ${
+                    subItemInput.trim()
+                      ? 'bg-accent-teal text-surface hover:bg-accent-teal/95'
+                      : 'bg-muted text-ink-tertiary cursor-not-allowed'
+                  }`}
+                >
+                  Add
+                </button>
+              </div>
+
+              {subItems.length > 0 ? (
+                <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
+                  {subItems.map((item) => (
+                    <div key={item.id} className="flex items-center justify-between p-2 bg-surface border border-muted/65 rounded-lg">
+                      <span className="text-xs text-ink-secondary">{item.title}</span>
+                      <button
+                        type="button"
+                        onClick={() => removeSubItem(item.id)}
+                        className="text-error/70 hover:text-error text-xs px-2"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-[10px] text-ink-tertiary text-center py-2">No sub-items added. Convert to Checklist by adding items.</p>
+              )}
+            </div>
+          )}
 
           <button
             onClick={handleAdd}
             disabled={!newTitle.trim()}
-            className={`w-full py-3 rounded-xl font-medium transition-all ${newTitle.trim() ? 'bg-ink-primary text-surface' : 'bg-muted text-ink-tertiary'}`}
+            className={`w-full py-3.5 rounded-xl font-semibold transition-all ${newTitle.trim() ? 'bg-ink-primary text-surface hover:bg-ink-primary/95' : 'bg-muted text-ink-tertiary cursor-not-allowed'}`}
           >
             Add Anchor
           </button>
