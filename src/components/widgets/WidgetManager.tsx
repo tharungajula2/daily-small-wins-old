@@ -3,8 +3,11 @@
 import { motion } from 'framer-motion';
 import { useRitualStore } from '@/store/useRitualStore';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
+import { createClient } from '@/lib/supabase/client';
+import { useRouter } from 'next/navigation';
 
 export default function WidgetManager({ onClose }: { onClose: () => void }) {
+  const router = useRouter();
   const { 
     isVisionEnabled, toggleVision,
     isNotesEnabled, toggleNotes
@@ -13,6 +16,14 @@ export default function WidgetManager({ onClose }: { onClose: () => void }) {
   const handleToggle = async (action: () => void) => {
     try { await Haptics.impact({ style: ImpactStyle.Light }); } catch (e) {}
     action();
+  };
+
+  const handleSignOut = async () => {
+    try { await Haptics.impact({ style: ImpactStyle.Medium }); } catch (e) {}
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    useRitualStore.persist.clearStorage(); // clears local Zustand state
+    window.location.href = '/login'; // Force a hard redirect to clear cache
   };
 
   const ToggleSwitch = ({ label, desc, isEnabled, onToggle }: { label: string, desc: string, isEnabled: boolean, onToggle: () => void }) => (
@@ -66,6 +77,16 @@ export default function WidgetManager({ onClose }: { onClose: () => void }) {
             isEnabled={isNotesEnabled} 
             onToggle={() => handleToggle(toggleNotes)} 
           />
+        </div>
+
+        <div className="pt-4 border-t border-muted">
+          <h4 className="text-ink-secondary text-xs uppercase tracking-widest mb-4">System</h4>
+          <button
+            onClick={handleSignOut}
+            className="w-full py-3.5 px-4 bg-error/10 hover:bg-error/20 text-error rounded-xl font-medium text-sm transition-colors flex items-center justify-center gap-2"
+          >
+            Sign Out
+          </button>
         </div>
 
       </motion.div>
