@@ -5,22 +5,36 @@ import { App } from '@capacitor/app';
 import { useRitualStore } from '@/store/useRitualStore';
 
 export default function AppLifecycleManager() {
-  const { lastActiveDate, resetDaily, setLastActiveDate } = useRitualStore();
-
   useEffect(() => {
     // Check if the date has changed since our last active session
     const checkReset = () => {
+      if (!useRitualStore.persist.hasHydrated()) {
+        console.log("AppLifecycleManager: Store not hydrated yet. Postponing date check.");
+        return;
+      }
+      
       const todayStr = new Date().toLocaleDateString('en-CA'); // Local YYYY-MM-DD
-      if (lastActiveDate && todayStr > lastActiveDate) {
-        console.log(`AppLifecycleManager: Date transitioned from ${lastActiveDate} to ${todayStr}. Triggering daily reset.`);
-        resetDaily();
-      } else if (!lastActiveDate) {
-        setLastActiveDate(todayStr);
+      const state = useRitualStore.getState();
+      const storedLastActive = state.lastActiveDate;
+
+      if (storedLastActive && todayStr > storedLastActive) {
+        console.log(`AppLifecycleManager: Date transitioned from ${storedLastActive} to ${todayStr}. Triggering daily reset.`);
+        state.resetDaily();
+      } else if (!storedLastActive) {
+        state.setLastActiveDate(todayStr);
       }
     };
 
-    // Run on initial bootstrap mount
-    checkReset();
+    // If already hydrated, run immediately
+    if (useRitualStore.persist.hasHydrated()) {
+      checkReset();
+    }
+
+    // Subscribe to hydration completion to ensure it runs as soon as hydrated
+    const unsubHydrate = useRitualStore.persist.onFinishHydration(() => {
+      console.log("AppLifecycleManager: Store hydrated. Running date check...");
+      checkReset();
+    });
 
     // Listen for application returning to foreground (focus regained)
     const listener = App.addListener('appStateChange', (state) => {
@@ -30,10 +44,21 @@ export default function AppLifecycleManager() {
       }
     });
 
+    // Listen for standard browser tab visibility changes (for web testing)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        console.log("AppLifecycleManager: Browser tab became visible. Checking for midnight threshold...");
+        checkReset();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
     return () => {
+      unsubHydrate();
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
       listener.then((l) => l.remove());
     };
-  }, [lastActiveDate, resetDaily, setLastActiveDate]);
+  }, []);
 
   return null;
 }

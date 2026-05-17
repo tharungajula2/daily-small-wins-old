@@ -106,8 +106,31 @@ export async function syncPullInitialState(localState: any, setLocalState: (part
           prompt: a.prompt || undefined,
           completed: false,
           usedBaseline: false,
-          reflectionText: undefined
+          reflectionText: undefined,
+          subItems: a.sub_items || [],
+          frequency: a.frequency || ['all']
         }));
+      } else {
+        let localAnchorsChanged = false;
+        const mergedAnchors = localState.anchors.map((la: any) => {
+          const cloud = userAnchors.find((ca: any) => ca.id === la.id);
+          if (cloud) {
+            const hasSubItemsChanged = JSON.stringify(la.subItems || []) !== JSON.stringify(cloud.sub_items || []);
+            const hasFrequencyChanged = JSON.stringify(la.frequency || []) !== JSON.stringify(cloud.frequency || []);
+            if (hasSubItemsChanged || hasFrequencyChanged) {
+              localAnchorsChanged = true;
+              return {
+                ...la,
+                subItems: cloud.sub_items || [],
+                frequency: cloud.frequency || ['all']
+              };
+            }
+          }
+          return la;
+        });
+        if (localAnchorsChanged) {
+          updates.anchors = mergedAnchors;
+        }
       }
     }
 
@@ -132,6 +155,21 @@ export async function syncPullInitialState(localState: any, setLocalState: (part
             newAnchor.reflectionText = log.reflection_text || undefined;
             modified = true;
           }
+          
+          if (log.sub_items_state && Array.isArray(log.sub_items_state)) {
+            const mergedSubItems = (newAnchor.subItems || []).map((s: any) => {
+              const stateItem = log.sub_items_state.find((st: any) => st.id === s.id);
+              if (stateItem && s.completed !== stateItem.completed) {
+                modified = true;
+                return { ...s, completed: stateItem.completed };
+              }
+              return s;
+            });
+            if (modified) {
+              newAnchor.subItems = mergedSubItems;
+            }
+          }
+          
           if (modified) {
             anchorsChanged = true;
             return newAnchor;
@@ -153,7 +191,6 @@ export async function syncPullInitialState(localState: any, setLocalState: (part
           id: n.id,
           content: n.content,
           attribution: n.attribution || '',
-          category: n.category || '',
           date: n.created_at
         }));
         updates.lifeNotes = [...mappedNotes, ...currentNotes];
@@ -242,7 +279,9 @@ export async function syncPushAnchors(anchors: any[]) {
       type: a.type,
       prompt: a.prompt || null,
       baseline_title: a.baselineTitle || null,
-      is_active: true
+      is_active: true,
+      sub_items: a.subItems || [],
+      frequency: a.frequency || ['all']
     }));
 
     // We do a bulk upsert. Deletions from local aren't handled by upsert automatically, 
@@ -266,7 +305,8 @@ export async function syncPushAnchorLog(
   anchorId: string, 
   completed: boolean, 
   usedBaseline: boolean,
-  reflectionText?: string
+  reflectionText?: string,
+  subItemsState?: { id: string; completed: boolean }[]
 ) {
   const supabase = createClient();
   
@@ -289,7 +329,8 @@ export async function syncPushAnchorLog(
       date: today,
       completed,
       used_baseline: usedBaseline,
-      reflection_text: reflectionText || null
+      reflection_text: reflectionText || null,
+      sub_items_state: subItemsState || null
     };
 
     const { error } = await supabase
@@ -318,15 +359,14 @@ export async function syncPushNote(note: any) {
       user_id: session.user.id,
       content: note.content,
       attribution: note.attribution || null,
-      category: note.category || null,
       created_at: note.date || new Date().toISOString()
     };
 
     const { error } = await supabase.from('notes_of_life').upsert(payload, { onConflict: 'id' });
     if (error) throw error;
     console.log("Sync Engine: Push Note Successful");
-  } catch (error) {
-    console.error("Sync Engine: Push Note Error", error);
+  } catch (error: any) {
+    console.error("Sync Engine: Push Note Error", error.message || error.details || error);
   }
 }
 

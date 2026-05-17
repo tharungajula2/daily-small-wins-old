@@ -37,10 +37,7 @@ export default function FeetOnFloor() {
     <div className="flex flex-col items-center justify-center min-h-[60vh] bg-canvas px-6">
       
       {/* Header Area */}
-      <div className="mb-12 text-center h-20">
-        <h2 className="text-ink-secondary text-sm font-medium uppercase tracking-widest mb-2">
-          {todayDate}
-        </h2>
+      <div className="mb-12 text-center h-12 flex flex-col justify-center">
         <AnimatePresence mode="wait">
           {feetOnFloorLogged && (
             <motion.p

@@ -27,7 +27,7 @@ export default function EveningCheckIn() {
     <motion.div 
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="p-6 mx-6 mt-8 rounded-2xl bg-surface border border-muted shadow-sm mb-8"
+      className="w-full bg-surface rounded-2xl p-5 border border-muted shadow-sm"
     >
       <h3 className="text-ink-primary font-medium mb-6">Evening Wind-down</h3>
       

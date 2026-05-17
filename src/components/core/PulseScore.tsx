@@ -80,6 +80,29 @@ export default function PulseScore({ score }: { score: number }) {
           </span>
         </div>
       </div>
+
+      {/* Weekly Day Tracker */}
+      <div className="flex gap-5 mt-6 justify-center w-full">
+        {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((day, index) => {
+          const todayIndex = new Date().getDay();
+          const activeIndex = todayIndex === 0 ? 6 : todayIndex - 1;
+          const isActive = index === activeIndex;
+          return (
+            <div key={index} className="flex flex-col items-center gap-1.5 w-6">
+              {/* Active Day Indicator Line */}
+              <div className="h-1 w-4 flex justify-center">
+                <span className={`h-1 w-full rounded-full transition-all duration-300 ${isActive ? 'bg-accent-teal shadow-[0_0_8px_rgba(42,127,127,0.5)]' : 'bg-transparent'}`} />
+              </div>
+              {/* Day Letter */}
+              <span className={`text-xs font-semibold select-none tracking-tight transition-all duration-300 ${isActive ? 'text-accent-teal font-bold scale-110' : 'text-ink-secondary/40'}`}>
+                {day}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+
     </div>
   );
 }
+

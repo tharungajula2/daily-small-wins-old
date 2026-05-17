@@ -68,9 +68,6 @@ export default function WidgetManager({ onClose }: { onClose: () => void }) {
           />
         </div>
 
-        <p className="text-center text-xs text-ink-tertiary mt-8">
-          More widgets will unlock as your baseline stabilizes.
-        </p>
       </motion.div>
     </motion.div>
   );

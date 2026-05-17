@@ -18,6 +18,8 @@ export interface Anchor {
   baselineTitle?: string;
   usedBaseline?: boolean;
   reflectionText?: string; // for Type B reflection completions
+  subItems?: { id: string; title: string; completed?: boolean }[];
+  frequency?: string[];
 }
 
 export interface AnchorLog {
@@ -29,6 +31,7 @@ export interface AnchorLog {
   usedBaseline: boolean;
   reflectionText?: string;
   completedAt?: string;
+  subItemsState?: { id: string; completed: boolean }[];
 }
 
 interface RitualState {
@@ -61,7 +64,8 @@ interface RitualState {
   setStreak: (streak: number) => void;
   completeMorningCheckIn: (sleep: number, mood: number, bedTime: string, duration: number) => Promise<void>;
   toggleAnchor: (id: string, asBaseline?: boolean, reflectionText?: string, prompt?: string) => void;
-  addAnchor: (title: string, pillarId: PillarId, type: AnchorType, baseline?: string, prompt?: string) => void;
+  addAnchor: (title: string, pillarId: PillarId, type: AnchorType, baseline?: string, prompt?: string, subItems?: { id: string; title: string }[], frequency?: string[]) => void;
+  toggleSubItem: (anchorId: string, subItemId: string) => void;
   removeAnchor: (id: string) => void;
   completeEveningCheckIn: (win: string, parkingLot: string) => Promise<void>;
   resetDaily: () => void;
@@ -161,22 +165,72 @@ export const useRitualStore = create<RitualState>()(
           anchors: state.anchors.map(a => {
             if (a.id !== id) return a;
             const willComplete = !a.completed;
+            const updatedSubItems = (a.subItems || []).map(s => ({
+              ...s,
+              completed: willComplete
+            }));
             return {
               ...a,
               completed: willComplete,
               usedBaseline: willComplete ? asBaseline : false,
               reflectionText: willComplete ? reflectionText : undefined,
-              prompt: willComplete ? (prompt || a.prompt) : a.prompt
+              prompt: willComplete ? (prompt || a.prompt) : a.prompt,
+              subItems: updatedSubItems
             };
           })
         }));
         const anchor = get().anchors.find(a => a.id === id);
         if (anchor) {
-          syncPushAnchorLog(anchor.id, anchor.completed, anchor.usedBaseline || false, anchor.reflectionText);
+          const subItemsState = (anchor.subItems || []).map(s => ({
+            id: s.id,
+            completed: !!s.completed
+          }));
+          syncPushAnchorLog(anchor.id, anchor.completed, anchor.usedBaseline || false, anchor.reflectionText, subItemsState);
+        }
+      },
+      
+      toggleSubItem: (anchorId: string, subItemId: string) => {
+        set((state) => {
+          const updatedAnchors = state.anchors.map(a => {
+            if (a.id !== anchorId) return a;
+            
+            const updatedSubItems = (a.subItems || []).map(s => {
+              if (s.id !== subItemId) return s;
+              return { ...s, completed: !s.completed };
+            });
+
+            // Evaluate if ALL sub-items are completed
+            const allCompleted = updatedSubItems.length > 0 && updatedSubItems.every(s => s.completed);
+
+            return {
+              ...a,
+              subItems: updatedSubItems,
+              completed: allCompleted
+            };
+          });
+
+          return { anchors: updatedAnchors };
+        });
+
+        const anchor = get().anchors.find(a => a.id === anchorId);
+        if (anchor) {
+          const subItemsState = (anchor.subItems || []).map(s => ({
+            id: s.id,
+            completed: !!s.completed
+          }));
+          syncPushAnchorLog(anchor.id, anchor.completed, anchor.usedBaseline || false, anchor.reflectionText, subItemsState);
         }
       },
 
-      addAnchor: (title: string, pillarId: PillarId, type: AnchorType, baseline?: string, prompt?: string) => {
+      addAnchor: (
+        title: string, 
+        pillarId: PillarId, 
+        type: AnchorType, 
+        baseline?: string, 
+        prompt?: string,
+        subItems?: { id: string; title: string }[],
+        frequency?: string[]
+      ) => {
         set((state) => ({
           anchors: [
             ...state.anchors, 
@@ -187,7 +241,9 @@ export const useRitualStore = create<RitualState>()(
               type, 
               completed: false, 
               baselineTitle: baseline || undefined,
-              prompt: prompt || undefined
+              prompt: prompt || undefined,
+              subItems: subItems || [],
+              frequency: frequency || ['all']
             }
           ]
         }));
@@ -216,7 +272,13 @@ export const useRitualStore = create<RitualState>()(
           moodScore: null,
           bedTime: null,
           sleepDuration: null,
-          anchors: state.anchors.map(a => ({ ...a, completed: false, usedBaseline: false, reflectionText: undefined })),
+          anchors: state.anchors.map(a => ({ 
+            ...a, 
+            completed: false, 
+            usedBaseline: false, 
+            reflectionText: undefined,
+            subItems: a.subItems?.map(s => ({ ...s, completed: false }))
+          })),
           eveningCheckInDone: false,
           winOfTheDay: '',
           parkingLotNotes: '',

@@ -15,7 +15,6 @@ import AnchorManager from '@/components/widgets/AnchorManager';
 import WidgetManager from '@/components/widgets/WidgetManager';
 import VisionPriming from '@/components/widgets/VisionPriming';
 import NotesOfLife from '@/components/widgets/NotesOfLife';
-import PulseSparkline from '@/components/core/PulseSparkline';
 import SundayReviewModal from '@/components/core/SundayReviewModal';
 
 const PILLAR_METADATA: Record<string, { title: string; icon: string }> = {
@@ -41,13 +40,28 @@ export default function Dashboard() {
     syncPullInitialState(useRitualStore.getState(), useRitualStore.setState);
   }, []);
 
-  const calculatePulse = () => {
-    const morningScore = morningCheckInDone ? 10 : 0;
-    const eveningScore = eveningCheckInDone ? 20 : 0;
+  // daily string matcher
+  const dayMap = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const todayStr = dayMap[new Date().getDay()];
+  const activeTodayAnchors = anchors.filter(
+    a => !a.frequency || a.frequency.length === 0 || a.frequency.includes('all') || a.frequency.includes(todayStr)
+  );
 
-    // Group anchors by pillarId to determine active pillars
-    const pillarsMap: Record<string, typeof anchors> = {};
-    anchors.forEach(anchor => {
+  const calculatePulse = () => {
+    let score = 0;
+
+    if (morningCheckInDone) {
+      score += 10;
+    }
+
+    if (eveningCheckInDone) {
+      score += 20;
+    }
+
+    // Engine (70 points max)
+    // Group activeTodayAnchors by pillarId to determine unique active pillars (denominator)
+    const pillarsMap: Record<string, typeof activeTodayAnchors> = {};
+    activeTodayAnchors.forEach(anchor => {
       if (!pillarsMap[anchor.pillarId]) {
         pillarsMap[anchor.pillarId] = [];
       }
@@ -55,7 +69,6 @@ export default function Dashboard() {
     });
 
     const activePillarIds = Object.keys(pillarsMap);
-    let engineScore = 0;
 
     if (activePillarIds.length > 0) {
       let totalPillarsCompletion = 0;
@@ -75,20 +88,25 @@ export default function Dashboard() {
       });
 
       const averagePillarCompletion = totalPillarsCompletion / activePillarIds.length;
-      engineScore = averagePillarCompletion * 70;
+      score += averagePillarCompletion * 70;
     }
 
-    return Math.round(morningScore + eveningScore + engineScore);
+    return Math.round(score);
   };
 
-  const allCompleted = anchors.length > 0 && anchors.every(a => a.completed);
+  const allCompleted = activeTodayAnchors.length > 0 && activeTodayAnchors.every(a => a.completed);
 
   return (
     <main className="flex flex-col min-h-screen max-w-md mx-auto relative shadow-sm bg-surface sm:border-x sm:border-muted">
       <SundayReviewModal />
       
       <header className="h-16 flex items-center justify-between px-6 border-b border-muted/50">
-        <div className="w-8"></div> {/* Spacer for centering */}
+        <span 
+          suppressHydrationWarning
+          className="text-[10px] font-bold tracking-widest text-ink-secondary select-none w-20 text-left"
+        >
+          {new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }).replace(',', '').toUpperCase()}
+        </span>
         <div className="flex items-center gap-2">
           <Image 
             src="/logo-transparent.png" 
@@ -101,12 +119,14 @@ export default function Dashboard() {
             Trelis
           </h1>
         </div>
-        <button 
-          onClick={() => setIsManagingWidgets(true)}
-          className="w-8 h-8 flex items-center justify-center text-ink-secondary hover:text-ink-primary transition-colors"
-        >
-          <SlidersHorizontal className="w-5 h-5" />
-        </button>
+        <div className="w-20 flex justify-end">
+          <button 
+            onClick={() => setIsManagingWidgets(true)}
+            className="w-8 h-8 flex items-center justify-center text-ink-secondary hover:text-ink-primary transition-colors"
+          >
+            <SlidersHorizontal className="w-5 h-5" />
+          </button>
+        </div>
       </header>
 
       <div className="flex-1 overflow-y-auto pb-20">
@@ -121,10 +141,9 @@ export default function Dashboard() {
                </>
             ) : (
               <div className="animate-in slide-in-from-bottom-2 fade-in duration-500 flex flex-col items-center gap-6 py-6 w-full">
-                 <div className="w-full px-6">
-                   <PulseScore score={calculatePulse()} />
-                   <PulseSparkline />
-                 </div>
+                  <div className="w-full px-6">
+                    <PulseScore score={calculatePulse()} />
+                  </div>
 
                  {isVisionEnabled && (
                    <div className="w-full px-6">
@@ -133,38 +152,45 @@ export default function Dashboard() {
                  )}
                  
                  <div className="w-full px-6 flex flex-col gap-6">
-                    {/* Header with Edit Button */}
-                    <div className="flex justify-between items-center ml-1">
-                      <h3 className="text-xs font-semibold tracking-widest uppercase text-ink-secondary">
-                        {allCompleted ? 'ALL ANCHORS SET ✓' : 'DAILY ANCHOR ENGINE'}
-                      </h3>
-                      <button 
+                    {/* The Engine Card */}
+                    <div className="w-full bg-surface rounded-2xl p-5 border border-muted shadow-sm flex flex-col gap-5">
+                      <div className="flex justify-between items-center ml-1">
+                        <h3 className="text-xs font-semibold tracking-widest uppercase text-ink-secondary">
+                          {allCompleted ? 'ALL ANCHORS SET ✓' : 'DAILY ANCHOR ENGINE'}
+                        </h3>
+                      </div>
+
+                      {/* Grouped Pillars */}
+                      <div className="flex flex-col gap-4">
+                        {['nutrition', 'movement', 'sleep', 'stress_mental', 'social', 'environment'].map(pId => {
+                          const meta = PILLAR_METADATA[pId];
+                          const pillarAnchors = activeTodayAnchors.filter(a => a.pillarId === pId);
+                          if (pillarAnchors.length === 0) return null;
+                          return (
+                            <div key={pId} className="flex flex-col gap-2">
+                              <div className="flex items-center gap-2 ml-1">
+                                <span className="text-sm">{meta.icon}</span>
+                                <h4 className="text-xs font-semibold tracking-widest uppercase text-ink-primary">
+                                  {meta.title}
+                                </h4>
+                              </div>
+                              <div className="flex flex-col gap-2">
+                                {pillarAnchors.map(anchor => (
+                                  <AnchorCard key={anchor.id} anchor={anchor} />
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      <button
                         onClick={() => setIsManagingAnchors(true)}
-                        className="text-ink-tertiary hover:text-accent-teal text-xs uppercase tracking-widest transition-colors flex items-center gap-1 font-semibold"
+                        className="w-full bg-canvas hover:bg-muted border border-dashed border-muted hover:border-ink-secondary/30 rounded-xl py-3 text-xs font-semibold tracking-widest uppercase text-ink-secondary transition-all flex items-center justify-center gap-2"
                       >
-                        ⚡ Edit Anchors
+                        + Add New Anchor
                       </button>
                     </div>
-
-                    {/* Grouped Pillars */}
-                    {['nutrition', 'movement', 'sleep', 'stress_mental', 'social', 'environment'].map(pId => {
-                      const meta = PILLAR_METADATA[pId];
-                      const pillarAnchors = anchors.filter(a => a.pillarId === pId);
-                      if (pillarAnchors.length === 0) return null;
-                      return (
-                        <div key={pId} className="w-full p-4 rounded-2xl bg-canvas border border-muted shadow-sm flex flex-col gap-1">
-                          <div className="flex items-center gap-2 mb-3 ml-1">
-                            <span className="text-base">{meta.icon}</span>
-                            <h4 className="text-xs font-semibold tracking-widest uppercase text-ink-primary">
-                              {meta.title}
-                            </h4>
-                          </div>
-                          {pillarAnchors.map(anchor => (
-                            <AnchorCard key={anchor.id} anchor={anchor} />
-                          ))}
-                        </div>
-                      );
-                    })}
 
                     {isNotesEnabled && (
                       <NotesOfLife />
@@ -179,7 +205,9 @@ export default function Dashboard() {
                      Begin Evening Wind-down
                    </button>
                  ) : (
-                   <EveningCheckIn />
+                   <div className="w-full px-6">
+                     <EveningCheckIn />
+                   </div>
                  )}
               </div>
             )}
