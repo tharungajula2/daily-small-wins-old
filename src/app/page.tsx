@@ -16,6 +16,8 @@ import WidgetManager from '@/components/widgets/WidgetManager';
 import VisionPriming from '@/components/widgets/VisionPriming';
 import NotesOfLife from '@/components/widgets/NotesOfLife';
 import SundayReviewModal from '@/components/core/SundayReviewModal';
+import { createClient } from '@/lib/supabase/client';
+import { useRouter } from 'next/navigation';
 
 const PILLAR_METADATA: Record<string, { title: string; icon: string }> = {
   nutrition: { title: 'Nutrition', icon: '🥑' },
@@ -27,6 +29,8 @@ const PILLAR_METADATA: Record<string, { title: string; icon: string }> = {
 };
 
 export default function Dashboard() {
+  const supabase = createClient();
+  const router = useRouter();
   const { 
     feetOnFloorLogged, morningCheckInDone, sleepScore, moodScore, anchors, eveningCheckInDone,
     isVisionEnabled, isNotesEnabled
@@ -36,6 +40,15 @@ export default function Dashboard() {
   const [isManagingWidgets, setIsManagingWidgets] = useState(false);
 
   useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      console.log("Current session status:", session);
+      if (!session) {
+        router.push('/login');
+      }
+    };
+    checkAuth();
+
     // Silently sync missing cloud data to local store on boot
     syncPullInitialState(useRitualStore.getState(), useRitualStore.setState);
   }, []);

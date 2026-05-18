@@ -22,8 +22,9 @@ export default function WidgetManager({ onClose }: { onClose: () => void }) {
     try { await Haptics.impact({ style: ImpactStyle.Medium }); } catch (e) {}
     const supabase = createClient();
     await supabase.auth.signOut();
-    useRitualStore.persist.clearStorage(); // clears local Zustand state
-    window.location.href = '/login'; // Force a hard redirect to clear cache
+    localStorage.clear(); // Wipe EVERYTHING in local storage
+    sessionStorage.clear(); // Wipe session storage
+    window.location.href = '/login'; // Force full browser reload to /login
   };
 
   const ToggleSwitch = ({ label, desc, isEnabled, onToggle }: { label: string, desc: string, isEnabled: boolean, onToggle: () => void }) => (
