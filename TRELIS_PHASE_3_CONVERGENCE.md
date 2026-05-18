@@ -213,17 +213,33 @@ During our intensive Phase 3.5 native mobile stabilization, we engineered elegan
     We then conditionally bound this storage engine to the Supabase client configuration using `Capacitor.isNativePlatform()` to guarantee session persistence directly inside the device's native key-value store.
 
 ### B. The Hard Auth Guard (Dual-Layer Security)
-*   **The Battle:** Standard Next.js server-side edge `middleware.ts` runs beautifully on web hosts (like Vercel), but it is completely bypassed inside Capacitor's static local web views (which load assets directly via local file execution). This left the home dashboard vulnerable to local cache bypass loops.
+*   **The Battle:** Standard Next.js server-side edge `middleware.ts` runs beautifully on web hosts (like Vercel), but it is completely bypassed inside Capacitor's static local web views (which load assets directly via local file execution). Furthermore, an immediate client-side `getSession()` check on cold starts runs before Capacitor's async native storage finishes reading the token from device hardware, resulting in a false-negative redirect loop.
 *   **The Surgical Solution:** We designed a robust, dual-layered guard framework:
     1.  **Edge Route Layer (`src/middleware.ts`):** An edge router middleware to intercept server hits and enforce `NextResponse.redirect` validations using `@supabase/ssr`'s server-side session checks.
-    2.  **Client-Side Check Layer (`src/app/page.tsx`):** A client-side `useEffect` hook that executes instantly upon mounting the dashboard:
+    2.  **Client-Side Check Layer (`src/app/page.tsx`):** A client-side `onAuthStateChange` subscription listener combined with a blocking visual loading state to prevent flash states during async native token parsing:
         ```typescript
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) {
-          router.push('/login');
-        }
+        const [isAuthLoading, setIsAuthLoading] = useState(true);
+
+        useEffect(() => {
+          const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+            if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN') {
+              setIsAuthLoading(false);
+              if (!session) {
+                router.push('/login');
+              } else {
+                syncPullInitialState(useRitualStore.getState(), useRitualStore.setState);
+              }
+            } else if (event === 'SIGNED_OUT') {
+              router.push('/login');
+            }
+          });
+
+          return () => {
+            authListener.subscription.unsubscribe();
+          };
+        }, []);
         ```
-        This ensures immediate protection and clean redirection on both native cold starts and deep-linked background resumes.
+        If `isAuthLoading` is true, we intercept rendering to display a sleek, centered theme-gated CSS spinner matching mobile proportions. This guarantees flawless protection and seamless redirection on cold launches, hot reboots, and deep-linked foreground wakes.
 
 ### C. The Ghost User & Cascade Delete Trap (Supabase RLS)
 *   **The Battle:** In Supabase, testing a new password-based email login flow by deleting a prior user in the Supabase Auth UI triggers a Postgres `CASCADE DELETE` on the user's corresponding database records if foreign keys are set up with `on delete cascade`. This leads to a blank/erased experience, wiping all streaks, templates, and logs. Moreover, creating a new user generates a fresh UUID, disconnecting them from previous pre-seeded development records.

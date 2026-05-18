@@ -38,20 +38,37 @@ export default function Dashboard() {
   const [showEvening, setShowEvening] = useState(false);
   const [isManagingAnchors, setIsManagingAnchors] = useState(false);
   const [isManagingWidgets, setIsManagingWidgets] = useState(false);
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
 
   useEffect(() => {
-    const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      console.log("Current session status:", session);
-      if (!session) {
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log("Auth Event:", event, "Session:", session ? "Exists" : "Null");
+      
+      if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN') {
+        setIsAuthLoading(false);
+        if (!session) {
+          router.push('/login');
+        } else {
+          // Silently sync missing cloud data to local store on boot
+          syncPullInitialState(useRitualStore.getState(), useRitualStore.setState);
+        }
+      } else if (event === 'SIGNED_OUT') {
         router.push('/login');
       }
-    };
-    checkAuth();
+    });
 
-    // Silently sync missing cloud data to local store on boot
-    syncPullInitialState(useRitualStore.getState(), useRitualStore.setState);
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
   }, []);
+
+  if (isAuthLoading) {
+    return (
+      <div className="min-h-screen max-w-md mx-auto bg-canvas flex items-center justify-center sm:border-x sm:border-muted shadow-sm">
+        <div className="w-6 h-6 rounded-full border-2 border-accent-teal border-t-transparent animate-spin" />
+      </div>
+    );
+  }
 
   // daily string matcher
   const dayMap = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
