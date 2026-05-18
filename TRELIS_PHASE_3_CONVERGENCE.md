@@ -184,5 +184,67 @@ An invisible `<AppLifecycleManager />` in `layout.tsx` uses `@capacitor/app` to 
 *   **Issue:** Argument sequencing mismatch between the store definition and `AnchorManager.tsx` parameter calling slots caused TypeScript compiler errors.
 *   **Fix:** Aligned the variable calling slots exactly: `addAnchor(title, pillarId, type, baseline, prompt, subItems, frequency)`.
 
-### B. Clean-Slate Dead Code purging
+### B. Clean-Slate Dead Code Purging
 *   Unused components or files referencing defunct Zustand properties are completely purged, resulting in a production build with **zero warnings** and superfast page load speeds.
+
+---
+
+## 10. Crucial Learnings & Hard-Won Battles
+
+During our intensive Phase 3.5 native mobile stabilization, we engineered elegant solutions for critical system behaviors across the auth lifecycle:
+
+### A. The Mobile Auth Amnesia Bug (WebView Storage Wipes)
+*   **The Battle:** Android WebView containers aggressively purge standard Next.js session cookies and basic `localStorage` state keys upon application process destruction. This caused users to experience a complete session reset—forcing them to log in from scratch on every single app boot.
+*   **The Surgical Solution:** We completely bypassed traditional cookie reliance on native mobile environments by creating a dedicated async client storage adapter. We installed `@capacitor/preferences` and overrode the browser client instantiation in `src/lib/supabase/client.ts`:
+    ```typescript
+    const capacitorStorage = {
+      getItem: async (key: string) => {
+        const { value } = await Preferences.get({ key });
+        return value;
+      },
+      setItem: async (key: string, value: string) => {
+        await Preferences.set({ key, value });
+      },
+      removeItem: async (key: string) => {
+        await Preferences.remove({ key });
+      },
+    };
+    ```
+    We then conditionally bound this storage engine to the Supabase client configuration using `Capacitor.isNativePlatform()` to guarantee session persistence directly inside the device's native key-value store.
+
+### B. The Hard Auth Guard (Dual-Layer Security)
+*   **The Battle:** Standard Next.js server-side edge `middleware.ts` runs beautifully on web hosts (like Vercel), but it is completely bypassed inside Capacitor's static local web views (which load assets directly via local file execution). This left the home dashboard vulnerable to local cache bypass loops.
+*   **The Surgical Solution:** We designed a robust, dual-layered guard framework:
+    1.  **Edge Route Layer (`src/middleware.ts`):** An edge router middleware to intercept server hits and enforce `NextResponse.redirect` validations using `@supabase/ssr`'s server-side session checks.
+    2.  **Client-Side Check Layer (`src/app/page.tsx`):** A client-side `useEffect` hook that executes instantly upon mounting the dashboard:
+        ```typescript
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          router.push('/login');
+        }
+        ```
+        This ensures immediate protection and clean redirection on both native cold starts and deep-linked background resumes.
+
+### C. The Ghost User & Cascade Delete Trap (Supabase RLS)
+*   **The Battle:** In Supabase, testing a new password-based email login flow by deleting a prior user in the Supabase Auth UI triggers a Postgres `CASCADE DELETE` on the user's corresponding database records if foreign keys are set up with `on delete cascade`. This leads to a blank/erased experience, wiping all streaks, templates, and logs. Moreover, creating a new user generates a fresh UUID, disconnecting them from previous pre-seeded development records.
+*   **The Surgical Solution:** In development environments, instead of creating new isolated accounts from scratch, we learned to preserve existing seeded templates and streak states by manually copying the newly registered user's authentication UID and updating the existing database tables in the Supabase SQL editor:
+    ```sql
+    UPDATE user_anchors SET user_id = 'NEW_USER_UID' WHERE user_id = 'OLD_USER_UID';
+    ```
+    This maintains the reference chain intact, respecting strict RLS policies (`auth.uid() = user_id`) while preserving development template databases.
+
+### D. The Nuclear Sign-Out
+*   **The Battle:** A basic `signOut` command leaves offline-first persistent states (Zustand, cached sessions) lingering in memory. A user signing out and logging into a different account could temporarily see cached layout configurations from the previous user's session.
+*   **The Surgical Solution:** We implemented an aggressive, multi-step **Nuclear Sign-Out** inside `WidgetManager.tsx` that completely wipes all client-side state footprints before forcing a hard redirection:
+    ```typescript
+    const handleSignOut = async () => {
+      try { await Haptics.impact({ style: ImpactStyle.Medium }); } catch (e) {}
+      const supabase = createClient();
+      await supabase.auth.signOut();
+      localStorage.clear(); // Complete local storage purge
+      sessionStorage.clear(); // Session memory reset
+      window.location.href = '/login'; // Hard redirect to break memory caches
+    };
+    ```
+    This completely cleanses the client memory space, ensuring a flawless visual transition to the authentication portal.
+
