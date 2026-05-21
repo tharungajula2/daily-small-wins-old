@@ -360,6 +360,7 @@ All core dashboard elements use a spacious border and shadow combination:
 - **Drop Shadows:** `shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05),0_1px_3px_rgba(0,0,0,0.02)]`
 - **Muted Inner Borders:** `border border-muted/80`
 - **Layout Padding:** Spacious padding (`p-5` or `p-6`) provides ample breathing room and prevents layout overcrowding.
+- **Symmetric HUD Header Grid Alignment:** Replaced the asymmetrical 3-part flex row inside `src/app/page.tsx` with a precise `grid grid-cols-3` layout. Each metric is styled as a vertically aligned flex column containing its indicator (icon/orbs), numeric value text, and compact tracking uppercase label, preventing overlapping, text squeezing, or line-wrapping on narrow mobile displays.
 
 ---
 

@@ -324,58 +324,59 @@ export default function Dashboard() {
               <div className="animate-in slide-in-from-bottom-2 fade-in duration-500 flex flex-col items-center gap-6 py-6 w-full">
                   {/* Premium HUD Bar */}
                   <div className="w-full px-6">
-                    <div className="w-full bg-surface rounded-3xl p-5 border border-muted/80 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05),0_1px_3px_rgba(0,0,0,0.02)] flex items-center justify-between hover:shadow-[0_6px_24px_-4px_rgba(0,0,0,0.08)] transition-all">
+                    <div className="w-full bg-surface rounded-3xl p-5 border border-muted/80 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05),0_1px_3px_rgba(0,0,0,0.02)] grid grid-cols-3 hover:shadow-[0_6px_24px_-4px_rgba(0,0,0,0.08)] transition-all">
                       {/* Left: Streak */}
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-canvas flex items-center justify-center text-xl shadow-sm select-none">
+                      <div className="flex flex-col items-center justify-center text-center border-r border-muted/30 pr-1">
+                        <div className="w-9 h-9 rounded-xl bg-canvas flex items-center justify-center text-lg shadow-sm mb-1.5 select-none">
                           {(userState?.current_streak ?? currentStreak ?? 0) >= 7 ? '🔥' : '🌱'}
                         </div>
-                        <div className="flex flex-col">
-                          <span className="text-sm font-semibold text-ink-primary select-none">
-                            {userState?.current_streak ?? currentStreak ?? 0} {(userState?.current_streak ?? currentStreak ?? 0) === 1 ? 'Day' : 'Days'}
-                          </span>
-                          <span className="text-[10px] tracking-wider text-ink-secondary uppercase font-medium select-none">
-                            Current Streak
-                          </span>
-                        </div>
+                        <span className="text-xs font-bold text-ink-primary select-none leading-none">
+                          {userState?.current_streak ?? currentStreak ?? 0} {(userState?.current_streak ?? currentStreak ?? 0) === 1 ? 'Day' : 'Days'}
+                        </span>
+                        <span className="text-[8px] tracking-wider text-ink-secondary uppercase font-semibold select-none mt-1.5 leading-none">
+                          Current Streak
+                        </span>
                       </div>
 
                       {/* Middle: Pause Tokens */}
-                      <div className="flex flex-col items-center select-none">
-                        <div className="flex gap-1.5 justify-center">
-                          {[1, 2, 3].map((num) => {
-                            const remaining = userState?.pause_tokens_remaining ?? 2;
-                            const isActive = num <= remaining;
-                            return (
-                              <span 
-                                key={num} 
-                                className={`h-2.5 w-2.5 rounded-full transition-all duration-300 ${
-                                  isActive 
-                                    ? 'bg-accent-teal shadow-[0_0_8px_rgba(42,127,127,0.5)]' 
-                                    : 'bg-muted'
-                                }`}
-                              />
-                            );
-                          })}
+                      <div className="flex flex-col items-center justify-center text-center border-r border-muted/30 px-1 select-none">
+                        <div className="h-9 flex items-center justify-center mb-1.5">
+                          <div className="flex gap-1.5">
+                            {[1, 2, 3].map((num) => {
+                              const remaining = userState?.pause_tokens_remaining ?? 2;
+                              const isActive = num <= remaining;
+                              return (
+                                <span 
+                                  key={num} 
+                                  className={`h-2.5 w-2.5 rounded-full transition-all duration-300 ${
+                                    isActive 
+                                      ? 'bg-accent-teal shadow-[0_0_8px_rgba(42,127,127,0.5)]' 
+                                      : 'bg-muted'
+                                  }`}
+                                />
+                              );
+                            })}
+                          </div>
                         </div>
-                        <span className="text-[10px] tracking-wider text-ink-secondary uppercase font-medium mt-1.5">
+                        <span className="text-xs font-bold text-ink-primary leading-none">
+                          {userState?.pause_tokens_remaining ?? 2} Tokens
+                        </span>
+                        <span className="text-[8px] tracking-wider text-ink-secondary uppercase font-semibold mt-1.5 leading-none">
                           Pause Tokens
                         </span>
                       </div>
 
-                      {/* Right: Lifetime completed */}
-                      <div className="flex items-center gap-3">
-                        <div className="flex flex-col items-end">
-                          <span className="text-sm font-semibold text-ink-primary select-none">
-                            {userState?.lifetime_anchor_count ?? 0}
-                          </span>
-                          <span className="text-[10px] tracking-wider text-ink-secondary uppercase font-medium select-none">
-                            Lifetime Done
-                          </span>
-                        </div>
-                        <div className="w-10 h-10 rounded-xl bg-canvas flex items-center justify-center text-lg shadow-sm select-none">
+                      {/* Right: Lifetime Completed */}
+                      <div className="flex flex-col items-center justify-center text-center pl-1">
+                        <div className="w-9 h-9 rounded-xl bg-canvas flex items-center justify-center text-md shadow-sm mb-1.5 select-none">
                           🏆
                         </div>
+                        <span className="text-xs font-bold text-ink-primary select-none leading-none">
+                          {userState?.lifetime_anchor_count ?? 0}
+                        </span>
+                        <span className="text-[8px] tracking-wider text-ink-secondary uppercase font-semibold select-none mt-1.5 leading-none">
+                          Lifetime Done
+                        </span>
                       </div>
                     </div>
                   </div>
