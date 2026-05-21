@@ -1,88 +1,201 @@
 'use client';
 
-import { motion, useAnimation, useInView } from 'framer-motion';
+import { motion, useInView } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
 
-export default function PulseScore({ score }: { score: number }) {
+export default function PulseScore({ 
+  score, 
+  morningScore = 0, 
+  eveningScore = 0, 
+  engineScore = 0 
+}: { 
+  score: number; 
+  morningScore?: number; 
+  eveningScore?: number; 
+  engineScore?: number; 
+}) {
   const [displayScore, setDisplayScore] = useState(0);
   const containerRef = useRef(null);
   const isInView = useInView(containerRef, { once: true });
 
-  // Determine color based on score thresholds
-  const getColor = (s: number) => {
-    if (s < 40) return '#C0564A'; // Red (<40)
-    if (s < 80) return '#C8923A'; // Amber (40-79)
-    return '#2A7F7F';             // Green (80+)
+  // 1. Asymmetric grade thresholds
+  const getGradeInfo = (s: number) => {
+    if (s >= 90) return { title: 'Peak Day', color: '#D4AF37', desc: 'Optimal synchrony.' };
+    if (s >= 75) return { title: 'Strong Day', color: '#A0A0A0', desc: 'Excellent alignment.' };
+    if (s >= 55) return { title: 'Steady Day', color: '#2A7F7F', desc: 'Solid consistency.' };
+    if (s >= 30) return { title: 'Light Day', color: '#52BE80', desc: 'Anchors that landed today' };
+    return { title: 'Rest Day', color: '#85929E', desc: 'Tomorrow is a new day.' };
   };
 
-  const color = getColor(score);
+  const gradeInfo = getGradeInfo(score);
 
   useEffect(() => {
     if (isInView) {
       let start = 0;
       const end = score;
-      if (start === end) return;
+      if (start === end) {
+        setDisplayScore(end);
+        return;
+      }
 
       const duration = 800; // 800ms animation
-      const incrementTime = Math.abs(Math.floor(duration / end));
+      const incrementTime = Math.max(5, Math.abs(Math.floor(duration / (end || 1))));
 
       const timer = setInterval(() => {
         start += 1;
-        setDisplayScore(start);
-        if (start === end) clearInterval(timer);
+        if (start >= end) {
+          setDisplayScore(end);
+          clearInterval(timer);
+        } else {
+          setDisplayScore(start);
+        }
       }, incrementTime);
 
       return () => clearInterval(timer);
     }
   }, [score, isInView]);
 
+  // Circumferences for concentric rings
+  const circOuter = 2 * Math.PI * 84;
+  const circMiddle = 2 * Math.PI * 68;
+  const circInner = 2 * Math.PI * 52;
+
+  // Percentages for check-ins
+  const enginePct = engineScore / 70; // Engine is out of 70 max
+  const eveningPct = eveningScore / 20; // Evening is out of 20 max
+  const morningPct = morningScore / 10; // Morning is out of 10 max
+
   return (
-    <div ref={containerRef} className="flex flex-col items-center justify-center my-8">
+    <div ref={containerRef} className="flex flex-col items-center justify-center my-6">
       <div className="relative w-48 h-48 flex items-center justify-center">
-        {/* Background Ring */}
-        <svg className="absolute inset-0 w-full h-full transform -rotate-90">
+        {/* Concentric Progress Rings */}
+        <svg className="absolute inset-0 w-full h-full transform -rotate-90 select-none">
+          {/* 1. OUTER RING: Daily Anchor Engine (70%) */}
           <circle
             cx="96"
             cy="96"
-            r="88"
+            r="84"
             fill="transparent"
-            stroke="#EEEDE8" // muted
-            strokeWidth="12"
+            stroke="#EEEDE8"
+            strokeWidth="8"
           />
-          {/* Animated Progress Ring */}
           <motion.circle
             cx="96"
             cy="96"
-            r="88"
+            r="84"
             fill="transparent"
-            stroke={color}
-            strokeWidth="12"
+            stroke={gradeInfo.color} // Dynamic Asymmetric Grade Accent
+            strokeWidth="8"
             strokeLinecap="round"
-            initial={{ strokeDasharray: "0 1000" }}
-            animate={isInView ? { strokeDasharray: `${(score / 100) * (2 * Math.PI * 88)} 1000` } : {}}
+            initial={{ strokeDasharray: `0 ${circOuter}` }}
+            animate={isInView ? { strokeDasharray: `${enginePct * circOuter} ${circOuter}` } : {}}
             transition={{ duration: 0.8, ease: "easeOut" }}
+          />
+
+          {/* 2. MIDDLE RING: Evening Check-In (20%) */}
+          <circle
+            cx="96"
+            cy="96"
+            r="68"
+            fill="transparent"
+            stroke="#EEEDE8"
+            strokeWidth="8"
+          />
+          <motion.circle
+            cx="96"
+            cy="96"
+            r="68"
+            fill="transparent"
+            stroke="#6A5ACD" // Evening Slate Blue
+            strokeWidth="8"
+            strokeLinecap="round"
+            initial={{ strokeDasharray: `0 ${circMiddle}` }}
+            animate={isInView ? { strokeDasharray: `${eveningPct * circMiddle} ${circMiddle}` } : {}}
+            transition={{ duration: 0.8, ease: "easeOut", delay: 0.1 }}
+          />
+
+          {/* 3. INNER RING: Morning Check-In (10%) */}
+          <circle
+            cx="96"
+            cy="96"
+            r="52"
+            fill="transparent"
+            stroke="#EEEDE8"
+            strokeWidth="8"
+          />
+          <motion.circle
+            cx="96"
+            cy="96"
+            r="52"
+            fill="transparent"
+            stroke="#D97706" // Morning Amber
+            strokeWidth="8"
+            strokeLinecap="round"
+            initial={{ strokeDasharray: `0 ${circInner}` }}
+            animate={isInView ? { strokeDasharray: `${morningPct * circInner} ${circInner}` } : {}}
+            transition={{ duration: 0.8, ease: "easeOut", delay: 0.2 }}
           />
         </svg>
 
-        {/* Inner Content */}
-        <div className="flex flex-col items-center z-10">
-          <motion.span 
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-            className="text-5xl font-mono font-semibold"
-            style={{ color: color }}
-          >
-            {displayScore}
-          </motion.span>
-          <span className="text-ink-secondary text-xs uppercase tracking-widest mt-2">
-            Daily Pulse
-          </span>
+        {/* Inner Content - Supportively Framed & Mathematically Centered */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center text-center select-none z-10 w-full h-full">
+          <div className="flex flex-col items-center justify-center max-w-[76px] px-1 overflow-hidden">
+            {score >= 55 ? (
+              <>
+                <motion.span 
+                  initial={{ scale: 0.8, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ duration: 0.5, delay: 0.2 }}
+                  className="text-3xl font-mono font-bold leading-none tracking-tight"
+                  style={{ color: gradeInfo.color }}
+                >
+                  {displayScore}
+                </motion.span>
+                <span className="text-ink-secondary text-[8px] uppercase tracking-widest mt-1 font-semibold leading-none">
+                  Pulse
+                </span>
+              </>
+            ) : score >= 30 ? (
+              <>
+                <span className="text-xl leading-none mb-0.5">🌱</span>
+                <span className="text-ink-primary font-bold text-[9px] uppercase tracking-wide leading-none">
+                  Light
+                </span>
+                <span className="text-ink-secondary text-[7.5px] leading-snug mt-1 font-medium text-center">
+                  {gradeInfo.desc}
+                </span>
+              </>
+            ) : (
+              <>
+                <span className="text-xl leading-none mb-0.5">🧘</span>
+                <span className="text-ink-primary font-bold text-[9px] uppercase tracking-wide leading-none">
+                  Rest
+                </span>
+                <span className="text-ink-secondary text-[7.5px] leading-snug mt-1 font-medium text-center">
+                  {gradeInfo.desc}
+                </span>
+              </>
+            )}
+          </div>
         </div>
       </div>
 
+      {/* Dynamic Grade Badge */}
+      <div className="mt-4 flex items-center justify-center">
+        <span 
+          style={{ 
+            color: gradeInfo.color, 
+            borderColor: `${gradeInfo.color}33`, 
+            backgroundColor: `${gradeInfo.color}0a` 
+          }}
+          className="px-3 py-1 rounded-full border text-[9px] font-bold uppercase tracking-wider select-none animate-fade-in"
+        >
+          {gradeInfo.title}
+        </span>
+      </div>
+
       {/* Weekly Day Tracker */}
-      <div className="flex gap-5 mt-6 justify-center w-full">
+      <div className="flex gap-5 mt-5 justify-center w-full">
         {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((day, index) => {
           const todayIndex = new Date().getDay();
           const activeIndex = todayIndex === 0 ? 6 : todayIndex - 1;
@@ -101,8 +214,6 @@ export default function PulseScore({ score }: { score: number }) {
           );
         })}
       </div>
-
     </div>
   );
 }
-

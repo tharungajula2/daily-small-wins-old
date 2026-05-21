@@ -9,7 +9,6 @@ export default function AppLifecycleManager() {
     // Check if the date has changed since our last active session
     const checkReset = () => {
       if (!useRitualStore.persist.hasHydrated()) {
-        console.log("AppLifecycleManager: Store not hydrated yet. Postponing date check.");
         return;
       }
       
@@ -18,36 +17,36 @@ export default function AppLifecycleManager() {
       const storedLastActive = state.lastActiveDate;
 
       if (storedLastActive && todayStr > storedLastActive) {
-        console.log(`AppLifecycleManager: Date transitioned from ${storedLastActive} to ${todayStr}. Triggering daily reset.`);
+        console.log(`AppLifecycleManager: Date transitioned from ${storedLastActive} to ${todayStr}. Resetting daily ritual.`);
         state.resetDaily();
       } else if (!storedLastActive) {
         state.setLastActiveDate(todayStr);
       }
     };
 
-    // If already hydrated, run immediately
+    // 1. Run immediately on mount if hydration is already complete
     if (useRitualStore.persist.hasHydrated()) {
       checkReset();
     }
 
-    // Subscribe to hydration completion to ensure it runs as soon as hydrated
+    // 2. Subscribe to hydration event to catch cold-launch initialization instantly
     const unsubHydrate = useRitualStore.persist.onFinishHydration(() => {
-      console.log("AppLifecycleManager: Store hydrated. Running date check...");
       checkReset();
     });
 
-    // Listen for application returning to foreground (focus regained)
+    // 3. Bulletproof 1-second interval to catch exact midnight transitions immediately
+    const checkInterval = setInterval(checkReset, 1000);
+
+    // 4. Listen for Capacitor foreground state triggers
     const listener = App.addListener('appStateChange', (state) => {
       if (state.isActive) {
-        console.log("AppLifecycleManager: Focus regained. Checking for midnight threshold...");
         checkReset();
       }
     });
 
-    // Listen for standard browser tab visibility changes (for web testing)
+    // 5. Listen for web tab visibility changes
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
-        console.log("AppLifecycleManager: Browser tab became visible. Checking for midnight threshold...");
         checkReset();
       }
     };
@@ -55,6 +54,7 @@ export default function AppLifecycleManager() {
 
     return () => {
       unsubHydrate();
+      clearInterval(checkInterval);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       listener.then((l) => l.remove());
     };

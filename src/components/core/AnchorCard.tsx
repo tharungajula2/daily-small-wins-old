@@ -15,13 +15,51 @@ const PILLAR_LABELS: Record<string, string> = {
   environment: 'Environment'
 };
 
-export default function AnchorCard({ anchor }: { anchor: Anchor }) {
+export default function AnchorCard({ 
+  anchor, 
+  metadata 
+}: { 
+  anchor: Anchor; 
+  metadata?: { is_non_negotiable: boolean; baseline_target: number | null }; 
+}) {
   const toggleAnchor = useRitualStore((state) => state.toggleAnchor);
   const toggleSubItem = useRitualStore((state) => state.toggleSubItem);
   const anchors = useRitualStore((state) => state.anchors);
   
   const [justCompleted, setJustCompleted] = useState(false);
+  const [isTooltipOpen, setIsTooltipOpen] = useState(false);
   
+  const getTooltipText = (title: string) => {
+    const normalized = title.toLowerCase().trim();
+    if (normalized.includes('water') || normalized.includes('2.5l')) {
+      return 'Optimal systemic hydration maximizes baseline metabolic output, mitigates fatigue, and supports cellular detoxification.';
+    }
+    if (normalized.includes('protein') || normalized.includes('30g')) {
+      return 'Ensures consistent muscle protein synthesis, regulates ghrelin/satiety hormones, and preserves lean muscle tissue.';
+    }
+    if (normalized.includes('steps') || normalized.includes('7,000')) {
+      return '7,000 steps is the critical inflection point for all-cause mortality risk reduction and baseline cardiovascular health.';
+    }
+    if (normalized.includes('desk rule') || normalized.includes('20-8-2')) {
+      return '20 minutes sitting, 8 standing, 2 moving. Reverses vascular stiffness and keeps insulin sensitivity active throughout desk work.';
+    }
+    if (normalized.includes('in bed') || normalized.includes('23:00')) {
+      return 'Circadian timing supports optimal glymphatic brain clearance, deeper slow-wave sleep cycles, and hormonal rebalancing.';
+    }
+    if (normalized.includes('evening reflection') || normalized.includes('reflection')) {
+      return 'Active reflection lowers amygdala hyper-arousal, decompressing mental state before sleep transition.';
+    }
+    if (normalized.includes('conversation') || normalized.includes('one real')) {
+      return 'Meaningful screen-free interaction lowers baseline cortisol, triggers oxytocin release, and increases life longevity metrics.';
+    }
+    if (normalized.includes('sunlight') || normalized.includes('10 minutes')) {
+      return 'Morning sunlight exposure sets the biological master clock, priming nighttime melatonin release 16 hours later.';
+    }
+    return null;
+  };
+
+  const tooltipText = getTooltipText(anchor.title);
+
   // Drawer / Modal States for Reflection Type
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [reflectionInput, setReflectionInput] = useState('');
@@ -119,6 +157,16 @@ export default function AnchorCard({ anchor }: { anchor: Anchor }) {
               <span className="bg-accent-teal/10 text-accent-teal text-[8px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full flex items-center gap-1 select-none">
                 <span className="text-[9px]">✓</span> Logged
               </span>
+              {metadata?.is_non_negotiable && (
+                <span className="text-[8px] font-semibold tracking-wider text-accent-teal bg-accent-teal/10 px-1.5 py-0.5 rounded-sm select-none uppercase">
+                  ★ Non-negotiable
+                </span>
+              )}
+              {metadata?.baseline_target && (
+                <span className="text-[8px] font-semibold tracking-wider text-ink-secondary bg-canvas px-1.5 py-0.5 rounded-sm select-none uppercase">
+                  Target: {metadata.baseline_target}
+                </span>
+              )}
             </div>
             <p className="text-[9px] uppercase tracking-widest text-ink-tertiary mt-0.5 font-medium">
               {PILLAR_LABELS[anchor.pillarId] || anchor.pillarId} • Reflection Logged
@@ -150,27 +198,59 @@ export default function AnchorCard({ anchor }: { anchor: Anchor }) {
       <motion.div
         whileTap={{ scale: 0.98 }}
         onClick={hasSubItems ? (e) => handleTap(e) : undefined}
-        animate={
-          justCompleted 
+        animate={{
+          ...(justCompleted 
             ? { scale: [1, 1.02, 1], backgroundColor: ['rgba(42, 127, 127, 0)', 'rgba(42, 127, 127, 0.1)', 'rgba(42, 127, 127, 0)'] }
-            : {}
-        }
-        transition={{ duration: 0.2 }}
-        className={`p-4 rounded-xl border transition-all ${hasSubItems ? 'cursor-pointer active:bg-muted/10' : ''} ${
+            : {}),
+          borderLeftColor: metadata?.is_non_negotiable 
+            ? (anchor.completed ? 'rgba(52, 199, 89, 0.4)' : '#E04C3C') 
+            : undefined,
+          borderLeftWidth: metadata?.is_non_negotiable ? '4px' : undefined,
+          borderLeftStyle: metadata?.is_non_negotiable ? 'solid' : undefined
+        }}
+        transition={{ duration: 0.3, ease: 'easeInOut' }}
+        className={`p-5 rounded-2xl border transition-all ${hasSubItems ? 'cursor-pointer active:bg-muted/10' : ''} ${
+          metadata?.is_non_negotiable ? 'border-l-4' : ''
+        } ${
           anchor.completed 
-            ? (anchor.usedBaseline ? 'bg-accent-amber/5 border-accent-amber/20' : 'bg-success/5 border-success/20') 
-            : 'bg-surface border-muted hover:border-muted/80'
+            ? (anchor.usedBaseline ? 'bg-accent-amber/5 border-accent-amber/20 shadow-xs' : 'bg-success/5 border-success/20 shadow-xs') 
+            : 'bg-surface border-muted/80 hover:border-muted shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05),0_1px_3px_rgba(0,0,0,0.02)] hover:shadow-[0_6px_24px_-4px_rgba(0,0,0,0.08)]'
         }`}
       >
         <div className="flex items-center justify-between">
           <div className="flex-1 pr-4">
-            <p className={`text-sm font-medium ${
-              anchor.completed 
-                ? (anchor.usedBaseline ? 'text-accent-amber' : 'text-success line-through') 
-                : 'text-ink-primary'
-            }`}>
-              {anchor.title}
-            </p>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <p className={`text-sm font-medium ${
+                anchor.completed 
+                  ? (anchor.usedBaseline ? 'text-accent-amber' : 'text-success line-through') 
+                  : 'text-ink-primary'
+              }`}>
+                {anchor.title}
+              </p>
+              {tooltipText && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsTooltipOpen(!isTooltipOpen);
+                  }}
+                  className="w-3.5 h-3.5 rounded-full border border-muted/50 flex items-center justify-center text-[9px] font-mono font-bold text-ink-secondary hover:text-accent-teal hover:border-accent-teal/50 transition-all select-none cursor-pointer focus:outline-none bg-canvas/30"
+                  title="Why this matters"
+                >
+                  i
+                </button>
+              )}
+              {metadata?.is_non_negotiable && (
+                <span className="text-[8px] font-semibold tracking-wider text-accent-teal bg-accent-teal/10 px-1.5 py-0.5 rounded-sm select-none uppercase">
+                  ★ Non-negotiable
+                </span>
+              )}
+              {metadata?.baseline_target && (
+                <span className="text-[8px] font-semibold tracking-wider text-ink-secondary bg-canvas px-1.5 py-0.5 rounded-sm select-none uppercase">
+                  Target: {metadata.baseline_target}
+                </span>
+              )}
+            </div>
             <p className="text-[10px] uppercase tracking-widest text-ink-tertiary mt-1 font-medium">
               {PILLAR_LABELS[anchor.pillarId] || anchor.pillarId} • {hasSubItems ? `STACK • ${progressText}` : anchor.type} {anchor.usedBaseline && '• BASELINE ACHIEVED'}
             </p>
@@ -196,6 +276,21 @@ export default function AnchorCard({ anchor }: { anchor: Anchor }) {
             )}
           </motion.button>
         </div>
+
+        <AnimatePresence>
+          {isTooltipOpen && tooltipText && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="overflow-hidden"
+            >
+              <div className="mt-3 pt-3 border-t border-muted/30 text-[10px] text-accent-teal leading-relaxed select-none italic bg-accent-teal/[0.03] rounded-lg p-3">
+                💡 <span className="font-semibold uppercase tracking-wider text-[9px] not-italic">Clinical Context:</span> {tooltipText}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Baseline Dropdown Trigger */}
         {!anchor.completed && anchor.baselineTitle && (
@@ -229,7 +324,7 @@ export default function AnchorCard({ anchor }: { anchor: Anchor }) {
               initial={{ y: '100%' }}
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
-              transition={{ type: 'spring', damping: 25, stiffness: 220 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
               className="relative w-full max-w-md bg-canvas rounded-t-3xl border-t border-muted shadow-2xl p-6 flex flex-col gap-6 z-10"
             >
               {/* Drag Handle */}
@@ -312,7 +407,7 @@ export default function AnchorCard({ anchor }: { anchor: Anchor }) {
               initial={{ y: '100%' }}
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
-              transition={{ type: 'spring', damping: 25, stiffness: 220 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
               className="relative w-full max-w-md bg-canvas rounded-t-3xl border-t border-muted shadow-2xl p-6 flex flex-col gap-6 z-10 pb-10"
             >
               {/* Drag Handle */}
