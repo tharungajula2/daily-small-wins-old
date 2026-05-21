@@ -361,6 +361,7 @@ All core dashboard elements use a spacious border and shadow combination:
 - **Muted Inner Borders:** `border border-muted/80`
 - **Layout Padding:** Spacious padding (`p-5` or `p-6`) provides ample breathing room and prevents layout overcrowding.
 - **Symmetric HUD Header Grid Alignment:** Replaced the asymmetrical 3-part flex row inside `src/app/page.tsx` with a precise `grid grid-cols-3` layout. Each metric is styled as a vertically aligned flex column containing its indicator (icon/orbs), numeric value text, and compact tracking uppercase label, preventing overlapping, text squeezing, or line-wrapping on narrow mobile displays.
+- **Premium Header Action Capsules:** Overhauled raw emojis and default icon buttons inside the header bar. Added custom `motion.button` spring elements styled as `rounded-xl` capsules with subtle `bg-canvas` backgrounds and `border-muted/50` borders. Leveraged perfect vector-scale Lucide icons (`Settings` and `SlidersHorizontal`) that scale down cleanly on touch (`whileTap={{ scale: 0.95 }}`) and glow into clinical teal (`hover:text-accent-teal hover:border-accent-teal/30 hover:bg-surface`) upon user hover.
 
 ---
 

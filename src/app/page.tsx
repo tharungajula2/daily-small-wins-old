@@ -10,7 +10,7 @@ import EveningCheckIn from '@/components/rituals/EveningCheckIn';
 import { useRitualStore } from '@/store/useRitualStore';
 import { syncPullInitialState } from '@/lib/supabase/syncEngine';
 import { motion, AnimatePresence } from 'framer-motion';
-import { SlidersHorizontal, ChevronDown } from 'lucide-react';
+import { SlidersHorizontal, ChevronDown, Settings } from 'lucide-react';
 import AnchorManager from '@/components/widgets/AnchorManager';
 import WidgetManager from '@/components/widgets/WidgetManager';
 import VisionPriming from '@/components/widgets/VisionPriming';
@@ -274,21 +274,23 @@ export default function Dashboard() {
             Trelis
           </h1>
         </div>
-        <div className="w-20 flex justify-end gap-1">
-          <button 
+        <div className="w-20 flex justify-end gap-1.5">
+          <motion.button 
+            whileTap={{ scale: 0.95 }}
             onClick={() => setIsManagingWidgets(true)}
-            className="w-8 h-8 flex items-center justify-center text-ink-secondary hover:text-ink-primary transition-colors animate-fade-in"
+            className="w-8 h-8 flex items-center justify-center rounded-xl bg-canvas border border-muted/50 text-ink-secondary hover:text-accent-teal hover:border-accent-teal/30 hover:bg-surface hover:shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] transition-all duration-300 select-none cursor-pointer focus:outline-none"
             title="Manage Widgets"
           >
-            <SlidersHorizontal className="w-4 h-4" />
-          </button>
-          <button 
+            <SlidersHorizontal className="w-3.5 h-3.5" />
+          </motion.button>
+          <motion.button 
+            whileTap={{ scale: 0.95 }}
             onClick={() => router.push('/settings')}
-            className="w-8 h-8 flex items-center justify-center text-ink-secondary hover:text-ink-primary transition-colors text-base select-none"
+            className="w-8 h-8 flex items-center justify-center rounded-xl bg-canvas border border-muted/50 text-ink-secondary hover:text-accent-teal hover:border-accent-teal/30 hover:bg-surface hover:shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] transition-all duration-300 select-none cursor-pointer focus:outline-none"
             title="Settings"
           >
-            ⚙️
-          </button>
+            <Settings className="w-3.5 h-3.5" />
+          </motion.button>
         </div>
       </header>
 
