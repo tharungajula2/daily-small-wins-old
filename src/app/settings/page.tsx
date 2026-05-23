@@ -272,7 +272,7 @@ export default function SettingsPage() {
                 }}
                 className="w-full mt-2 bg-[#2A7F7F] text-white text-xs font-semibold py-3 px-4 rounded-xl hover:bg-opacity-95 transition-all text-center active:scale-[0.98] shadow-sm shadow-[#2A7F7F]/5 flex items-center justify-center gap-1.5"
               >
-                <span>Upgrade to Plus</span>
+                <span>Join the Plus Waitlist</span>
               </button>
             )}
           </div>
@@ -311,7 +311,7 @@ export default function SettingsPage() {
                 value={visionInput}
                 onChange={(e) => handleSaveVision(e.target.value)}
                 placeholder="E.g. Focus purely on what expands your power and clarity today."
-                className="w-full bg-[#F7F6F2] border border-muted rounded-lg p-2.5 text-xs text-ink-primary focus:outline-none focus:border-accent-teal transition-all min-h-[60px] leading-relaxed resize-none font-medium"
+                className="w-full bg-canvas border border-muted rounded-lg p-2.5 text-xs text-ink-primary focus:outline-none focus:border-accent-teal transition-all min-h-[60px] leading-relaxed resize-none font-medium"
               />
             </div>
           </div>
@@ -394,7 +394,7 @@ export default function SettingsPage() {
                     value={partnerEmailInput}
                     onChange={(e) => setPartnerEmailInput(e.target.value)}
                     placeholder="partner@trelis.life"
-                    className="w-full bg-[#F7F6F2] border border-muted rounded-xl p-2.5 text-xs text-ink-primary focus:outline-none focus:border-accent-teal transition-all font-medium"
+                    className="w-full bg-canvas border border-muted rounded-xl p-2.5 text-xs text-ink-primary focus:outline-none focus:border-accent-teal transition-all font-medium"
                   />
                 </div>
                 
@@ -415,7 +415,7 @@ export default function SettingsPage() {
               Allow Trelis to silently read your movement and rest. We never sell or export your health data.
             </p>
             {isHealthConnected ? (
-              <div className="w-full py-3 bg-[#F7F6F2] rounded-xl flex items-center justify-center gap-2 border border-muted/50 transition-all select-none">
+              <div className="w-full py-3 bg-canvas rounded-xl flex items-center justify-center gap-2 border border-muted/50 transition-all select-none">
                 <Check className="w-4 h-4 text-accent-teal stroke-[3px]" />
                 <span className="text-xs uppercase tracking-wider font-semibold text-accent-teal">Connected</span>
               </div>

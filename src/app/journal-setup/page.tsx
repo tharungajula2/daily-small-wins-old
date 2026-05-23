@@ -72,9 +72,9 @@ export default function JournalSetupPage() {
           <div className="w-12 h-12 bg-accent-teal/10 rounded-full flex items-center justify-center mx-auto mb-6">
             <span className="text-accent-teal text-xl">🔒</span>
           </div>
-          <h1 className="text-xl text-ink-primary font-medium tracking-wide mb-4">Zero-Knowledge Journal</h1>
-          <p className="font-serif italic text-base text-ink-secondary leading-relaxed px-2">
-            "Your thoughts belong strictly to you. Set a secure journal passphrase."
+          <h1 className="text-3xl font-serif font-semibold text-ink-primary tracking-tight mb-4">Lock your thoughts.</h1>
+          <p className="text-sm text-ink-secondary leading-relaxed px-2 font-medium">
+            Think of this as a secondary lock on your private journal. Trelis uses military-grade encryption so your reflections never leave your device and cannot be read by anyone—not even us. Choose a memorable lock phrase.
           </p>
         </div>
 
@@ -122,25 +122,41 @@ export default function JournalSetupPage() {
               </div>
             </div>
 
-            <p className="text-[11px] text-ink-secondary leading-relaxed px-1">
+            <p className="text-[11px] text-ink-secondary leading-relaxed px-1 font-medium">
               This passphrase-derived key resides completely in your device's hardware enclave. Trelis cannot recover or reset it. Write down a physical copy of your passphrase.
             </p>
 
             {status === 'error' && (
-              <p className="text-xs text-error mt-2 px-1">{errorMessage}</p>
+              <p className="text-xs text-error mt-2 px-1 font-medium">{errorMessage}</p>
             )}
 
-            <button
-              type="submit"
-              disabled={status === 'loading' || !passphrase || !confirmPassphrase}
-              className={`w-full py-4 rounded-xl font-medium transition-all ${
-                passphrase && confirmPassphrase && status !== 'loading'
-                  ? 'bg-accent-teal text-surface hover:bg-accent-teal/95 shadow-md shadow-accent-teal/10'
-                  : 'bg-muted text-ink-tertiary cursor-not-allowed'
-              }`}
-            >
-              {status === 'loading' ? 'Encrypting Journal...' : 'Set Passphrase'}
-            </button>
+            <div className="space-y-3">
+              <button
+                type="submit"
+                disabled={status === 'loading' || !passphrase || !confirmPassphrase}
+                className={`w-full py-4 rounded-xl font-semibold text-sm transition-all ${
+                  passphrase && confirmPassphrase && status !== 'loading'
+                    ? 'bg-accent-teal text-white hover:bg-accent-teal/95 shadow-md shadow-accent-teal/10 active:scale-[0.98]'
+                    : 'bg-muted text-ink-tertiary cursor-not-allowed'
+                }`}
+              >
+                {status === 'loading' ? 'Encrypting Journal...' : 'Set Passphrase'}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  try {
+                    const { Haptics } = require('@capacitor/haptics');
+                    Haptics.vibrate();
+                  } catch {}
+                  router.push('/');
+                }}
+                className="w-full py-2.5 text-center text-xs font-semibold text-ink-secondary hover:text-ink-primary transition-all active:scale-[0.98] focus:outline-none bg-transparent"
+              >
+                Not right now, go back.
+              </button>
+            </div>
           </form>
         )}
 

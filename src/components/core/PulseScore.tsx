@@ -76,7 +76,7 @@ export default function PulseScore({
             cy="96"
             r="84"
             fill="transparent"
-            stroke="#EEEDE8"
+            stroke="var(--color-muted)"
             strokeWidth="8"
           />
           <motion.circle
@@ -98,7 +98,7 @@ export default function PulseScore({
             cy="96"
             r="68"
             fill="transparent"
-            stroke="#EEEDE8"
+            stroke="var(--color-muted)"
             strokeWidth="8"
           />
           <motion.circle
@@ -120,9 +120,10 @@ export default function PulseScore({
             cy="96"
             r="52"
             fill="transparent"
-            stroke="#EEEDE8"
+            stroke="var(--color-muted)"
             strokeWidth="8"
           />
+
           <motion.circle
             cx="96"
             cy="96"

@@ -24,3 +24,13 @@ body {
   background-color: var(--color-canvas);
   color: var(--color-ink-primary);
 }
+
+.dark {
+  --color-canvas: #1E1B17;
+  --color-surface: #25221F;
+  --color-ink-primary: #F7F6F2;
+  --color-ink-secondary: #C8C5C0;
+  --color-ink-tertiary: #A09E9B;
+  --color-muted: #383430;
+}
+
