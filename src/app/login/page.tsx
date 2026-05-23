@@ -93,9 +93,11 @@ export default function LoginPage() {
         className="w-full max-w-sm"
       >
         <div className="text-center mb-10 flex flex-col items-center">
-          <div className="w-14 h-14 rounded-2xl bg-accent-teal flex items-center justify-center text-white text-2xl font-semibold shadow-xl shadow-accent-teal/10 mb-6 select-none">
-            T
-          </div>
+          <img 
+            src="/icons/icon-192.webp" 
+            alt="Trelis Logo" 
+            className="w-16 h-16 object-contain mb-6 select-none"
+          />
           <h1 className="text-2xl text-ink-primary font-medium tracking-wide mb-2">TRELIS</h1>
           <p className="text-sm text-ink-secondary">Structure for a better life.</p>
         </div>
