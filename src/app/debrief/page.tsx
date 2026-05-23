@@ -6,6 +6,8 @@ import { useRitualStore } from '@/store/useRitualStore';
 import { motion, AnimatePresence } from 'framer-motion';
 import { createClient } from '@/lib/supabase/client';
 import { ChevronLeft, CheckCircle2, Sparkles, BookOpen } from 'lucide-react';
+import { getKey } from '@/lib/crypto/keyVault';
+import { encryptText } from '@/lib/crypto/journalCrypto';
 
 export default function SundayDebrief() {
   const router = useRouter();
@@ -84,8 +86,21 @@ export default function SundayDebrief() {
       if (debriefAnchor) {
         const structuredReflectionText = `WHAT WORKED:\n${worked}\n\nWHAT BROKE DOWN:\n${brokeDown}\n\nCHANGE FOR NEXT WEEK:\n${changeText}`;
         
+        let finalReflectionText = structuredReflectionText;
+        try {
+          const key = await getKey();
+          if (key) {
+            finalReflectionText = await encryptText(structuredReflectionText, key);
+          } else {
+            router.push('/journal-setup');
+            return;
+          }
+        } catch (err) {
+          console.error('Failed to encrypt weekly debrief:', err);
+        }
+
         // 2. Complete and log reflection to Zustand and remote database
-        toggleAnchor(debriefAnchor.id, false, structuredReflectionText);
+        toggleAnchor(debriefAnchor.id, false, finalReflectionText);
         
         // 3. Mark the review completed in the store
         completeWeeklyReview();

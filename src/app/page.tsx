@@ -15,12 +15,17 @@ import AnchorManager from '@/components/widgets/AnchorManager';
 import WidgetManager from '@/components/widgets/WidgetManager';
 import VisionPriming from '@/components/widgets/VisionPriming';
 import NotesOfLife from '@/components/widgets/NotesOfLife';
+import QuietPartner from '@/components/core/QuietPartner';
 import SundayReviewModal from '@/components/core/SundayReviewModal';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import { isAnchorActiveForDay } from '@/utils/dayMatcher';
 import VisionPrimer from '@/components/VisionPrimer';
 import { evaluateYesterdayStreak } from '@/utils/streakEngine';
+import GentleReEntryScreen from '@/components/core/GentleReEntryScreen';
+import { Haptics, ImpactStyle } from '@capacitor/haptics';
+import { App } from '@capacitor/app';
+import { useWearableSync } from '@/hooks/useWearableSync';
 
 const PILLAR_METADATA: Record<string, { title: string; icon: string; stripeColor: string }> = {
   nutrition: { title: 'Nutrition', icon: '🥑', stripeColor: 'bg-accent-teal' },
@@ -36,10 +41,42 @@ export default function Dashboard() {
   const router = useRouter();
   const { 
     feetOnFloorLogged, morningCheckInDone, sleepScore, moodScore, anchors, eveningCheckInDone,
-    isVisionEnabled, isNotesEnabled, currentStreak
+    isVisionEnabled, isNotesEnabled, currentStreak, lastActiveDate, setLastActiveDate,
+    lastFreshStartPrompt, setLastFreshStartPrompt
   } = useRitualStore();
   
   const [hasHydrated, setHasHydrated] = useState(false);
+  const [showGentleReEntry, setShowGentleReEntry] = useState(false);
+  const [showFreshStart, setShowFreshStart] = useState(false);
+
+  const { syncWearables } = useWearableSync();
+
+  // Silent Background Wearable Automation Sync (Health Connect)
+  useEffect(() => {
+    if (hasHydrated) {
+      syncWearables();
+
+      let appStateListener: any = null;
+      try {
+        App.addListener('appStateChange', (state) => {
+          if (state.isActive) {
+            console.log('Trelis Lifecycle: App returned to focus. Syncing wearable metrics...');
+            syncWearables();
+          }
+        }).then(listener => {
+          appStateListener = listener;
+        });
+      } catch (err) {
+        console.log('Trelis Lifecycle: Capacitor App plugin unavailable on browser.', err);
+      }
+
+      return () => {
+        if (appStateListener) {
+          appStateListener.remove();
+        }
+      };
+    }
+  }, [hasHydrated, syncWearables]);
 
   useEffect(() => {
     if (useRitualStore.persist.hasHydrated()) {
@@ -51,6 +88,49 @@ export default function Dashboard() {
       return () => unsub();
     }
   }, []);
+
+  useEffect(() => {
+    if (hasHydrated && lastActiveDate) {
+      try {
+        const today = new Date();
+        const lastDate = new Date(lastActiveDate);
+        today.setHours(0, 0, 0, 0);
+        lastDate.setHours(0, 0, 0, 0);
+        
+        const diffTime = Math.abs(today.getTime() - lastDate.getTime());
+        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+        
+        if (diffDays >= 7) {
+          setShowGentleReEntry(true);
+        }
+      } catch (err) {
+        console.error('Error evaluating lastActiveDate delta:', err);
+      }
+    }
+  }, [hasHydrated, lastActiveDate]);
+
+  const handleResume = () => {
+    const todayStr = new Date().toLocaleDateString('en-CA');
+    setLastActiveDate(todayStr);
+    setShowGentleReEntry(false);
+  };
+
+  useEffect(() => {
+    if (hasHydrated) {
+      try {
+        const today = new Date();
+        const isMonday = today.getDay() === 1;
+        const isFirstOfMonth = today.getDate() === 1;
+        const todayStr = today.toLocaleDateString('en-CA');
+        
+        if ((isMonday || isFirstOfMonth) && lastFreshStartPrompt !== todayStr) {
+          setShowFreshStart(true);
+        }
+      } catch (err) {
+        console.error('Error evaluating fresh start day:', err);
+      }
+    }
+  }, [hasHydrated, lastFreshStartPrompt]);
 
   const [showEvening, setShowEvening] = useState(false);
   const [isManagingAnchors, setIsManagingAnchors] = useState(false);
@@ -185,7 +265,7 @@ export default function Dashboard() {
 
   if (!hasHydrated || isAuthLoading) {
     return (
-      <div className="min-h-screen max-w-md mx-auto bg-canvas bg-[#F7F6F2] flex flex-col justify-center px-8 gap-6 sm:border-x sm:border-muted shadow-sm">
+      <div className="min-h-screen max-w-md mx-auto bg-transparent flex flex-col justify-center px-8 gap-6 sm:border-x sm:border-muted shadow-sm">
         <div className="flex flex-col gap-4">
           <div className="w-12 h-12 rounded-2xl bg-muted/20 animate-pulse" />
           <div className="h-6 w-3/4 bg-muted/20 rounded-md animate-pulse" />
@@ -252,8 +332,44 @@ export default function Dashboard() {
   const allCompleted = activeTodayAnchors.length > 0 && activeTodayAnchors.every(a => a.completed);
 
   return (
-    <main className="flex flex-col min-h-screen max-w-md mx-auto relative shadow-md bg-[#F7F6F2] sm:border-x sm:border-muted">
+    <main className="flex flex-col min-h-screen max-w-md mx-auto relative shadow-md bg-transparent sm:border-x sm:border-muted">
       <SundayReviewModal />
+      
+      <AnimatePresence>
+        {showFreshStart && (
+          <motion.div
+            initial={{ opacity: 0, height: 0, y: -20 }}
+            animate={{ opacity: 1, height: 'auto', y: 0 }}
+            exit={{ opacity: 0, height: 0, y: -20 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+            className="overflow-hidden bg-[#F7F6F2] dark:bg-[#1E1B17] border-b border-accent-teal/20 relative z-40"
+          >
+            <div className="px-6 py-4 flex flex-col items-start gap-3 max-w-md mx-auto">
+              <div className="flex flex-col gap-0.5">
+                <span className="text-[9px] uppercase tracking-widest text-accent-teal font-semibold">Fresh Start Moment</span>
+                <p className="text-xs text-ink-primary font-medium leading-relaxed">
+                  Want to start this {new Date().getDay() === 1 ? 'week' : 'month'} fresh? Your anchors stay exactly the same.
+                </p>
+              </div>
+              <button
+                onClick={async () => {
+                  try {
+                    await Haptics.impact({ style: ImpactStyle.Light });
+                  } catch (e) {
+                    // web fallback
+                  }
+                  const todayStr = new Date().toLocaleDateString('en-CA');
+                  setLastFreshStartPrompt(todayStr);
+                  setShowFreshStart(false);
+                }}
+                className="bg-accent-teal hover:bg-accent-teal/95 text-white text-xs font-semibold px-4 py-2 rounded-xl active:scale-98 transition-all whitespace-nowrap self-stretch text-center select-none"
+              >
+                Take a breath & begin
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
       
       <header className="h-16 flex items-center justify-between px-6 border-b border-muted/50 bg-surface/90 backdrop-blur-md sticky top-0 z-30 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
         <span 
@@ -542,6 +658,7 @@ export default function Dashboard() {
                     {isNotesEnabled && (
                       <NotesOfLife />
                     )}
+                    <QuietPartner />
                  </div>
 
                  {!showEvening ? (
@@ -581,6 +698,9 @@ export default function Dashboard() {
       </AnimatePresence>
       <AnimatePresence>
         {isManagingWidgets && <WidgetManager onClose={() => setIsManagingWidgets(false)} />}
+      </AnimatePresence>
+      <AnimatePresence>
+        {showGentleReEntry && <GentleReEntryScreen onResume={handleResume} />}
       </AnimatePresence>
     </main>
   );

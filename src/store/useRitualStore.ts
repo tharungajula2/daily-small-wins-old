@@ -20,6 +20,7 @@ export interface Anchor {
   reflectionText?: string; // for Type B reflection completions
   subItems?: { id: string; title: string; completed?: boolean }[];
   frequency?: string[];
+  baseline_trg?: number;
 }
 
 export interface AnchorLog {
@@ -78,11 +79,21 @@ interface RitualState {
   dismissTooltip: (tooltip: string) => void;
   setWeeklyHistory: (history: any[]) => void;
   completeWeeklyReview: () => void;
+  
+  focusThreeIds: string[];
+  setFocusThree: (ids: string[]) => void;
+  lastFreshStartPrompt: string | null;
+  setLastFreshStartPrompt: (date: string) => void;
+  isPremium: boolean;
+  setPremiumStatus: (status: boolean) => void;
 }
 
 export const useRitualStore = create<RitualState>()(
   persist(
     (set, get) => ({
+      focusThreeIds: [],
+      lastFreshStartPrompt: null,
+      isPremium: false,
       feetOnFloorLogged: false,
       wakeTime: null,
       currentStreak: 0,
@@ -243,7 +254,11 @@ export const useRitualStore = create<RitualState>()(
               baselineTitle: baseline || undefined,
               prompt: prompt || undefined,
               subItems: subItems || [],
-              frequency: frequency || ['all']
+              frequency: frequency || ['all'],
+              baseline_trg: (function() {
+                const match = title.match(/([\d,]+)\s*step/i);
+                return match ? parseInt(match[1].replace(/,/g, ''), 10) : undefined;
+              })()
             }
           ]
         }));
@@ -324,6 +339,16 @@ export const useRitualStore = create<RitualState>()(
         set((state) => ({ [widgetKey]: !state[widgetKey as keyof RitualState] })),
 
       dismissTooltip: (tooltip) => set({ [tooltip]: true }),
+      
+      setFocusThree: (ids: string[]) => {
+        set({ focusThreeIds: ids.slice(0, 3) });
+      },
+      setLastFreshStartPrompt: (date: string) => {
+        set({ lastFreshStartPrompt: date });
+      },
+      setPremiumStatus: (status: boolean) => {
+        set({ isPremium: status });
+      },
     }),
     {
       name: 'trelis-life-ritual-storage',

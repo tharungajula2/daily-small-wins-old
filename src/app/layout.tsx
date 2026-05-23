@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import AppLifecycleManager from '@/components/core/AppLifecycleManager';
+import { CircadianProvider } from '@/components/core/CircadianProvider';
 
 export const metadata: Metadata = {
   title: 'Trelis Life',
@@ -24,7 +25,9 @@ export default function RootLayout({
     <html lang="en">
       <body className="bg-canvas text-ink-primary antialiased min-h-screen">
         <AppLifecycleManager />
-        {children}
+        <CircadianProvider>
+          {children}
+        </CircadianProvider>
       </body>
     </html>
   );

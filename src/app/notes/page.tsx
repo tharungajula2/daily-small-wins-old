@@ -5,6 +5,9 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { ArrowLeft, Search, Calendar, SlidersHorizontal, Tag, BookOpen } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { getKey } from '@/lib/crypto/keyVault';
+import { decryptText } from '@/lib/crypto/journalCrypto';
+import ReflectionEcho from '@/components/core/ReflectionEcho';
 
 interface JournalEntry {
   id: string;
@@ -38,15 +41,26 @@ export default function NotesPage() {
   const [selectedPillar, setSelectedPillar] = useState('all');
   const [selectedTag, setSelectedTag] = useState('all');
   const [sortBy, setSortBy] = useState<'newest' | 'oldest'>('newest');
+  const [activeEchoId, setActiveEchoId] = useState<string | null>(null);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [sessionLoaded, setSessionLoaded] = useState<boolean>(false);
 
   useEffect(() => {
     async function loadNotes() {
       try {
+        const encryptionKey = await getKey();
+        if (!encryptionKey) {
+          router.push('/journal-setup');
+          return;
+        }
+
         const { data: { session } } = await supabase.auth.getSession();
         if (!session?.user) {
           router.push('/login');
           return;
         }
+        setUserEmail(session.user.email || null);
+        setSessionLoaded(true);
         
         const { data } = await supabase
           .from('anchor_logs')
@@ -58,17 +72,36 @@ export default function NotesPage() {
 
         const mapped: JournalEntry[] = [];
         if (data) {
-          data.forEach((d: any) => {
+          const decryptionPromises = data.map(async (d: any) => {
             if (d.reflection_text) {
-              mapped.push({
+              let decryptedText = d.reflection_text;
+              try {
+                decryptedText = await decryptText(d.reflection_text, encryptionKey);
+              } catch (e) {
+                // If it is potential base64 ciphertext with no spaces, label it [Encrypted Entry]
+                const isPossibleCiphertext = /^[A-Za-z0-9+/=]+$/.test(d.reflection_text.trim());
+                if (isPossibleCiphertext) {
+                  decryptedText = '[Encrypted Entry]';
+                } else {
+                  decryptedText = d.reflection_text; // legacy unencrypted
+                }
+              }
+
+              return {
                 id: d.id,
                 date: d.date,
-                reflection_text: d.reflection_text,
+                reflection_text: decryptedText,
                 anchor_title: d.user_anchors?.title || 'Reflection',
                 anchor_prompt: d.user_anchors?.prompt || 'Logged',
                 pillar_id: d.user_anchors?.pillar_id || 'stress_mental'
-              });
+              };
             }
+            return null;
+          });
+
+          const resolved = await Promise.all(decryptionPromises);
+          resolved.forEach((item) => {
+            if (item) mapped.push(item);
           });
         }
 
@@ -384,6 +417,49 @@ export default function NotesPage() {
                     <p className="text-xs font-serif text-ink-primary leading-relaxed font-normal tracking-wide mt-1 pl-0.5">
                       {e.reflection_text}
                     </p>
+
+                    {/* Ask Echo secure AI reflection panel */}
+                    {sessionLoaded && (
+                      <div className="mt-3 pt-3 border-t border-muted/50 flex flex-col gap-3">
+                        {userEmail === 'tharune4ir@gmail.com' ? (
+                          <>
+                            <div className="flex justify-between items-center">
+                              <span className="text-[9px] uppercase tracking-wider text-ink-secondary/70">Secure AI reflection</span>
+                              <button
+                                onClick={() => setActiveEchoId(activeEchoId === e.id ? null : e.id)}
+                                className={`px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-wider transition-all border ${
+                                  activeEchoId === e.id
+                                    ? 'bg-accent-teal/10 text-accent-teal border-accent-teal/30 font-bold'
+                                    : 'bg-canvas text-ink-secondary border-muted/80 hover:border-muted'
+                                }`}
+                              >
+                                {activeEchoId === e.id ? 'Close Echo' : 'Ask Echo'}
+                              </button>
+                            </div>
+
+                            <AnimatePresence initial={false}>
+                              {activeEchoId === e.id && (
+                                <motion.div
+                                  initial={{ opacity: 0, height: 0 }}
+                                  animate={{ opacity: 1, height: 'auto' }}
+                                  exit={{ opacity: 0, height: 0 }}
+                                  transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                                  className="overflow-hidden"
+                                >
+                                  <ReflectionEcho entryText={e.reflection_text} />
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          </>
+                        ) : (
+                          <div className="w-full bg-canvas/30 border border-dashed border-muted/50 p-4 rounded-xl text-center">
+                            <p className="text-[10px] text-ink-secondary leading-relaxed font-normal select-none">
+                              Trelis Neural Engine is currently in closed founder beta. Your reflections remain safely offline.
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </motion.div>
                 ))}
               </AnimatePresence>

@@ -108,7 +108,8 @@ export async function syncPullInitialState(localState: any, setLocalState: (part
           usedBaseline: false,
           reflectionText: undefined,
           subItems: a.sub_items || [],
-          frequency: a.frequency || ['all']
+          frequency: a.frequency || ['all'],
+          baseline_trg: a.baseline_target || undefined
         }));
       } else {
         let localAnchorsChanged = false;

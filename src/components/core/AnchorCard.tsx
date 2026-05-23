@@ -5,6 +5,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
 import { Anchor, useRitualStore } from '@/store/useRitualStore';
 import { getRandomPrompt } from '@/utils/prompts';
+import { getKey } from '@/lib/crypto/keyVault';
+import { encryptText } from '@/lib/crypto/journalCrypto';
 
 const PILLAR_LABELS: Record<string, string> = {
   nutrition: 'Nutrition',
@@ -25,6 +27,10 @@ export default function AnchorCard({
   const toggleAnchor = useRitualStore((state) => state.toggleAnchor);
   const toggleSubItem = useRitualStore((state) => state.toggleSubItem);
   const anchors = useRitualStore((state) => state.anchors);
+  const focusThreeIds = useRitualStore((state) => state.focusThreeIds);
+  
+  const isFocusThreeActive = focusThreeIds && focusThreeIds.length > 0;
+  const isMuted = isFocusThreeActive && !focusThreeIds.includes(anchor.id) && !anchor.completed;
   
   const [justCompleted, setJustCompleted] = useState(false);
   const [isTooltipOpen, setIsTooltipOpen] = useState(false);
@@ -123,7 +129,17 @@ export default function AnchorCard({
       // web fallback
     }
 
-    toggleAnchor(anchor.id, false, reflectionInput.trim(), currentPrompt);
+    let finalReflectionText = reflectionInput.trim();
+    try {
+      const key = await getKey();
+      if (key) {
+        finalReflectionText = await encryptText(finalReflectionText, key);
+      }
+    } catch (err) {
+      console.error('Failed to encrypt reflection:', err);
+    }
+
+    toggleAnchor(anchor.id, false, finalReflectionText, currentPrompt);
     setIsDrawerOpen(false);
     
     setJustCompleted(true);
@@ -209,12 +225,14 @@ export default function AnchorCard({
           borderLeftStyle: metadata?.is_non_negotiable ? 'solid' : undefined
         }}
         transition={{ duration: 0.3, ease: 'easeInOut' }}
-        className={`p-5 rounded-2xl border transition-all ${hasSubItems ? 'cursor-pointer active:bg-muted/10' : ''} ${
+        className={`p-5 rounded-2xl border ${hasSubItems ? 'cursor-pointer active:bg-muted/10' : ''} ${
           metadata?.is_non_negotiable ? 'border-l-4' : ''
         } ${
           anchor.completed 
             ? (anchor.usedBaseline ? 'bg-accent-amber/5 border-accent-amber/20 shadow-xs' : 'bg-success/5 border-success/20 shadow-xs') 
             : 'bg-surface border-muted/80 hover:border-muted shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05),0_1px_3px_rgba(0,0,0,0.02)] hover:shadow-[0_6px_24px_-4px_rgba(0,0,0,0.08)]'
+        } ${
+          isMuted ? 'opacity-40 grayscale transition-all duration-500' : 'transition-all duration-500'
         }`}
       >
         <div className="flex items-center justify-between">
