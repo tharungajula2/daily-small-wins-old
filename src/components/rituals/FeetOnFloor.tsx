@@ -44,7 +44,7 @@ export default function FeetOnFloor() {
               initial={{ opacity: 0, y: 4 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.2, ease: 'easeOut' }}
-              className="text-ink-primary text-2xl font-serif"
+              className="text-ink-primary text-2xl font-medium tracking-tight"
             >
               {encouragement}
             </motion.p>
@@ -59,11 +59,11 @@ export default function FeetOnFloor() {
         whileTap={!feetOnFloorLogged ? { scale: 0.95 } : {}}
         animate={feetOnFloorLogged ? { 
           scale: [1, 1.05, 1],
-          backgroundColor: '#2A7F7F', // success
-          borderColor: '#2A7F7F'
+          backgroundColor: 'var(--color-accent-teal)', // success
+          borderColor: 'var(--color-accent-teal)'
         } : {
-          backgroundColor: '#FFFFFF', // surface
-          borderColor: '#EEEDE8'      // muted
+          backgroundColor: 'var(--color-surface)', // surface
+          borderColor: 'var(--color-muted)'      // muted
         }}
         transition={{ duration: 0.3 }}
         className={`relative w-48 h-48 rounded-full border-2 shadow-sm flex flex-col items-center justify-center transition-colors overflow-hidden ${

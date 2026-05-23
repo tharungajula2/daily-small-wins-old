@@ -194,7 +194,7 @@ export default function NotesPage() {
   const springTransition = { type: 'spring' as const, stiffness: 300, damping: 30 };
 
   return (
-    <main className="min-h-screen max-w-md mx-auto bg-[#F7F6F2] relative flex flex-col justify-between p-6 sm:border-x sm:border-muted shadow-sm select-none">
+    <main className="min-h-screen max-w-md mx-auto bg-canvas relative flex flex-col justify-between p-6 sm:border-x sm:border-muted shadow-sm select-none">
       <div className="flex flex-col gap-6">
         <header className="flex items-center justify-between h-8 relative">
           <button 
@@ -230,7 +230,7 @@ export default function NotesPage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search thoughts, anchors, or priorities..."
-              className="w-full bg-[#F7F6F2] border border-muted rounded-xl pl-9 pr-4 py-2.5 text-xs text-ink-primary focus:outline-none focus:border-accent-teal/50 transition-all font-medium"
+              className="w-full bg-canvas border border-muted rounded-xl pl-9 pr-4 py-2.5 text-xs text-ink-primary focus:outline-none focus:border-accent-teal/50 transition-all font-medium shadow-inner"
             />
             {searchQuery && (
               <button 
@@ -322,7 +322,7 @@ export default function NotesPage() {
               Showing {filteredEntries.length} reflection{filteredEntries.length === 1 ? '' : 's'}
             </span>
 
-            <div className="flex items-center gap-1 bg-[#F7F6F2] p-0.5 rounded-lg border border-muted">
+            <div className="flex items-center gap-1 bg-canvas p-0.5 rounded-lg border border-muted">
               <button
                 onClick={() => setSortBy('newest')}
                 className={`px-2.5 py-1 rounded-md text-[9px] font-bold uppercase tracking-wider transition-all ${
@@ -398,7 +398,7 @@ export default function NotesPage() {
                         </div>
                       </div>
                       
-                      <div className="flex items-center gap-1.5 text-ink-secondary/70 select-none bg-[#F7F6F2] px-2 py-0.5 rounded-md border border-muted/50">
+                      <div className="flex items-center gap-1.5 text-ink-secondary/70 select-none bg-canvas px-2 py-0.5 rounded-md border border-muted/50">
                         <Calendar className="w-2.5 h-2.5" />
                         <span className="text-[8px] font-bold tracking-widest uppercase mt-0.5">
                           {e.date}
@@ -413,8 +413,8 @@ export default function NotesPage() {
                       </p>
                     </div>
 
-                    {/* Reflection Text with Serif Typography */}
-                    <p className="text-xs font-serif text-ink-primary leading-relaxed font-normal tracking-wide mt-1 pl-0.5">
+                    {/* Reflection Text */}
+                    <p className="text-xs text-ink-primary leading-relaxed font-normal tracking-wide mt-1 pl-0.5">
                       {e.reflection_text}
                     </p>
 
