@@ -134,7 +134,7 @@ export default function HistoryPage() {
 
   const getHeatmapOpacity = (pillarId: string, dateStr: string) => {
     const dayPillarLogs = heatmapLogs.filter(l => l.date === dateStr && l.pillar_id === pillarId);
-    if (dayPillarLogs.length === 0) return 'bg-[#1C1C1E] border-muted/20 opacity-30';
+    if (dayPillarLogs.length === 0) return 'bg-canvas border-muted/20 opacity-30';
     const completed = dayPillarLogs.filter(l => l.completed).length;
     const density = completed / dayPillarLogs.length;
 
@@ -145,7 +145,7 @@ export default function HistoryPage() {
   };
 
   return (
-    <main className="min-h-screen max-w-md mx-auto bg-[#F7F6F2] relative flex flex-col justify-between p-6 sm:border-x sm:border-muted shadow-sm select-none">
+    <main className="min-h-screen max-w-md mx-auto bg-canvas text-ink-primary relative flex flex-col justify-between p-6 sm:border-x sm:border-muted shadow-sm select-none">
       <div className="flex flex-col gap-6">
         <header className="flex items-center justify-between h-8">
           <button 

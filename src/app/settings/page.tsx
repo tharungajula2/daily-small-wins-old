@@ -222,23 +222,20 @@ export default function SettingsPage() {
   };
 
   return (
-    <main className="min-h-screen max-w-md mx-auto bg-transparent relative flex flex-col justify-between p-6 sm:border-x sm:border-muted shadow-sm select-none">
-      <div className="flex flex-col gap-6">
-        <header className="flex items-center justify-between h-8 relative">
+    <main className="min-h-screen max-w-md mx-auto bg-transparent relative flex flex-col justify-between sm:border-x sm:border-muted shadow-sm select-none pb-6">
+      <div className="flex flex-col">
+        <header className="pt-12 pb-6 px-6 relative flex items-center justify-between">
+          <h1 className="text-2xl font-semibold text-ink-primary tracking-tight">Settings</h1>
           <button 
             onClick={() => router.back()} 
-            className="text-ink-secondary hover:text-ink-primary transition-colors flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider"
+            className="text-ink-secondary hover:text-ink-primary transition-colors flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider bg-surface border border-muted/30 px-3 py-1.5 rounded-full"
           >
-            <ArrowLeft className="w-4 h-4" /> Dashboard
+            <ArrowLeft className="w-3.5 h-3.5" /> Back
           </button>
-          <span className="text-[10px] font-bold tracking-widest text-ink-secondary uppercase">
-            Settings
-          </span>
-          <div className="w-8" />
         </header>
 
         {/* Configurations List */}
-        <div className="flex flex-col gap-4">
+        <div className="px-6 flex flex-col gap-4">
           {/* Trelis Plus Premium Membership Card */}
           <div className="p-5 rounded-2xl bg-surface border border-muted/80 flex flex-col gap-3 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05),0_1px_3px_rgba(0,0,0,0.02)]">
             <div className="flex justify-between items-start">
@@ -449,28 +446,19 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      {/* Settings Footer with Nuclear Sign-Out */}
-      <div className="mt-8 flex flex-col gap-4">
-        <div className="p-5 rounded-2xl bg-red-500/[0.02] border border-red-500/10 flex items-start gap-3 shadow-[0_2px_12px_rgba(239,68,68,0.02)]">
-          <ShieldAlert className="w-5 h-5 text-red-500/60 mt-0.5 flex-shrink-0" />
-          <p className="text-[10px] text-red-500/60 leading-normal font-normal">
-            Nuclear Sign-Out terminates all auth sessions, squashes active channels, and fully purges local Capacitor WebView states.
-          </p>
-        </div>
-
+      {/* Settings Footer with Muted Sign-Out */}
+      <div className="mt-8 px-6 flex flex-col gap-4">
         <button
           onClick={handleNuclearSignOut}
           disabled={isClearing}
-          className={`w-full py-4 rounded-2xl font-semibold text-sm uppercase tracking-widest border border-red-500/20 text-red-500 hover:bg-red-500/[0.02] transition-all flex items-center justify-center gap-2 active:scale-98 shadow-[0_4px_20px_-4px_rgba(239,68,68,0.05)] ${
-            isClearing ? 'opacity-70 cursor-wait' : ''
-          }`}
+          className="w-full py-3 text-center text-xs font-semibold text-ink-tertiary hover:text-ink-primary transition-all active:scale-[0.98] focus:outline-none bg-transparent border-0"
         >
-          <LogOut className="w-4 h-4" /> {isClearing ? 'Purging Cache...' : 'Nuclear Sign-Out'}
+          {isClearing ? 'Purging Cache...' : 'Sign Out'}
         </button>
 
         {/* Google Play Medical Compliance */}
-        <p className="mt-4 text-[10px] text-ink-secondary/70 text-center px-4 leading-relaxed select-none">
-          Trelis Life is not a medical device and does not diagnose, treat, cure, or prevent any medical condition.
+        <p className="mt-2 text-[10px] text-ink-secondary/70 text-center px-4 leading-relaxed select-none">
+          Trelis is not a medical device and does not diagnose, treat, cure, or prevent any medical condition.
         </p>
       </div>
     </main>

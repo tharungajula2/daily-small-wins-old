@@ -52,7 +52,7 @@ export default function SundayReviewModal() {
             <h2 className="text-accent-teal text-xs font-bold tracking-[0.2em] uppercase mb-4">
               Weekly Debrief
             </h2>
-            <h1 className="text-ink-primary text-3xl font-serif">
+            <h1 className="text-ink-primary text-3xl font-semibold tracking-tight">
               Sunday Reflection
             </h1>
           </motion.div>

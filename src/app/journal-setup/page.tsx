@@ -72,8 +72,8 @@ export default function JournalSetupPage() {
           <div className="w-12 h-12 bg-accent-teal/10 rounded-full flex items-center justify-center mx-auto mb-6">
             <span className="text-accent-teal text-xl">🔒</span>
           </div>
-          <h1 className="text-3xl font-serif font-semibold text-ink-primary tracking-tight mb-4">Lock your thoughts.</h1>
-          <p className="text-sm text-ink-secondary leading-relaxed px-2 font-medium">
+          <h1 className="text-2xl font-semibold text-ink-primary tracking-tight mb-4">Lock your thoughts.</h1>
+          <p className="text-base text-ink-secondary leading-relaxed px-2">
             Think of this as a secondary lock on your private journal. Trelis uses military-grade encryption so your reflections never leave your device and cannot be read by anyone—not even us. Choose a memorable lock phrase.
           </p>
         </div>
@@ -162,7 +162,7 @@ export default function JournalSetupPage() {
 
         {/* Google Play Medical Compliance */}
         <p className="mt-12 text-[10px] text-ink-secondary/70 text-center px-4 leading-relaxed">
-          Trelis Life is not a medical device and does not diagnose, treat, cure, or prevent any medical condition.
+          Trelis is not a medical device and does not diagnose, treat, cure, or prevent any medical condition.
         </p>
       </motion.div>
     </main>

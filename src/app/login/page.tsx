@@ -92,7 +92,10 @@ export default function LoginPage() {
         animate={{ opacity: 1, y: 0 }}
         className="w-full max-w-sm"
       >
-        <div className="text-center mb-10">
+        <div className="text-center mb-10 flex flex-col items-center">
+          <div className="w-14 h-14 rounded-2xl bg-accent-teal flex items-center justify-center text-white text-2xl font-semibold shadow-xl shadow-accent-teal/10 mb-6 select-none">
+            T
+          </div>
           <h1 className="text-2xl text-ink-primary font-medium tracking-wide mb-2">TRELIS</h1>
           <p className="text-sm text-ink-secondary">Structure for a better life.</p>
         </div>
@@ -247,7 +250,7 @@ export default function LoginPage() {
         )}
         {/* Google Play Medical Compliance */}
         <p className="mt-12 text-[10px] text-ink-secondary/70 text-center px-4 leading-relaxed">
-          Trelis Life is not a medical device and does not diagnose, treat, cure, or prevent any medical condition.
+          Trelis is not a medical device and does not diagnose, treat, cure, or prevent any medical condition.
         </p>
       </motion.div>
     </main>

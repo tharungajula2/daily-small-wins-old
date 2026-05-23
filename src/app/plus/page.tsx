@@ -117,17 +117,17 @@ export default function PlusWaitlistPage() {
               className="w-full flex flex-col items-center text-center"
             >
               {/* Premium Logo Ring */}
-              <div className="w-16 h-16 rounded-3xl bg-accent-teal flex items-center justify-center text-white text-3xl font-serif shadow-xl shadow-accent-teal/10 mb-8 select-none">
+              <div className="w-16 h-16 rounded-3xl bg-accent-teal flex items-center justify-center text-white text-3xl shadow-xl shadow-accent-teal/10 mb-8 select-none">
                 T+
               </div>
 
-              {/* Luxury Serif Title */}
-              <h1 className="text-3xl sm:text-4xl font-serif font-semibold tracking-tight text-ink-primary mb-4 leading-tight">
+              {/* Standard Typography Heading */}
+              <h1 className="text-2xl font-semibold tracking-tight text-ink-primary mb-4 leading-tight">
                 Trelis Plus is coming.
               </h1>
 
-              {/* Muted luxury sub-copy */}
-              <p className="text-ink-secondary text-sm max-w-[310px] leading-relaxed mb-10 font-medium">
+              {/* Standard Typography Paragraph */}
+              <p className="text-base text-ink-secondary leading-relaxed mb-10">
                 We are building the ultimate privacy-first Life OS. Shape the future and claim early beta access.
               </p>
 
@@ -196,7 +196,7 @@ export default function PlusWaitlistPage() {
             >
               {/* Survey Header */}
               <div className="text-center mb-8">
-                <h2 className="text-2xl font-serif font-semibold text-ink-primary mb-2">Beta Survey</h2>
+                <h2 className="text-2xl font-semibold tracking-tight text-ink-primary mb-2">Beta Survey</h2>
                 <p className="text-ink-secondary text-xs font-medium">Your voice dictates what we build first.</p>
               </div>
 
@@ -273,12 +273,12 @@ export default function PlusWaitlistPage() {
                 <Check className="w-8 h-8 stroke-[3px]" />
               </div>
 
-              {/* Calm Serif Success Title */}
-              <h1 className="text-3xl font-serif font-semibold text-ink-primary mb-3">
+              {/* Standard Typography Success Title */}
+              <h1 className="text-2xl font-semibold tracking-tight text-ink-primary mb-3">
                 Thank you.
               </h1>
 
-              <p className="text-ink-secondary text-sm max-w-[280px] leading-relaxed mb-10 font-medium">
+              <p className="text-base text-ink-secondary leading-relaxed mb-10">
                 You are officially on the waitlist. Your input directly influences what we prioritize for Phase 6.
               </p>
 
