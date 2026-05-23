@@ -143,7 +143,7 @@ export default function LoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Enter your email"
-                  className="w-full bg-canvas border border-muted rounded-xl p-4 text-sm text-ink-primary placeholder:text-ink-tertiary focus:outline-none focus:ring-1 focus:ring-accent-teal focus:border-accent-teal transition-colors"
+                  className="w-full bg-surface border border-muted rounded-xl p-4 text-sm text-ink-primary placeholder:text-ink-secondary placeholder-ink-secondary focus:outline-none focus:ring-1 focus:ring-accent-teal focus:border-accent-teal transition-colors shadow-sm"
                   disabled={status === 'loading'}
                 />
               </div>
@@ -166,7 +166,7 @@ export default function LoginPage() {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="Enter your password"
-                      className="w-full bg-canvas border border-muted rounded-xl p-4 text-sm text-ink-primary placeholder:text-ink-tertiary focus:outline-none focus:ring-1 focus:ring-accent-teal focus:border-accent-teal transition-colors"
+                      className="w-full bg-surface border border-muted rounded-xl p-4 text-sm text-ink-primary placeholder:text-ink-secondary placeholder-ink-secondary focus:outline-none focus:ring-1 focus:ring-accent-teal focus:border-accent-teal transition-colors shadow-sm"
                       disabled={status === 'loading'}
                     />
                   </motion.div>

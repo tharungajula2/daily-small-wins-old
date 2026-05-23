@@ -7,6 +7,7 @@ import { useRitualStore } from '@/store/useRitualStore';
 import { ArrowLeft, LogOut, ShieldAlert, Check } from 'lucide-react';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
 import { checkAndRequestPermissions, checkPermissionsGranted } from '@/lib/health/healthService';
+import { clearJournalKey } from '@/lib/crypto/keyVault';
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -210,6 +211,7 @@ export default function SettingsPage() {
       await supabase.removeAllChannels();
 
       // 3. Purging all caches and local key stores
+      await clearJournalKey();
       localStorage.clear();
       sessionStorage.clear();
 
