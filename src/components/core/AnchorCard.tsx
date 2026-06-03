@@ -146,12 +146,12 @@ export default function AnchorCard({
         initial={{ opacity: 0, y: 5 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-        className="p-5 rounded-2xl bg-accent-teal/[0.02] border-accent-teal/20 shadow-sm flex flex-col gap-3 relative overflow-hidden transition-all duration-300 hover:shadow-md"
+        className="p-6 rounded-2xl bg-accent-teal/[0.02] border-accent-teal/20 shadow-sm flex flex-col gap-3 relative overflow-hidden transition-all duration-300 hover:shadow-md"
       >
         <div className="flex justify-between items-start">
-          <div className="flex-1">
-            <div className="flex items-center gap-2 flex-wrap">
-              <h4 className="text-sm font-semibold text-ink-primary leading-snug">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2.5 flex-wrap">
+              <h4 className="text-sm font-semibold text-ink-primary leading-relaxed break-words">
                 {anchor.title}
               </h4>
               <span className="bg-accent-teal/10 text-accent-teal text-[8px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full flex items-center gap-1 select-none">
@@ -168,7 +168,7 @@ export default function AnchorCard({
                 </span>
               )}
             </div>
-            <p className="text-[9px] uppercase tracking-widest text-ink-tertiary mt-0.5 font-semibold">
+            <p className="text-[9px] uppercase tracking-widest text-ink-tertiary mt-0.5 font-semibold leading-relaxed">
               Reflection Logged
             </p>
           </div>
@@ -181,10 +181,10 @@ export default function AnchorCard({
         </div>
 
         <div className="pl-3 border-l-2 border-accent-teal/40 py-0.5">
-          <p className="text-xs text-ink-secondary italic mb-2">
+          <p className="text-xs text-ink-secondary italic mb-2 leading-relaxed">
             "{anchor.prompt}"
           </p>
-          <p className="text-sm text-ink-primary font-normal leading-relaxed whitespace-pre-wrap">
+          <p className="text-sm text-ink-primary font-normal leading-relaxed whitespace-pre-wrap break-words">
             {anchor.reflectionText || 'No reflection logged.'}
           </p>
         </div>
@@ -209,7 +209,7 @@ export default function AnchorCard({
           borderLeftStyle: metadata?.is_non_negotiable ? 'solid' : undefined
         }}
         transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-        className={`p-5 rounded-2xl border ${hasSubItems ? 'cursor-pointer active:bg-muted/10' : ''} ${
+        className={`p-6 rounded-2xl border ${hasSubItems ? 'cursor-pointer active:bg-muted/10' : ''} ${
           metadata?.is_non_negotiable ? 'border-l-4' : ''
         } ${
           anchor.completed 
@@ -220,9 +220,9 @@ export default function AnchorCard({
         }`}
       >
         <div className="flex items-center justify-between">
-          <div className="flex-1 pr-4">
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <p className={`text-sm font-semibold ${
+          <div className="flex-1 pr-4 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap min-w-0">
+              <p className={`text-sm font-semibold break-words leading-relaxed ${
                 anchor.completed 
                   ? (anchor.usedBaseline ? 'text-accent-amber' : 'text-success line-through') 
                   : 'text-ink-primary'

@@ -30,19 +30,10 @@ Trelis Life is a premium daily routine companion designed to instill structural 
    ```
 6. **Two Font-Weights Rule**: Never use more than two font weights (400 and 600) on any single screen.
 
----
-
-### The 6 MECE Behavioral Pillars
-The ecosystem partitions human daily routines into six Mutually Exclusive, Collectively Exhaustive (MECE) pillars:
-
-| Pillar Key | Behavioral Scope | Visual Signifier (Emoji) | Base Color / Hex Token |
-| :--- | :--- | :--- | :--- |
-| `nutrition` | Metabolic intake, hydration, and nutritional boundary habits. | 🥑 | `bg-accent-teal` (`#2A7F7F`) |
-| `movement` | Calisthenics, physical mobility, daily movement checks. | 💪 | `#2A7F7F` |
-| `sleep` | Chronotype sleep quality, duration metrics, bedtime rituals. | 🌙 | `#6A5ACD` |
-| `stress_mental` | Reflection journaling, meditative breathing, grounding metrics. | 🧘 | `#D97706` |
-| `social` | Silent peer support networks, toxicity-free companion checks. | 🤝 | `#C084FC` |
-| `environment` | Contextual exposure, morning sun capture, physical space layout. | 🌱 | Green |
+### Deprecated Pillar Architecture (Purged in v2.0.0)
+The legacy six Mutually Exclusive, Collectively Exhaustive (MECE) pillars (Nutrition, Movement, Sleep, Stress/Mental, Social, Environment) have been completely purged from the application layer. Instead of rigid folders or categories, the app is centered on:
+1. **The Arc**: The permanent, non-deletable daily keystone anchor containing the night-to-morning cycle.
+2. **Personal Anchors**: Up to 4 custom, user-defined anchors (soft cap of 5 total including The Arc) to prevent perfectionist overwhelm.
 
 ---
 
@@ -87,7 +78,7 @@ CREATE TABLE public.user_anchors (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
     title text NOT NULL,
-    pillar_id text NOT NULL CHECK (pillar_id IN ('nutrition', 'movement', 'sleep', 'stress_mental', 'social', 'environment')),
+    pillar_id text CHECK (pillar_id IN ('nutrition', 'movement', 'sleep', 'stress_mental', 'social', 'environment')), -- Nullable / Deprecated in v2.0.0
     type text NOT NULL CHECK (type IN ('action', 'reflection')),
     prompt text,
     baseline_title text,
@@ -279,23 +270,15 @@ This section details exactly how a user experiences and interacts with every sys
 
 ---
 
-### C. The 4-Step Onboarding Experience (`/onboarding`)
-1. **Step 1: Philosophical Welcome**:
-   - Large, high-impact typography: `Hi.` followed by a simple paragraph statement.
-   - Tap `Continue` (light haptic tap) to slide horizontally into Step 2.
-2. **Step 2: Pillar Education Grid**:
-   - A 2x3 grid detailing the 6 MECE pillars with descriptive emojis (🥑, 💪, 🌙, 🧘, 🤝, 🌱) and short explanations.
-   - Tap `Continue` to slide into Step 3.
-3. **Step 3: Wake Window Picker**:
-   - Displays a large, visual digital clock face input setting the wake-up time.
-   - Tap the clock to open the device's native time picker utility. The user selects a time (e.g., `07:30`).
-   - Tap `Continue`.
-4. **Step 4: Starter Templates Seeding**:
-   - Displays the 8 default starter habits pre-configured for the user.
-   - Tapping `Enter Trelis Life` initiates database upsertion:
-     * **Upserts** default user state to `public.user_state` setting current streak to 0, longest streak to 0, and pause tokens remaining to 2.
-     * **Inserts** the 8 default anchors into `public.user_anchors` under the generated user ID.
-     * Redirects the user to the dashboard (`/`).
+### C. The 3-Step Onboarding Experience (`/onboarding`)
+1. **Step 1: Set your windows**:
+   - Establish wake and sleep window targets.
+   - Saves these targets into local storage and synchronizes them with the user's daily schedule setup.
+2. **Step 2: Meet The Arc**:
+   - Short explanation of "The Arc" foundational daily rhythm and the one promise kept every day.
+3. **Step 3: Your First Anchor**:
+   - Name the user's first optional custom daily anchor.
+   - Clicking "Enter Trelis Life" upserts the default user state (`user_state`) to Supabase, registers the custom anchor (if provided) to the user's database store, and redirects the user to the Dashboard at `/`.
 
 ---
 

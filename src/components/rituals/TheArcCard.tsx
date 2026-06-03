@@ -33,7 +33,7 @@ export default function TheArcCard() {
   };
 
   return (
-    <div className="w-full bg-surface rounded-3xl p-5 border border-muted/80 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05),0_1px_3px_rgba(0,0,0,0.02)] hover:shadow-[0_6px_24px_-4px_rgba(0,0,0,0.08)] transition-all">
+    <div className="w-full bg-surface rounded-3xl p-6 border border-muted/80 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05),0_1px_3px_rgba(0,0,0,0.02)] hover:shadow-[0_6px_24px_-4px_rgba(0,0,0,0.08)] transition-all">
       {/* Card Header */}
       <div className="flex items-center justify-between pb-3 border-b border-muted/40">
         <div className="flex items-center gap-2.5">
@@ -41,8 +41,8 @@ export default function TheArcCard() {
             <Shield className="w-4 h-4" />
           </div>
           <div>
-            <h3 className="text-sm font-semibold text-ink-primary">The Arc</h3>
-            <p className="text-[10px] text-ink-secondary">Keystone Anchor • Permanent</p>
+            <h3 className="text-sm font-semibold text-ink-primary leading-relaxed">The Arc</h3>
+            <p className="text-[10px] text-ink-secondary leading-relaxed">Keystone Anchor • Permanent</p>
           </div>
         </div>
         <div className="flex items-center gap-1.5 bg-canvas px-2.5 py-1 rounded-full text-[9px] font-semibold text-accent-teal select-none">
@@ -53,29 +53,29 @@ export default function TheArcCard() {
       {/* Grid of Wake/Sleep Settings & Statuses */}
       <div className="grid grid-cols-2 gap-4 pt-4 text-left">
         {/* Morning Tap */}
-        <div className="flex flex-col gap-1.5 p-3 rounded-2xl bg-canvas/40 border border-muted/30">
+        <div className="flex flex-col gap-2 p-4 rounded-2xl bg-canvas/40 border border-muted/30 min-w-0">
           <div className="flex items-center gap-1 text-ink-secondary">
             <Sun className="w-3.5 h-3.5 text-amber-500" />
             <span className="text-[10px] font-semibold uppercase tracking-wider">Morning Tap</span>
           </div>
-          <span className="text-xs font-semibold text-ink-primary">
+          <span className="text-xs font-semibold text-ink-primary break-words leading-relaxed">
             {feetOnFloorLogged ? `Checked in at ${wakeTime}` : 'Tap on waking'}
           </span>
-          <span className="text-[9px] text-ink-secondary leading-none">
+          <span className="text-[9px] text-ink-secondary leading-relaxed break-words">
             Target wake: {wakeWindow}
           </span>
         </div>
 
         {/* Night Wind-down */}
-        <div className="flex flex-col gap-1.5 p-3 rounded-2xl bg-canvas/40 border border-muted/30">
+        <div className="flex flex-col gap-2 p-4 rounded-2xl bg-canvas/40 border border-muted/30 min-w-0">
           <div className="flex items-center gap-1 text-ink-secondary">
             <Moon className="w-3.5 h-3.5 text-indigo-500" />
             <span className="text-[10px] font-semibold uppercase tracking-wider">Sleep Window</span>
           </div>
-          <span className="text-xs font-semibold text-ink-primary">
+          <span className="text-xs font-semibold text-ink-primary break-words leading-relaxed">
             Bounded opportunity
           </span>
-          <span className="text-[9px] text-ink-secondary leading-none">
+          <span className="text-[9px] text-ink-secondary leading-relaxed break-words">
             Sleep target: {sleepWindow}
           </span>
         </div>
@@ -84,15 +84,15 @@ export default function TheArcCard() {
       {/* Evening wind-down control */}
       <div className="mt-4 border-t border-muted/30 pt-3">
         {eveningCheckInDone ? (
-          <div className="p-3 rounded-2xl bg-canvas/30 border border-muted/30 flex flex-col gap-1">
-            <span className="text-[8px] font-semibold text-accent-teal uppercase tracking-widest leading-none">Evening Closed</span>
+          <div className="p-4 rounded-2xl bg-canvas/30 border border-muted/30 flex flex-col gap-1.5">
+            <span className="text-[8px] font-semibold text-accent-teal uppercase tracking-widest leading-relaxed">Evening Closed</span>
             {winOfTheDay && (
-              <p className="text-xs font-semibold text-ink-primary mt-1">
+              <p className="text-xs font-semibold text-ink-primary mt-1 break-words leading-relaxed">
                 Win: "{winOfTheDay}"
               </p>
             )}
             {parkingLotNotes && (
-              <p className="text-[10px] text-ink-secondary leading-relaxed">
+              <p className="text-[10px] text-ink-secondary leading-relaxed break-words">
                 Parked: {parkingLotNotes}
               </p>
             )}
@@ -112,7 +112,7 @@ export default function TheArcCard() {
                 animate={{ opacity: 1, height: 'auto' }}
                 exit={{ opacity: 0, height: 0 }}
                 transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                className="flex flex-col gap-3.5 p-3 bg-canvas/30 rounded-2xl border border-muted/50 text-left"
+                className="flex flex-col gap-4 p-4 bg-canvas/30 rounded-2xl border border-muted/50 text-left"
               >
                 <div className="flex items-center justify-between pb-1.5 border-b border-muted/40">
                   <span className="text-[10px] font-semibold text-ink-primary uppercase tracking-wider">Close the Day</span>
@@ -127,7 +127,7 @@ export default function TheArcCard() {
                 {/* Wind-down Input Fields */}
                 <div className="flex flex-col gap-3">
                   <div>
-                    <label className="text-[10px] font-semibold uppercase tracking-wider text-ink-secondary mb-1 block">
+                    <label className="text-[10px] font-semibold uppercase tracking-wider text-ink-secondary mb-1.5 block leading-relaxed">
                       Park tomorrow's thoughts (Optional)
                     </label>
                     <input
@@ -135,12 +135,12 @@ export default function TheArcCard() {
                       value={parkingLot}
                       onChange={(e) => setParkingLot(e.target.value)}
                       placeholder="Clear your mind..."
-                      className="w-full bg-surface border border-muted rounded-xl px-3 py-2 text-xs text-ink-primary placeholder:text-ink-tertiary focus:outline-none focus:border-accent-teal transition-colors"
+                      className="w-full bg-surface border border-muted rounded-xl px-4 py-2.5 text-xs text-ink-primary placeholder:text-ink-tertiary focus:outline-none focus:border-accent-teal transition-colors"
                     />
                   </div>
 
                   <div>
-                    <label className="text-[10px] font-semibold uppercase tracking-wider text-ink-secondary mb-1 block">
+                    <label className="text-[10px] font-semibold uppercase tracking-wider text-ink-secondary mb-1.5 block leading-relaxed">
                       One win today (Optional)
                     </label>
                     <input
@@ -148,7 +148,7 @@ export default function TheArcCard() {
                       value={win}
                       onChange={(e) => setWin(e.target.value)}
                       placeholder="What went right?"
-                      className="w-full bg-surface border border-muted rounded-xl px-3 py-2 text-xs text-ink-primary placeholder:text-ink-tertiary focus:outline-none focus:border-accent-teal transition-colors"
+                      className="w-full bg-surface border border-muted rounded-xl px-4 py-2.5 text-xs text-ink-primary placeholder:text-ink-tertiary focus:outline-none focus:border-accent-teal transition-colors"
                     />
                   </div>
                 </div>

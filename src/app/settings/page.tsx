@@ -170,74 +170,74 @@ export default function SettingsPage() {
   return (
     <main className="min-h-screen max-w-md mx-auto bg-transparent relative flex flex-col justify-between sm:border-x sm:border-muted shadow-sm select-none pb-6">
       <div className="flex flex-col">
-        <header className="pt-12 pb-6 px-6 relative flex items-center justify-between">
-          <h1 className="text-2xl font-semibold text-ink-primary tracking-tight">Settings</h1>
+        <header className="pt-10 pb-4 px-6 relative flex items-center justify-between">
+          <h1 className="text-lg font-semibold text-ink-primary tracking-tight leading-relaxed">Settings</h1>
           <button 
             onClick={() => router.back()} 
-            className="text-ink-secondary hover:text-ink-primary transition-colors flex items-center gap-1.5 text-sm font-semibold uppercase tracking-wider bg-surface border border-muted/30 px-3 py-1.5 rounded-full"
+            className="text-ink-secondary hover:text-ink-primary transition-colors flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider bg-surface border border-muted/30 px-3 py-1 rounded-full"
           >
-            <ArrowLeft className="w-4 h-4" /> Back
+            <ArrowLeft className="w-3.5 h-3.5" /> Back
           </button>
         </header>
 
         {/* Configurations List */}
-        <div className="px-6 flex flex-col gap-4">
-          <div className="p-5 rounded-2xl bg-surface border border-muted/80 flex flex-col gap-2 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05),0_1px_3px_rgba(0,0,0,0.02)]">
-            <h3 className="text-xl font-semibold text-ink-primary">Profile</h3>
-            <p className="text-lg text-ink-secondary font-normal mt-1">{profileEmail || 'Loading Profile...'}</p>
+        <div className="px-6 flex flex-col gap-3">
+          <div className="p-4 rounded-xl bg-surface border border-muted/80 flex flex-col gap-1 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05),0_1px_3px_rgba(0,0,0,0.02)]">
+            <h3 className="text-xs font-semibold text-ink-secondary uppercase tracking-wider">Profile</h3>
+            <p className="text-sm text-ink-primary font-normal mt-0.5 leading-relaxed break-all">{profileEmail || 'Loading Profile...'}</p>
           </div>
 
-          <div className="p-5 rounded-2xl bg-surface border border-muted/80 flex flex-col gap-4 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05),0_1px_3px_rgba(0,0,0,0.02)]">
-            <h3 className="text-xl font-semibold text-ink-primary">Daily Structure</h3>
-            <div className="flex justify-between items-center py-2">
-              <span className="text-lg text-ink-primary font-normal">Wake Window</span>
-              <span className="text-lg font-semibold text-ink-secondary bg-canvas px-3 py-1 rounded-md">07:00 AM</span>
+          <div className="p-4 rounded-xl bg-surface border border-muted/80 flex flex-col gap-3.5 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05),0_1px_3px_rgba(0,0,0,0.02)]">
+            <h3 className="text-xs font-semibold text-ink-secondary uppercase tracking-wider">Daily Structure</h3>
+            <div className="flex justify-between items-center py-1">
+              <span className="text-xs text-ink-primary font-normal leading-relaxed">Wake Window</span>
+              <span className="text-xs font-semibold text-ink-secondary bg-canvas px-2.5 py-1 rounded-md">07:00 AM</span>
             </div>
-            <div className="flex justify-between items-center py-2 border-t border-muted/40">
-              <span className="text-lg text-ink-primary font-normal">Sleep Window</span>
-              <span className="text-lg font-semibold text-ink-secondary bg-canvas px-3 py-1 rounded-md">11:00 PM</span>
+            <div className="flex justify-between items-center py-1 border-t border-muted/40">
+              <span className="text-xs text-ink-primary font-normal leading-relaxed">Sleep Window</span>
+              <span className="text-xs font-semibold text-ink-secondary bg-canvas px-2.5 py-1 rounded-md">11:00 PM</span>
             </div>
           </div>
 
-          <div className="p-5 rounded-2xl bg-surface border border-muted/80 flex flex-col gap-4 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05),0_1px_3px_rgba(0,0,0,0.02)]">
+          <div className="p-4 rounded-xl bg-surface border border-muted/80 flex flex-col gap-3 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05),0_1px_3px_rgba(0,0,0,0.02)]">
             <div className="flex justify-between items-center">
-              <h3 className="text-xl font-semibold text-ink-primary">Vision</h3>
+              <h3 className="text-xs font-semibold text-ink-secondary uppercase tracking-wider">Vision</h3>
               <button 
                 onClick={() => {
                   try { Haptics.vibrate(); } catch {}
                   toggleVision();
                 }}
-                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none ${isVisionEnabled ? 'bg-accent-teal' : 'bg-muted'}`}
+                className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none ${isVisionEnabled ? 'bg-accent-teal' : 'bg-muted'}`}
               >
-                <span className={`inline-block h-4.5 w-4.5 transform rounded-full bg-surface transition duration-200 ease-in-out shadow-sm ${isVisionEnabled ? 'translate-x-5.5' : 'translate-x-1'}`} />
+                <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-surface transition duration-200 ease-in-out shadow-sm ${isVisionEnabled ? 'translate-x-4.5' : 'translate-x-1'}`} />
               </button>
             </div>
             {isVisionEnabled && (
               <div className="flex flex-col gap-2 mt-1">
-                <label className="text-sm text-ink-secondary font-normal select-none">Daily morning intention statement</label>
+                <label className="text-[10px] text-ink-secondary uppercase tracking-wider font-semibold select-none leading-relaxed">Daily morning intention statement</label>
                 <textarea
                   value={visionInput}
                   onChange={(e) => handleSaveVision(e.target.value)}
                   placeholder="E.g. Focus purely on what expands your power and clarity today."
-                  className="w-full bg-canvas border border-muted rounded-xl p-3 text-lg text-ink-primary focus:outline-none focus:border-accent-teal transition-all min-h-[80px] leading-relaxed resize-none font-normal"
+                  className="w-full bg-canvas border border-muted rounded-xl p-3 text-xs text-ink-primary placeholder:text-ink-tertiary focus:outline-none focus:border-accent-teal transition-all min-h-[60px] leading-relaxed resize-none font-normal"
                 />
               </div>
             )}
           </div>
 
-          <div className="p-5 rounded-2xl bg-surface border border-muted/80 flex flex-col gap-4 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05),0_1px_3px_rgba(0,0,0,0.02)]">
-            <h3 className="text-xl font-semibold text-ink-primary">Partner</h3>
+          <div className="p-4 rounded-xl bg-surface border border-muted/80 flex flex-col gap-3 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05),0_1px_3px_rgba(0,0,0,0.02)]">
+            <h3 className="text-xs font-semibold text-ink-secondary uppercase tracking-wider">Partner</h3>
             
             {partnerEmail ? (
-              <div className="flex flex-col gap-4">
-                <div className="flex items-center justify-between p-4 bg-canvas rounded-xl border border-muted/50">
-                  <div className="flex flex-col">
-                    <span className="text-xs uppercase tracking-wider text-ink-secondary font-semibold">
+              <div className="flex flex-col gap-3">
+                <div className="flex items-center justify-between p-3 bg-canvas rounded-xl border border-muted/50">
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-[9px] uppercase tracking-wider text-ink-secondary font-semibold">
                       {isLinked ? 'Active Connection' : 'Pending Verification'}
                     </span>
-                    <span className="text-lg font-semibold text-ink-primary mt-1">{partnerEmail}</span>
+                    <span className="text-xs font-semibold text-ink-primary mt-1 break-all leading-relaxed">{partnerEmail}</span>
                   </div>
-                  <span className={`text-xs px-3 py-1 rounded-full font-semibold uppercase ${
+                  <span className={`text-[9px] px-2 py-0.5 rounded-full font-semibold uppercase ${
                     isLinked ? 'bg-accent-teal/10 text-accent-teal' : 'bg-amber-500/10 text-amber-600'
                   }`}>
                     {isLinked ? 'Linked' : 'Pending'}
@@ -247,32 +247,32 @@ export default function SettingsPage() {
                 <button
                   onClick={handleRemovePartner}
                   disabled={isRemovingPartner}
-                  className="w-full py-3 rounded-xl text-sm uppercase tracking-wider font-semibold border border-red-500/20 text-red-500 hover:bg-red-500/[0.02] transition-all flex items-center justify-center gap-1 active:scale-98 disabled:opacity-50"
+                  className="w-full py-2 rounded-xl text-xs uppercase tracking-wider font-semibold border border-red-500/20 text-red-500 hover:bg-red-500/[0.02] transition-all flex items-center justify-center gap-1 active:scale-98 disabled:opacity-50"
                 >
                   {isRemovingPartner ? 'Removing...' : 'Remove Partner'}
                 </button>
               </div>
             ) : (
-              <div className="flex flex-col gap-4">
-                <p className="text-lg text-ink-secondary leading-relaxed font-normal">
+              <div className="flex flex-col gap-3">
+                <p className="text-xs text-ink-secondary leading-relaxed font-normal">
                   Invite one person to silently share your journey. No scores, no details. Just presence.
                 </p>
                 
-                <div className="flex flex-col gap-2">
-                  <label className="text-sm text-ink-secondary font-normal">Partner's Email Address</label>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[10px] text-ink-secondary uppercase tracking-wider font-semibold">Partner's Email Address</label>
                   <input
                     type="email"
                     value={partnerEmailInput}
                     onChange={(e) => setPartnerEmailInput(e.target.value)}
                     placeholder="partner@trelis.life"
-                    className="w-full bg-canvas border border-muted rounded-xl p-3 text-lg text-ink-primary focus:outline-none focus:border-accent-teal transition-all font-normal"
+                    className="w-full bg-canvas border border-muted rounded-xl px-3 py-2 text-xs text-ink-primary focus:outline-none focus:border-accent-teal transition-all font-normal"
                   />
                 </div>
                 
                 <button
                   onClick={handleSendInvite}
                   disabled={isSendingInvite || !partnerEmailInput.trim()}
-                  className="w-full py-3 bg-accent-teal text-white rounded-xl text-sm uppercase tracking-wider font-semibold hover:bg-accent-teal/95 active:scale-98 transition-all disabled:opacity-50"
+                  className="w-full py-2.5 bg-accent-teal text-white rounded-xl text-xs uppercase tracking-wider font-semibold hover:bg-accent-teal/95 active:scale-98 transition-all disabled:opacity-50"
                 >
                   {isSendingInvite ? 'Sending...' : 'Send Invite'}
                 </button>
@@ -280,31 +280,31 @@ export default function SettingsPage() {
             )}
           </div>
 
-          <div className="p-5 rounded-2xl bg-surface border border-muted/80 flex flex-col gap-4 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05),0_1px_3px_rgba(0,0,0,0.02)]">
-            <h3 className="text-xl font-semibold text-ink-primary">Visualizations</h3>
+          <div className="p-4 rounded-xl bg-surface border border-muted/80 flex flex-col gap-3 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05),0_1px_3px_rgba(0,0,0,0.02)]">
+            <h3 className="text-xs font-semibold text-ink-secondary uppercase tracking-wider">Visualizations</h3>
             <button 
               onClick={() => router.push('/history')}
-              className="flex justify-between items-center py-2 text-lg text-ink-primary hover:text-accent-teal transition-colors text-left font-semibold"
+              className="flex justify-between items-center py-1 text-xs text-ink-primary hover:text-accent-teal transition-colors text-left font-semibold"
             >
-              <span className="text-ink-primary font-normal">📈 Pulse History & Quiet Tracks</span>
-              <span className="text-lg text-ink-secondary font-normal">➔</span>
+              <span className="text-ink-primary font-normal leading-relaxed">📈 Pulse History & Quiet Tracks</span>
+              <span className="text-xs text-ink-secondary font-normal">➔</span>
             </button>
           </div>
         </div>
       </div>
 
       {/* Settings Footer with Muted Sign-Out */}
-      <div className="mt-8 px-6 flex flex-col gap-4">
+      <div className="mt-6 px-6 flex flex-col gap-4">
         <button
           onClick={handleNuclearSignOut}
           disabled={isClearing}
-          className="w-full py-3 text-center text-sm font-semibold text-ink-tertiary hover:text-ink-primary transition-all active:scale-[0.98] focus:outline-none bg-transparent border-0"
+          className="w-full py-2.5 text-center text-xs font-semibold text-ink-tertiary hover:text-ink-primary transition-all active:scale-[0.98] focus:outline-none bg-transparent border-0"
         >
           {isClearing ? 'Purging Cache...' : 'Sign Out'}
         </button>
 
         {/* Google Play Medical Compliance */}
-        <p className="mt-2 text-xs text-ink-secondary/70 text-center px-4 leading-relaxed select-none font-normal">
+        <p className="mt-1 text-[10px] text-ink-secondary/70 text-center px-4 leading-relaxed select-none font-normal">
           Trelis is not a medical device and does not diagnose, treat, cure, or prevent any medical condition.
         </p>
       </div>

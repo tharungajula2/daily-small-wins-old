@@ -268,22 +268,22 @@ Describe changes; let the coding agent implement safe migrations.
 
 Generate one IDE prompt per step. Verify green build after each.
 
-1. **Purge — AI/Gemma** (Section 3A). Build check.
-2. **Purge — Wearables/Health** (Section 3B). Build check.
-3. **Purge — Journal vault + passphrase wall** (Section 3D, 8). Build check.
-4. **Purge — Membership/Plus + jargon/chrome** (Section 3E, 3F). Build check.
-5. **De-pillar** the data layer and UI (Section 3C, 10) — make `pillar_id` optional, remove pillar folders/grid/multiplier. Build check.
-6. **The Arc** — implement the keystone anchor: wind-down, Morning Tap floor, windows binding, completion (Section 4).
-7. **Anchor system** — the universal primitive (name/shape/floor/track), 1-start / 5-cap, discovery questions, codenames, Anchor Priority (Section 5).
-8. **Dashboard redesign** — seam-and-arc ring, Promises Kept header, vision priming, anchor cards, completion moment (Section 6.4, 9).
-9. **Streak presentation** — non-accusing display layer over the kept engine (Section 7).
-10. **Settings strip + typography fix** (Section 6.5, 9).
-11. **First-run onboarding tour** (Section 6.3).
-12. **History → per-anchor Quiet Tracks** (Section 6.7).
-13. **Quiet Partner polish** (Section 6.6).
-14. **Routing/landing fix** (Section 6.1).
-15. **Full design polish pass** — motion, spacing, completion moment, emoji cleanup, premium QA against Section 9.
-16. **Final:** regenerate `TRELIS_LIFE_SOURCE_OF_TRUTH.md` to reflect the as-built v2.0 app.
+1. **[COMPLETED]** **Purge — AI/Gemma** (Section 3A). Build check.
+2. **[COMPLETED]** **Purge — Wearables/Health** (Section 3B). Build check.
+3. **[COMPLETED]** **Purge — Journal vault + passphrase wall** (Section 3D, 8). Build check.
+4. **[COMPLETED]** **Purge — Membership/Plus + jargon/chrome** (Section 3E, 3F). Build check.
+5. **[COMPLETED]** **De-pillar** the data layer and UI (Section 3C, 10) — make `pillar_id` optional, remove pillar folders/grid/multiplier. Build check.
+6. **[COMPLETED]** **The Arc** — implement the keystone anchor: wind-down, Morning Tap floor, windows binding, completion (Section 4).
+7. **[COMPLETED]** **Anchor system** — the universal primitive (name/shape/floor/track), 1-start / 5-cap, discovery questions, codenames, Anchor Priority (Section 5).
+8. **[COMPLETED]** **Dashboard redesign** — seam-and-arc ring, Promises Kept header, vision priming, anchor cards, completion moment (Section 6.4, 9).
+9. **[COMPLETED]** **Streak presentation** — non-accusing display layer over the kept engine (Section 7).
+10. **[COMPLETED]** **Settings strip + typography fix** (Section 6.5, 9).
+11. **[COMPLETED]** **First-run onboarding tour** (Section 6.3).
+12. **[COMPLETED]** **History → per-anchor Quiet Tracks** (Section 6.7).
+13. **[COMPLETED]** **Quiet Partner polish** (Section 6.6).
+14. **[COMPLETED]** **Routing/landing fix** (Section 6.1).
+15. **[COMPLETED]** **Full design polish pass** — motion, spacing, completion moment, emoji cleanup, premium QA against Section 9.
+16. **[COMPLETED]** **Final:** regenerate `TRELIS_LIFE_SOURCE_OF_TRUTH.md` to reflect the as-built v2.0 app.
 
 ---
 
