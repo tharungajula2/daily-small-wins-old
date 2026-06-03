@@ -6,6 +6,12 @@ import { CircadianProvider } from '@/components/core/CircadianProvider';
 export const metadata: Metadata = {
   title: 'Trelis Life',
   description: 'Structure for a better life.',
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'Trelis',
+  },
 };
 
 export const viewport: Viewport = {

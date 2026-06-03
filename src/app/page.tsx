@@ -565,17 +565,8 @@ export default function Page() {
 
   if (!hasHydrated || isAuthLoading) {
     return (
-      <div className="min-h-screen max-w-md mx-auto bg-transparent flex flex-col justify-center px-8 gap-6 sm:border-x sm:border-muted shadow-sm">
-        <div className="flex flex-col gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-muted/20 animate-pulse" />
-          <div className="h-6 w-3/4 bg-muted/20 rounded-md animate-pulse" />
-          <div className="h-4 w-1/2 bg-muted/20 rounded-md animate-pulse" />
-        </div>
-        <div className="flex flex-col gap-4 mt-6">
-          <div className="h-24 w-full bg-muted/20 rounded-2xl animate-pulse" />
-          <div className="h-24 w-full bg-muted/20 rounded-2xl animate-pulse" />
-          <div className="h-24 w-full bg-muted/20 rounded-2xl animate-pulse" />
-        </div>
+      <div className="min-h-screen bg-canvas dark:bg-[#1E1B17] flex items-center justify-center">
+        <div className="w-6 h-6 border-2 border-accent-teal border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
