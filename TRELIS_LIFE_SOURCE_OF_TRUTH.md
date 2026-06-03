@@ -369,6 +369,7 @@ npx cap open android
 2. **Database Cleansing & Blank Slate**: Executed PostgreSQL scripts to delete all records from `public` tables (`anchor_logs`, `daily_rituals`, `user_anchors`, etc.) and all users from `auth.users` to provide a true "Day 1" blank slate.
 3. **PWA Landing Page & Circadian Mapping**: Rewrote `LandingPage.tsx` using exact product copy and integrated the `useCircadian` provider to ensure colors adapt beautifully to the time of day.
 4. **Production SEO & Open Graph (OG) Integration**: Upgraded `src/app/layout.tsx` metadata with complete OG tags, separate `Viewport` structure for light/dark theme color media queries, and configured `/manifest.json` for proper iOS and Android home screen installability.
+5. **Production Security Headers & Env Audit**: Injected production-grade HTTP security headers (`X-DNS-Prefetch-Control`, `Strict-Transport-Security`, `X-Frame-Options`, `X-Content-Type-Options`, and `Referrer-Policy`) inside `next.config.ts` and a root `vercel.json` file. Verified that only standard, safe public variables (`NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`) are exposed to client browsers.
 
 ---
 
