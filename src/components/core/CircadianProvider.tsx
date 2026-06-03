@@ -31,13 +31,13 @@ export function CircadianProvider({ children }: { children: React.ReactNode }) {
   const themeClasses: Record<CircadianTheme, string> = {
     morning: 'bg-[#F7F6F2] text-[#2A2520]',
     day: 'bg-[#FFFFFF] text-[#2A2520]',
-    evening: 'bg-[#F1EAD9] text-[#F7F6F2]',
+    evening: 'bg-[#F1EAD9] text-[#2A2520]',
     night: 'bg-[#1E1B17] text-[#F7F6F2]',
   };
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      if (theme === 'night' || theme === 'evening') {
+      if (theme === 'night') {
         document.documentElement.classList.add('dark');
       } else {
         document.documentElement.classList.remove('dark');

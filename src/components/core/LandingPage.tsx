@@ -41,7 +41,7 @@ export default function LandingPage() {
   };
 
   const currentThemeClass = themeClasses[theme] || themeClasses.day;
-  const isDark = theme === 'night' || theme === 'evening';
+  const isDark = theme === 'night';
 
   return (
     <div 
