@@ -5,8 +5,6 @@ import { motion } from 'framer-motion';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
 import { useRitualStore } from '@/store/useRitualStore';
 
-const EMOJI_SCALE = ['😫', '🥱', '😐', '🙂', '🤩'];
-
 export default function MorningCheckIn() {
   const [sleep, setSleep] = useState<number | null>(null);
   const [mood, setMood] = useState<number | null>(null);
@@ -32,9 +30,10 @@ export default function MorningCheckIn() {
     <motion.div 
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
+      transition={{ type: 'spring', stiffness: 300, damping: 30 }}
       className="p-6 mx-6 mt-8 rounded-2xl bg-surface border border-muted shadow-sm"
     >
-      <h3 className="text-ink-primary font-medium mb-6">Morning Check-in</h3>
+      <h3 className="text-ink-primary font-semibold mb-6">Morning Check-in</h3>
       
       {/* Detailed Sleep Metrics */}
       <div className="flex gap-4 mb-6">
@@ -62,14 +61,18 @@ export default function MorningCheckIn() {
       {/* Sleep Scale */}
       <div className="mb-6">
         <p className="text-ink-secondary text-sm mb-3">Sleep Quality</p>
-        <div className="flex justify-between">
-          {EMOJI_SCALE.map((emoji, idx) => (
+        <div className="flex justify-between px-2">
+          {[1, 2, 3, 4, 5].map((val, idx) => (
             <button
               key={`sleep-${idx}`}
               onClick={() => setSleep(idx)}
-              className={`text-2xl w-10 h-10 rounded-full transition-all ${sleep === idx ? 'bg-accent-teal/10 scale-110' : 'grayscale opacity-50 hover:grayscale-0'}`}
+              className={`w-10 h-10 rounded-full border text-sm font-semibold transition-all ${
+                sleep === idx 
+                  ? 'bg-accent-teal/10 border-accent-teal text-accent-teal scale-110' 
+                  : 'bg-canvas border-muted/50 text-ink-secondary hover:border-ink-secondary/50'
+              }`}
             >
-              {emoji}
+              {val}
             </button>
           ))}
         </div>
@@ -78,14 +81,18 @@ export default function MorningCheckIn() {
       {/* Mood Scale */}
       <div className="mb-6">
         <p className="text-ink-secondary text-sm mb-3">How do you feel right now?</p>
-        <div className="flex justify-between">
-          {EMOJI_SCALE.map((emoji, idx) => (
+        <div className="flex justify-between px-2">
+          {[1, 2, 3, 4, 5].map((val, idx) => (
             <button
               key={`mood-${idx}`}
               onClick={() => setMood(idx)}
-              className={`text-2xl w-10 h-10 rounded-full transition-all ${mood === idx ? 'bg-accent-teal/10 scale-110' : 'grayscale opacity-50 hover:grayscale-0'}`}
+              className={`w-10 h-10 rounded-full border text-sm font-semibold transition-all ${
+                mood === idx 
+                  ? 'bg-accent-teal/10 border-accent-teal text-accent-teal scale-110' 
+                  : 'bg-canvas border-muted/50 text-ink-secondary hover:border-ink-secondary/50'
+              }`}
             >
-              {emoji}
+              {val}
             </button>
           ))}
         </div>
@@ -105,7 +112,7 @@ export default function MorningCheckIn() {
       <button
         onClick={handleComplete}
         disabled={!isReady}
-        className={`w-full py-3 rounded-xl font-medium transition-all ${isReady ? 'bg-ink-primary text-surface' : 'bg-muted text-ink-tertiary'}`}
+        className={`w-full py-3 rounded-xl font-semibold transition-all ${isReady ? 'bg-ink-primary text-surface' : 'bg-muted text-ink-tertiary'}`}
       >
         Complete Check-in
       </button>

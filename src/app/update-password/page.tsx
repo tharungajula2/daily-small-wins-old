@@ -49,10 +49,11 @@ export default function UpdatePasswordPage() {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
+        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
         className="w-full max-w-sm"
       >
         <div className="text-center mb-10">
-          <h1 className="text-2xl text-ink-primary font-medium tracking-wide mb-2">TRELIS</h1>
+          <h1 className="text-2xl text-ink-primary font-semibold tracking-wide mb-2">TRELIS</h1>
           <p className="text-sm text-ink-secondary">Set a new password for your account.</p>
         </div>
 
@@ -69,7 +70,7 @@ export default function UpdatePasswordPage() {
               <div className="w-12 h-12 bg-success/10 rounded-full flex items-center justify-center mx-auto mb-4">
                 <span className="text-success text-xl">✓</span>
               </div>
-              <h3 className="text-ink-primary font-medium mb-2">Password Updated</h3>
+              <h3 className="text-ink-primary font-semibold mb-2">Password Updated</h3>
               <p className="text-sm text-ink-secondary">
                 Your password has been changed successfully. Redirecting you to the dashboard...
               </p>
@@ -80,6 +81,7 @@ export default function UpdatePasswordPage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
               onSubmit={handleUpdatePassword}
               className="space-y-4"
             >
@@ -120,7 +122,7 @@ export default function UpdatePasswordPage() {
               <button
                 type="submit"
                 disabled={status === 'loading' || !newPassword || !confirmPassword}
-                className={`w-full py-4 rounded-xl font-medium transition-all ${
+                className={`w-full py-4 rounded-xl font-semibold transition-all ${
                   newPassword && confirmPassword && status !== 'loading'
                     ? 'bg-ink-primary text-surface hover:bg-ink-primary/95'
                     : 'bg-muted text-ink-tertiary cursor-not-allowed'

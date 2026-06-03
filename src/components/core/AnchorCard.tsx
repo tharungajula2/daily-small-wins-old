@@ -5,17 +5,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
 import { Anchor, useRitualStore } from '@/store/useRitualStore';
 import { getRandomPrompt } from '@/utils/prompts';
-import { getKey } from '@/lib/crypto/keyVault';
-import { encryptText } from '@/lib/crypto/journalCrypto';
 
-const PILLAR_LABELS: Record<string, string> = {
-  nutrition: 'Nutrition',
-  movement: 'Movement',
-  sleep: 'Sleep',
-  stress_mental: 'Stress & Mental Health',
-  social: 'Social Connection',
-  environment: 'Environment'
-};
+
 
 export default function AnchorCard({ 
   anchor, 
@@ -38,28 +29,28 @@ export default function AnchorCard({
   const getTooltipText = (title: string) => {
     const normalized = title.toLowerCase().trim();
     if (normalized.includes('water') || normalized.includes('2.5l')) {
-      return 'Optimal systemic hydration maximizes baseline metabolic output, mitigates fatigue, and supports cellular detoxification.';
+      return 'Water keeps you hydrated and clear throughout the day.';
     }
     if (normalized.includes('protein') || normalized.includes('30g')) {
-      return 'Ensures consistent muscle protein synthesis, regulates ghrelin/satiety hormones, and preserves lean muscle tissue.';
+      return 'Protein keeps your energy stable between meals.';
     }
     if (normalized.includes('steps') || normalized.includes('7,000')) {
-      return '7,000 steps is the critical inflection point for all-cause mortality risk reduction and baseline cardiovascular health.';
+      return 'A simple walk clears the mind and keeps you moving.';
     }
     if (normalized.includes('desk rule') || normalized.includes('20-8-2')) {
-      return '20 minutes sitting, 8 standing, 2 moving. Reverses vascular stiffness and keeps insulin sensitivity active throughout desk work.';
+      return 'Move a little every hour to stay limber.';
     }
     if (normalized.includes('in bed') || normalized.includes('23:00')) {
-      return 'Circadian timing supports optimal glymphatic brain clearance, deeper slow-wave sleep cycles, and hormonal rebalancing.';
+      return 'Going to bed on time gives you a clean head start tomorrow.';
     }
     if (normalized.includes('evening reflection') || normalized.includes('reflection')) {
-      return 'Active reflection lowers amygdala hyper-arousal, decompressing mental state before sleep transition.';
+      return 'Writing down your day helps clear your head for sleep.';
     }
     if (normalized.includes('conversation') || normalized.includes('one real')) {
-      return 'Meaningful screen-free interaction lowers baseline cortisol, triggers oxytocin release, and increases life longevity metrics.';
+      return 'Connecting with someone keeps you grounded.';
     }
     if (normalized.includes('sunlight') || normalized.includes('10 minutes')) {
-      return 'Morning sunlight exposure sets the biological master clock, priming nighttime melatonin release 16 hours later.';
+      return 'A little morning light wakes up your body naturally.';
     }
     return null;
   };
@@ -129,15 +120,7 @@ export default function AnchorCard({
       // web fallback
     }
 
-    let finalReflectionText = reflectionInput.trim();
-    try {
-      const key = await getKey();
-      if (key) {
-        finalReflectionText = await encryptText(finalReflectionText, key);
-      }
-    } catch (err) {
-      console.error('Failed to encrypt reflection:', err);
-    }
+    const finalReflectionText = reflectionInput.trim();
 
     toggleAnchor(anchor.id, false, finalReflectionText, currentPrompt);
     setIsDrawerOpen(false);
@@ -162,6 +145,7 @@ export default function AnchorCard({
       <motion.div
         initial={{ opacity: 0, y: 5 }}
         animate={{ opacity: 1, y: 0 }}
+        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
         className="p-5 rounded-2xl bg-accent-teal/[0.02] border-accent-teal/20 shadow-sm flex flex-col gap-3 relative overflow-hidden transition-all duration-300 hover:shadow-md"
       >
         <div className="flex justify-between items-start">
@@ -170,7 +154,7 @@ export default function AnchorCard({
               <h4 className="text-sm font-semibold text-ink-primary leading-snug">
                 {anchor.title}
               </h4>
-              <span className="bg-accent-teal/10 text-accent-teal text-[8px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full flex items-center gap-1 select-none">
+              <span className="bg-accent-teal/10 text-accent-teal text-[8px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full flex items-center gap-1 select-none">
                 <span className="text-[9px]">✓</span> Logged
               </span>
               {metadata?.is_non_negotiable && (
@@ -184,8 +168,8 @@ export default function AnchorCard({
                 </span>
               )}
             </div>
-            <p className="text-[9px] uppercase tracking-widest text-ink-tertiary mt-0.5 font-medium">
-              {PILLAR_LABELS[anchor.pillarId] || anchor.pillarId} • Reflection Logged
+            <p className="text-[9px] uppercase tracking-widest text-ink-tertiary mt-0.5 font-semibold">
+              Reflection Logged
             </p>
           </div>
           <button
@@ -224,7 +208,7 @@ export default function AnchorCard({
           borderLeftWidth: metadata?.is_non_negotiable ? '4px' : undefined,
           borderLeftStyle: metadata?.is_non_negotiable ? 'solid' : undefined
         }}
-        transition={{ duration: 0.3, ease: 'easeInOut' }}
+        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
         className={`p-5 rounded-2xl border ${hasSubItems ? 'cursor-pointer active:bg-muted/10' : ''} ${
           metadata?.is_non_negotiable ? 'border-l-4' : ''
         } ${
@@ -238,7 +222,7 @@ export default function AnchorCard({
         <div className="flex items-center justify-between">
           <div className="flex-1 pr-4">
             <div className="flex items-center gap-1.5 flex-wrap">
-              <p className={`text-sm font-medium ${
+              <p className={`text-sm font-semibold ${
                 anchor.completed 
                   ? (anchor.usedBaseline ? 'text-accent-amber' : 'text-success line-through') 
                   : 'text-ink-primary'
@@ -252,7 +236,7 @@ export default function AnchorCard({
                     e.stopPropagation();
                     setIsTooltipOpen(!isTooltipOpen);
                   }}
-                  className="w-3.5 h-3.5 rounded-full border border-muted/50 flex items-center justify-center text-[9px] font-mono font-bold text-ink-secondary hover:text-accent-teal hover:border-accent-teal/50 transition-all select-none cursor-pointer focus:outline-none bg-canvas/30"
+                  className="w-3.5 h-3.5 rounded-full border border-muted/50 flex items-center justify-center text-[9px] font-mono font-semibold text-ink-secondary hover:text-accent-teal hover:border-accent-teal/50 transition-all select-none cursor-pointer focus:outline-none bg-canvas/30"
                   title="Why this matters"
                 >
                   i
@@ -269,14 +253,15 @@ export default function AnchorCard({
                 </span>
               )}
             </div>
-            <p className="text-[10px] uppercase tracking-widest text-ink-tertiary mt-1 font-medium">
-              {PILLAR_LABELS[anchor.pillarId] || anchor.pillarId} • {hasSubItems ? `STACK • ${progressText}` : anchor.type} {anchor.usedBaseline && '• BASELINE ACHIEVED'}
+            <p className="text-[10px] uppercase tracking-widest text-ink-tertiary mt-1 font-semibold">
+              {hasSubItems ? `STACK • ${progressText}` : anchor.type} {anchor.usedBaseline && '• BASELINE ACHIEVED'}
             </p>
           </div>
           
           <motion.button
             whileTap={{ scale: 0.9 }}
             onClick={(e) => handleTap(e)}
+            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
             className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-colors flex-shrink-0 ${
               anchor.completed 
                 ? (anchor.usedBaseline ? 'bg-accent-amber border-accent-amber' : 'bg-success border-success') 
@@ -287,6 +272,7 @@ export default function AnchorCard({
               <motion.span 
                 initial={{ scale: 0 }} 
                 animate={{ scale: 1 }} 
+                transition={{ type: 'spring', stiffness: 300, damping: 30 }}
                 className="text-surface text-sm"
               >
                 ✓
@@ -301,10 +287,11 @@ export default function AnchorCard({
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
               className="overflow-hidden"
             >
               <div className="mt-3 pt-3 border-t border-muted/30 text-[10px] text-accent-teal leading-relaxed select-none italic bg-accent-teal/[0.03] rounded-lg p-3">
-                💡 <span className="font-semibold uppercase tracking-wider text-[9px] not-italic">Clinical Context:</span> {tooltipText}
+                <span className="font-semibold uppercase tracking-wider text-[9px] not-italic">Clinical Context:</span> {tooltipText}
               </div>
             </motion.div>
           )}
@@ -316,7 +303,7 @@ export default function AnchorCard({
             <span className="text-xs text-ink-tertiary italic">Hard day?</span>
             <button 
               onClick={handleBaseline}
-              className="text-xs text-accent-amber hover:text-accent-amber/80 font-medium transition-colors flex items-center gap-1"
+              className="text-xs text-accent-amber hover:text-accent-amber/80 font-semibold transition-colors flex items-center gap-1"
             >
               ↳ Drop to Baseline: {anchor.baselineTitle}
             </button>
@@ -333,6 +320,7 @@ export default function AnchorCard({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
               onClick={() => setIsDrawerOpen(false)}
               className="absolute inset-0 bg-black/40 backdrop-blur-xs"
             />
@@ -350,7 +338,7 @@ export default function AnchorCard({
 
               <div>
                 <p className="text-[10px] tracking-widest font-semibold text-accent-teal uppercase">
-                  {PILLAR_LABELS[anchor.pillarId] || anchor.pillarId} • REFLECTION
+                  REFLECTION
                 </p>
                 <h3 className="text-lg font-semibold text-ink-primary mt-1">
                   {anchor.title}
@@ -362,7 +350,7 @@ export default function AnchorCard({
                 <p className="text-xs font-semibold uppercase tracking-widest text-ink-secondary mb-1">
                   Prompt
                 </p>
-                <p className="text-sm font-medium text-ink-primary italic leading-relaxed">
+                <p className="text-sm font-semibold text-ink-primary italic leading-relaxed">
                   "{currentPrompt}"
                 </p>
               </div>
@@ -416,6 +404,7 @@ export default function AnchorCard({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
               onClick={() => setIsStackDrawerOpen(false)}
               className="absolute inset-0 bg-black/40 backdrop-blur-xs"
             />
@@ -433,7 +422,7 @@ export default function AnchorCard({
 
               <div>
                 <p className="text-[10px] tracking-widest font-semibold text-accent-teal uppercase">
-                  {PILLAR_LABELS[anchor.pillarId] || anchor.pillarId} • CHECKLIST STACK
+                  CHECKLIST STACK
                 </p>
                 <div className="flex items-center justify-between mt-1">
                   <h3 className="text-lg font-semibold text-ink-primary">
@@ -463,7 +452,7 @@ export default function AnchorCard({
                         : 'bg-surface border-muted hover:border-muted/80'
                     }`}
                   >
-                    <span className={`text-sm font-medium ${item.completed ? 'text-success line-through' : 'text-ink-primary'}`}>
+                    <span className={`text-sm font-semibold ${item.completed ? 'text-success line-through' : 'text-ink-primary'}`}>
                       {item.title}
                     </span>
                     
@@ -473,7 +462,7 @@ export default function AnchorCard({
                         : 'border-muted'
                     }`}>
                       {item.completed && (
-                        <span className="text-surface text-xs font-bold">✓</span>
+                        <span className="text-surface text-xs font-semibold">✓</span>
                       )}
                     </div>
                   </motion.div>

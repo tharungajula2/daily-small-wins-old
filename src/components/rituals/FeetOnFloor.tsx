@@ -43,8 +43,8 @@ export default function FeetOnFloor() {
             <motion.p
               initial={{ opacity: 0, y: 4 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.2, ease: 'easeOut' }}
-              className="text-ink-primary text-2xl font-medium tracking-tight"
+              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+              className="text-ink-primary text-2xl font-semibold tracking-tight"
             >
               {encouragement}
             </motion.p>
@@ -65,7 +65,7 @@ export default function FeetOnFloor() {
           backgroundColor: 'var(--color-surface)', // surface
           borderColor: 'var(--color-muted)'      // muted
         }}
-        transition={{ duration: 0.3 }}
+        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
         className={`relative w-48 h-48 rounded-full border-2 shadow-sm flex flex-col items-center justify-center transition-colors overflow-hidden ${
           feetOnFloorLogged ? 'cursor-default' : 'cursor-pointer hover:shadow-md'
         }`}
@@ -77,19 +77,23 @@ export default function FeetOnFloor() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0, y: 4 }}
-              className="text-ink-primary text-lg font-medium"
+              className="text-ink-primary text-base font-semibold px-4 text-center leading-snug"
             >
-              I'm up
+              I'm here.<br/>Still breathing.
             </motion.span>
           ) : (
             <motion.div
               key="logged"
               initial={{ opacity: 0, y: -4 }}
               animate={{ opacity: 1, y: 0 }}
-              className="text-ink-inverse flex flex-col items-center"
+              className="text-white flex flex-col items-center justify-center p-4 text-center"
             >
-              <span className="text-3xl font-mono mb-1">{currentStreak}</span>
-              <span className="text-xs uppercase tracking-wider opacity-80">Day Streak</span>
+              <span className="text-3xl font-semibold mb-1">
+                {currentStreak > 0 ? `${currentStreak}` : '🌱'}
+              </span>
+              <span className="text-[10px] font-semibold uppercase tracking-widest opacity-90 leading-tight">
+                {currentStreak > 0 ? (currentStreak >= 7 ? 'Days Strong 🔥' : 'Days Strong 🌱') : 'Fresh Arc'}
+              </span>
             </motion.div>
           )}
         </AnimatePresence>
@@ -102,10 +106,10 @@ export default function FeetOnFloor() {
             <motion.p
               initial={{ opacity: 0, y: 4 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5, duration: 0.2 }}
-              className="text-ink-tertiary text-sm text-center max-w-[200px]"
+              transition={{ delay: 0.5, type: 'spring', stiffness: 300, damping: 30 }}
+              className="text-ink-secondary text-sm text-center font-normal leading-relaxed"
             >
-              Phone face down. <br/> See you in 30 minutes.
+              Step through the seam. <br/> Resume the arc.
             </motion.p>
           )}
         </AnimatePresence>

@@ -4,38 +4,31 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { ArrowLeft } from 'lucide-react';
+import { useRitualStore } from '@/store/useRitualStore';
 
 interface DailyPulseLog {
   date: string;
   pulse_score: number;
 }
 
-interface HeatmapLog {
+interface QuietTrackLog {
   date: string;
   completed: boolean;
-  pillar_id: string;
+  anchor_id: string;
 }
-
-const PILLARS = [
-  { id: 'nutrition', icon: '🥑', title: 'Nutrition' },
-  { id: 'movement', icon: '💪', title: 'Movement' },
-  { id: 'sleep', icon: '🌙', title: 'Sleep' },
-  { id: 'stress_mental', icon: '🧘', title: 'Stress & Mental' },
-  { id: 'social', icon: '🤝', title: 'Social' },
-  { id: 'environment', icon: '🌱', title: 'Environment' }
-];
 
 export default function HistoryPage() {
   const router = useRouter();
   const supabase = createClient();
+  const anchors = useRitualStore((state) => state.anchors);
   const [pulseLogs, setPulseLogs] = useState<DailyPulseLog[]>([]);
-  const [heatmapLogs, setHeatmapLogs] = useState<HeatmapLog[]>([]);
+  const [trackLogs, setTrackLogs] = useState<QuietTrackLog[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Generate last 14 days
-  const last14Days = Array.from({ length: 14 }, (_, i) => {
+  // Generate last 7 days (including today)
+  const last7Days = Array.from({ length: 7 }, (_, i) => {
     const d = new Date();
-    d.setDate(d.getDate() - (13 - i));
+    d.setDate(d.getDate() - (6 - i));
     return d.toISOString().split('T')[0];
   });
 
@@ -49,7 +42,7 @@ export default function HistoryPage() {
         }
         const uid = session.user.id;
 
-        // Fetch past 30 days of daily rituals
+        // Fetch past 30 days of daily rituals for sparkline
         const thirtyDaysAgo = new Date();
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
         const startDateStr = thirtyDaysAgo.toISOString().split('T')[0];
@@ -61,16 +54,16 @@ export default function HistoryPage() {
           .gte('date', startDateStr)
           .order('date', { ascending: true });
 
-        // Fetch past 14 days of anchor logs
-        const fourteenDaysAgo = new Date();
-        fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
-        const heatmapDateStr = fourteenDaysAgo.toISOString().split('T')[0];
+        // Fetch past 7 days of anchor logs
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        const trackDateStr = sevenDaysAgo.toISOString().split('T')[0];
 
         const { data: logs } = await supabase
           .from('anchor_logs')
-          .select('date, completed, anchor_id, user_anchors(pillar_id)')
+          .select('date, completed, anchor_id')
           .eq('user_id', uid)
-          .gte('date', heatmapDateStr);
+          .gte('date', trackDateStr);
 
         // Fallbacks for cold states to make visual charts beautiful immediately
         const mockRituals: DailyPulseLog[] = Array.from({ length: 30 }, (_, i) => {
@@ -84,35 +77,34 @@ export default function HistoryPage() {
 
         setPulseLogs(rituals && rituals.length > 0 ? (rituals as any) : mockRituals);
 
-        const mappedLogs: HeatmapLog[] = [];
+        const mappedLogs: QuietTrackLog[] = [];
         if (logs) {
           logs.forEach((log: any) => {
-            if (log.user_anchors?.pillar_id) {
-              mappedLogs.push({
-                date: log.date,
-                completed: !!log.completed,
-                pillar_id: log.user_anchors.pillar_id
-              });
-            }
+            mappedLogs.push({
+              date: log.date,
+              completed: !!log.completed,
+              anchor_id: log.anchor_id
+            });
           });
         }
         
-        // Cold start fallback logs for beautiful heatmap demo
+        // Cold start fallback logs for beautiful Quiet Tracks demo using actual anchors
         if (mappedLogs.length === 0) {
-          PILLARS.forEach(p => {
-            last14Days.forEach(date => {
+          const activeAnchors = useRitualStore.getState().anchors;
+          activeAnchors.forEach(a => {
+            last7Days.forEach(date => {
               if (Math.random() > 0.25) {
                 mappedLogs.push({
                   date,
                   completed: Math.random() > 0.45,
-                  pillar_id: p.id
+                  anchor_id: a.id
                 });
               }
             });
           });
         }
 
-        setHeatmapLogs(mappedLogs);
+        setTrackLogs(mappedLogs);
       } catch (err) {
         console.error("Error loading history:", err);
       } finally {
@@ -132,16 +124,16 @@ export default function HistoryPage() {
     }).join(' ');
   };
 
-  const getHeatmapOpacity = (pillarId: string, dateStr: string) => {
-    const dayPillarLogs = heatmapLogs.filter(l => l.date === dateStr && l.pillar_id === pillarId);
-    if (dayPillarLogs.length === 0) return 'bg-canvas border-muted/20 opacity-30';
-    const completed = dayPillarLogs.filter(l => l.completed).length;
-    const density = completed / dayPillarLogs.length;
+  const isAnchorCompletedOnDate = (anchorId: string, dateStr: string): boolean => {
+    const dayAnchorLogs = trackLogs.filter(l => l.date === dateStr && l.anchor_id === anchorId);
+    if (dayAnchorLogs.length === 0) return false;
+    return dayAnchorLogs.some(l => l.completed);
+  };
 
-    if (density === 0) return 'bg-canvas border-muted/50';
-    if (density < 0.4) return 'bg-accent-teal/20 border-accent-teal/30';
-    if (density < 0.8) return 'bg-accent-teal/50 border-accent-teal/60';
-    return 'bg-accent-teal border-accent-teal';
+  const getDayLetter = (dateStr: string) => {
+    const date = new Date(dateStr + 'T00:00:00');
+    const days = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+    return days[date.getDay()];
   };
 
   return (
@@ -150,19 +142,19 @@ export default function HistoryPage() {
         <header className="flex items-center justify-between h-8">
           <button 
             onClick={() => router.back()} 
-            className="text-ink-secondary hover:text-ink-primary transition-colors flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider"
+            className="text-ink-secondary hover:text-ink-primary transition-colors flex items-center gap-1.5 text-sm font-semibold uppercase tracking-wider"
           >
             <ArrowLeft className="w-4 h-4" /> Back
           </button>
-          <span className="text-[10px] font-bold tracking-widest text-ink-secondary uppercase">Pulse Engine Trend</span>
+          <span className="text-sm font-semibold uppercase tracking-wider text-ink-secondary">Pulse Trend</span>
           <div className="w-8" />
         </header>
 
         {/* 30-Day Sparkline */}
         <section className="p-5 rounded-2xl bg-surface border border-muted shadow-sm flex flex-col gap-4">
           <div>
-            <h3 className="text-sm font-semibold text-ink-primary">Daily Pulse (30 Days)</h3>
-            <p className="text-[10px] uppercase tracking-wider text-ink-secondary mt-0.5">Stoic Sparkline Rhythms</p>
+            <h3 className="text-xl font-semibold text-ink-primary">Daily Pulse (30 Days)</h3>
+            <p className="text-sm text-ink-secondary font-normal mt-1">Stoic Sparkline Rhythms</p>
           </div>
           {isLoading ? (
             <div className="h-16 w-full bg-canvas animate-pulse rounded-lg" />
@@ -182,34 +174,48 @@ export default function HistoryPage() {
           )}
         </section>
 
-        {/* Pillar Completion Heatmap */}
+        {/* Quiet Tracks */}
         <section className="p-5 rounded-2xl bg-surface border border-muted shadow-sm flex flex-col gap-4">
           <div>
-            <h3 className="text-sm font-semibold text-ink-primary">Pillar Heatmap (14 Days)</h3>
-            <p className="text-[10px] uppercase tracking-wider text-ink-secondary mt-0.5">Daily Completion Density Grid</p>
+            <h3 className="text-xl font-semibold text-ink-primary">Quiet Tracks</h3>
+            <p className="text-sm text-ink-secondary font-normal mt-1">A minimal visual log of your anchors over the last 7 days.</p>
           </div>
           {isLoading ? (
             <div className="h-32 w-full bg-canvas animate-pulse rounded-lg" />
           ) : (
-            <div className="flex flex-col gap-2 overflow-x-auto pb-1 mt-2">
-              <div className="flex justify-between items-center text-[8px] uppercase tracking-widest text-ink-secondary px-1 mb-1">
-                <span>{last14Days[0].split('-').slice(1).join('/')}</span>
+            <div className="flex flex-col gap-4 overflow-x-auto pb-1 mt-2">
+              <div className="flex justify-between items-center text-xs uppercase tracking-widest text-ink-secondary px-1 mb-1">
+                <span>{last7Days[0].split('-').slice(1).join('/')}</span>
                 <span>Today</span>
               </div>
-              {PILLARS.map(p => (
-                <div key={p.id} className="flex items-center gap-3">
-                  <span className="text-xs select-none w-5 text-center" title={p.title}>{p.icon}</span>
-                  <div className="flex-1 grid grid-cols-14 gap-1.5">
-                    {last14Days.map(date => (
-                      <div 
-                        key={date} 
-                        className={`h-4 w-4 rounded-sm border transition-all ${getHeatmapOpacity(p.id, date)}`} 
-                        title={`${p.title} at ${date}`} 
-                      />
-                    ))}
+              {anchors.map(a => (
+                <div key={a.id} className="flex items-center justify-between gap-3">
+                  <span className="text-base font-normal text-ink-secondary truncate w-32" title={a.title}>
+                    {a.title}
+                  </span>
+                  <div className="flex gap-3 items-center">
+                    {last7Days.map(date => {
+                      const completed = isAnchorCompletedOnDate(a.id, date);
+                      return (
+                        <div key={date} className="flex flex-col items-center gap-1">
+                          <span className="text-[10px] font-semibold text-ink-secondary select-none">
+                            {getDayLetter(date)}
+                          </span>
+                          <div 
+                            className={`h-3.5 w-3.5 rounded-full transition-all ${
+                              completed ? 'bg-teal-600' : 'bg-gray-300'
+                            }`}
+                            title={`${a.title} on ${date}: ${completed ? 'Completed' : 'Missed'}`} 
+                          />
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               ))}
+              {anchors.length === 0 && (
+                <p className="text-ink-secondary text-sm text-center py-4 font-normal">No active anchors.</p>
+              )}
             </div>
           )}
         </section>

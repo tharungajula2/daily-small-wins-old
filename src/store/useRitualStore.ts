@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { 
   syncPushDailyRitual, syncPushAnchors, syncPushAnchorLog,
-  syncPushNote, syncPushVision
+  syncPushVision
 } from '@/lib/supabase/syncEngine';
 
 export type PillarId = 'nutrition' | 'movement' | 'sleep' | 'stress_mental' | 'social' | 'environment';
@@ -11,7 +11,7 @@ export type AnchorType = 'action' | 'reflection';
 export interface Anchor {
   id: string;
   title: string;
-  pillarId: PillarId;
+  pillarId?: PillarId | null;
   type: AnchorType;
   prompt?: string; // for Type B reflection anchors
   completed: boolean;
@@ -50,8 +50,6 @@ interface RitualState {
   parkingLotNotes: string;
   isVisionEnabled: boolean;
   visionText: string;
-  isNotesEnabled: boolean;
-  lifeNotes: Array<{ id: string; content: string; attribution: string; date: string }>;
   
   hasSeenVisionTooltip: boolean;
 
@@ -61,20 +59,23 @@ interface RitualState {
   lastActiveDate: string | null;
   setLastActiveDate: (date: string) => void;
 
+  // Wake/Sleep Windows for The Arc definition
+  wakeWindow: string;
+  sleepWindow: string;
+  setWakeWindow: (time: string) => void;
+  setSleepWindow: (time: string) => void;
+
   markFeetOnFloor: (time: string) => void;
   setStreak: (streak: number) => void;
   completeMorningCheckIn: (sleep: number, mood: number, bedTime: string, duration: number) => Promise<void>;
   toggleAnchor: (id: string, asBaseline?: boolean, reflectionText?: string, prompt?: string) => void;
-  addAnchor: (title: string, pillarId: PillarId, type: AnchorType, baseline?: string, prompt?: string, subItems?: { id: string; title: string }[], frequency?: string[]) => void;
+  addAnchor: (title: string, pillarId?: PillarId | null, type?: AnchorType, baseline?: string, prompt?: string, subItems?: { id: string; title: string }[], frequency?: string[]) => void;
   toggleSubItem: (anchorId: string, subItemId: string) => void;
   removeAnchor: (id: string) => void;
   completeEveningCheckIn: (win: string, parkingLot: string) => Promise<void>;
   resetDaily: () => void;
   toggleVision: () => void;
   setVisionText: (text: string) => void;
-  toggleNotes: () => void;
-  addLifeNote: (content: string, attribution: string) => void;
-  removeLifeNote: (id: string) => void;
   toggleWidget: (widgetKey: string) => void;
   dismissTooltip: (tooltip: string) => void;
   setWeeklyHistory: (history: any[]) => void;
@@ -86,6 +87,8 @@ interface RitualState {
   setLastFreshStartPrompt: (date: string) => void;
   isPremium: boolean;
   setPremiumStatus: (status: boolean) => void;
+  isRestDay: boolean;
+  toggleRestDay: () => void;
 }
 
 export const useRitualStore = create<RitualState>()(
@@ -94,6 +97,7 @@ export const useRitualStore = create<RitualState>()(
       focusThreeIds: [],
       lastFreshStartPrompt: null,
       isPremium: false,
+      isRestDay: false,
       feetOnFloorLogged: false,
       wakeTime: null,
       currentStreak: 0,
@@ -102,47 +106,12 @@ export const useRitualStore = create<RitualState>()(
       moodScore: null,
       bedTime: null,
       sleepDuration: null,
-      anchors: [
-        { 
-          id: 'default-a1', 
-          title: 'Hydration (3 Liters)', 
-          pillarId: 'nutrition', 
-          type: 'action', 
-          completed: false, 
-          baselineTitle: 'Drink 1 large glass' 
-        },
-        { 
-          id: 'default-a2', 
-          title: 'Morning Sunlight / Walk', 
-          pillarId: 'environment', 
-          type: 'action', 
-          completed: false, 
-          baselineTitle: 'Step outside for 2 mins' 
-        },
-        { 
-          id: 'default-a3', 
-          title: 'Silence / Breathwork', 
-          pillarId: 'stress_mental', 
-          type: 'action', 
-          completed: false, 
-          baselineTitle: '3 deep breaths' 
-        },
-        {
-          id: 'default-a4',
-          title: 'Daily Reflection',
-          pillarId: 'stress_mental',
-          type: 'reflection',
-          prompt: 'What was the most meaningful part of today?',
-          completed: false
-        }
-      ],
+      anchors: [],
       eveningCheckInDone: false,
       winOfTheDay: '',
       parkingLotNotes: '',
       isVisionEnabled: true,
       visionText: "I am building the structure for a better life.",
-      isNotesEnabled: false,
-      lifeNotes: [],
 
       hasSeenVisionTooltip: false,
 
@@ -150,13 +119,18 @@ export const useRitualStore = create<RitualState>()(
       lastWeeklyReviewDate: null,
       lastActiveDate: null,
       
+      wakeWindow: '07:00',
+      sleepWindow: '23:00',
+      setWakeWindow: (time: string) => set({ wakeWindow: time }),
+      setSleepWindow: (time: string) => set({ sleepWindow: time }),
+
       markFeetOnFloor: (time: string) => {
-        set({ feetOnFloorLogged: true, wakeTime: time });
+        set({ feetOnFloorLogged: true, wakeTime: time, morningCheckInDone: true });
         syncPushDailyRitual(get());
       },
         
       setStreak: (streak: number) => 
-        set({ currentStreak: streak }),
+      	set({ currentStreak: streak }),
 
       completeMorningCheckIn: async (sleep: number, mood: number, bedTime: string, duration: number) => {
         // 1. Update Local State Instantly
@@ -235,8 +209,8 @@ export const useRitualStore = create<RitualState>()(
 
       addAnchor: (
         title: string, 
-        pillarId: PillarId, 
-        type: AnchorType, 
+        pillarId?: PillarId | null, 
+        type: AnchorType = 'action', 
         baseline?: string, 
         prompt?: string,
         subItems?: { id: string; title: string }[],
@@ -248,7 +222,7 @@ export const useRitualStore = create<RitualState>()(
             { 
               id: crypto.randomUUID(), 
               title, 
-              pillarId, 
+              pillarId: pillarId || null, 
               type, 
               completed: false, 
               baselineTitle: baseline || undefined,
@@ -297,8 +271,11 @@ export const useRitualStore = create<RitualState>()(
           eveningCheckInDone: false,
           winOfTheDay: '',
           parkingLotNotes: '',
+          isRestDay: false,
           lastActiveDate: new Date().toLocaleDateString('en-CA'),
         })),
+
+      toggleRestDay: () => set((state) => ({ isRestDay: !state.isRestDay })),
 
       setLastActiveDate: (date: string) => set({ lastActiveDate: date }),
 
@@ -308,23 +285,7 @@ export const useRitualStore = create<RitualState>()(
         syncPushVision(text);
       },
       
-      toggleNotes: () => set((state) => ({ isNotesEnabled: !state.isNotesEnabled })),
-      
-      addLifeNote: (content: string, attribution: string) => {
-        const newNote = { id: crypto.randomUUID(), content, attribution, date: new Date().toISOString() };
-        set((state) => ({
-          lifeNotes: [
-            newNote,
-            ...state.lifeNotes
-          ]
-        }));
-        syncPushNote(newNote);
-      },
-        
-      removeLifeNote: (id: string) => 
-        set((state) => ({
-          lifeNotes: state.lifeNotes.filter(n => n.id !== id)
-        })),
+
 
       setWeeklyHistory: (history: any[]) => set({ weeklyHistory: history }),
 

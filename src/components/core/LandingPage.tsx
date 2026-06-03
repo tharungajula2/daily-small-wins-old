@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
-import { ArrowRight, BookOpen, Layers, Target, Compass } from 'lucide-react';
+import { ArrowRight, BookOpen, Layers, Target, Compass, Sunrise, Settings, Sunset, Apple, Activity, Moon, Brain, Users, Sprout } from 'lucide-react';
 import Link from 'next/link';
 
 export default function LandingPage() {
@@ -31,12 +31,12 @@ export default function LandingPage() {
   }, [ringProgress]);
 
   const PILLARS = [
-    { icon: '🥑', title: 'Nutrition', desc: 'Frictionless baseline caloric structure and hydration limits.' },
-    { icon: '💪', title: 'Movement', desc: 'Active, deliberate mobility loops integrated into desk routines.' },
-    { icon: '🌙', title: 'Sleep', desc: 'Strict light hygiene thresholds and evening circadian alignments.' },
-    { icon: '🧘', title: 'Stress & Mental', desc: 'Stoic silent gaps, breathwork, and clean cognitive decompression.' },
-    { icon: '🤝', title: 'Social Connection', desc: 'Deliberate dialogues with key relationships without screens.' },
-    { icon: '🌱', title: 'Environment', desc: 'Optimizing physical micro-spaces to remove friction from habits.' }
+    { icon: <Apple className="w-4 h-4 text-accent-teal" />, title: 'Nutrition', desc: 'Frictionless baseline caloric structure and hydration limits.' },
+    { icon: <Activity className="w-4 h-4 text-accent-teal" />, title: 'Movement', desc: 'Active, deliberate mobility loops integrated into desk routines.' },
+    { icon: <Moon className="w-4 h-4 text-accent-teal" />, title: 'Sleep', desc: 'Strict light hygiene thresholds and evening circadian alignments.' },
+    { icon: <Brain className="w-4 h-4 text-accent-teal" />, title: 'Stress & Mental', desc: 'Stoic silent gaps, breathwork, and clean cognitive decompression.' },
+    { icon: <Users className="w-4 h-4 text-accent-teal" />, title: 'Social Connection', desc: 'Deliberate dialogues with key relationships without screens.' },
+    { icon: <Sprout className="w-4 h-4 text-accent-teal" />, title: 'Environment', desc: 'Optimizing physical micro-spaces to remove friction from habits.' }
   ];
 
   return (
@@ -47,7 +47,7 @@ export default function LandingPage() {
       {/* Premium Header */}
       <header className="fixed top-0 inset-x-0 h-16 bg-[#1C1C1E]/80 backdrop-blur-md border-b border-[#2C2C2E] flex items-center justify-between px-6 z-50 max-w-4xl mx-auto rounded-b-xl">
         <div className="flex items-center gap-2">
-          <span className="text-lg font-bold tracking-widest text-[#2A7F7F]">TRELIS</span>
+          <span className="text-lg font-semibold tracking-widest text-[#2A7F7F]">TRELIS</span>
         </div>
         <Link 
           href="/login"
@@ -60,7 +60,7 @@ export default function LandingPage() {
       <div className="max-w-xl mx-auto px-6 pt-24 pb-20 flex flex-col gap-24 relative z-10">
         
         {/* SECTION 1: HERO */}
-        <section className="relative min-h-[75vh] flex flex-col justify-center items-center text-center gap-6 relative overflow-hidden py-10">
+        <section className="relative min-h-[75vh] flex flex-col justify-center items-center text-center gap-6 overflow-hidden py-10">
           {/* Animated Lattice SVG (Vines grow as user scrolls) */}
           <div className="absolute inset-0 pointer-events-none opacity-30 z-0">
             <svg className="w-full h-full stroke-accent-teal" viewBox="0 0 400 600" fill="none">
@@ -77,12 +77,12 @@ export default function LandingPage() {
           </div>
 
           <div className="flex flex-col gap-4 relative z-10">
-            <h1 className="text-4xl font-extrabold tracking-tight leading-[1.15] text-white">
+            <h1 className="text-4xl font-semibold tracking-tight leading-[1.15] text-white">
               The trellis your<br />
               <span className="text-[#2A7F7F] bg-accent-teal/5 px-3 py-1 rounded-md">habits grow on.</span>
             </h1>
             <p className="text-sm text-[#9A9A9E] leading-relaxed max-w-sm mx-auto font-normal">
-              Not a tracking app. A Life Operating System designed to act as physical scaffolding for a structured, exceptional life.
+              Not a tracking app. A daily protocol designed to act as physical scaffolding for a structured, exceptional life.
             </p>
           </div>
 
@@ -99,7 +99,7 @@ export default function LandingPage() {
         {/* SECTION 2: THE DAILY LOOP */}
         <section className="flex flex-col items-center gap-12 py-6">
           <div className="text-center">
-            <h2 className="text-xl font-bold text-white">The Daily Loop</h2>
+            <h2 className="text-xl font-semibold text-white">The Daily Loop</h2>
             <p className="text-[10px] uppercase tracking-wider text-[#9A9A9E] mt-1">Structured Habit Synchrony</p>
           </div>
 
@@ -122,7 +122,7 @@ export default function LandingPage() {
               </svg>
             </div>
             <div className="flex flex-col items-center text-center z-10 gap-0.5">
-              <span className="text-3xl font-extrabold text-white">{percentVal}%</span>
+              <span className="text-3xl font-semibold text-white">{percentVal}%</span>
               <span className="text-[9px] uppercase tracking-widest text-[#9A9A9E] font-semibold">Pulse Completed</span>
             </div>
           </div>
@@ -130,41 +130,41 @@ export default function LandingPage() {
           <div className="grid grid-cols-1 gap-4 w-full">
             <div className="p-5 rounded-2xl bg-[#2C2C2E]/30 border border-[#2C2C2E] flex flex-col gap-2">
               <div className="flex items-center gap-2.5">
-                <span className="text-sm">🌅</span>
+                <Sunrise className="w-4 h-4 text-accent-teal shrink-0" />
                 <h4 className="text-xs uppercase tracking-widest font-semibold text-white">Morning Check-In</h4>
               </div>
-              <p className="text-xs text-[#9A9A9E] leading-relaxed">
+              <p className="text-xs text-[#9A9A9E] leading-relaxed font-normal">
                 Log rise time, sleep efficiency scores, and morning mindset levels within 30 minutes of waking.
               </p>
             </div>
 
             <div className="p-5 rounded-2xl bg-[#2C2C2E]/30 border border-[#2C2C2E] flex flex-col gap-2">
               <div className="flex items-center gap-2.5">
-                <span className="text-sm">⚙️</span>
-                <h4 className="text-xs uppercase tracking-widest font-semibold text-[#2A7F7F]">The Habit Engine</h4>
+                <Settings className="w-4 h-4 text-accent-teal shrink-0" />
+                <h4 className="text-xs uppercase tracking-widest font-semibold text-[#2A7F7F]">The Habit Protocol</h4>
               </div>
-              <p className="text-xs text-[#9A9A9E] leading-relaxed">
+              <p className="text-xs text-[#9A9A9E] leading-relaxed font-normal">
                 Execute daily non-negotiable protocols. Utilize forgiving baseline targets on tough days.
               </p>
             </div>
 
             <div className="p-5 rounded-2xl bg-[#2C2C2E]/30 border border-[#2C2C2E] flex flex-col gap-2">
               <div className="flex items-center gap-2.5">
-                <span className="text-sm">🌌</span>
+                <Sunset className="w-4 h-4 text-accent-teal shrink-0" />
                 <h4 className="text-xs uppercase tracking-widest font-semibold text-white">Evening Check-In</h4>
               </div>
-              <p className="text-xs text-[#9A9A9E] leading-relaxed">
+              <p className="text-xs text-[#9A9A9E] leading-relaxed font-normal">
                 Reflect on today's single biggest win, clear tasks into parking lots, and prepare mental hygiene for rest.
               </p>
             </div>
           </div>
         </section>
 
-        {/* SECTION 3: THE SIX PILLARS */}
+        {/* SECTION 3: CORE RITUAL AREAS */}
         <section className="flex flex-col gap-8 py-6">
           <div className="text-center">
-            <h2 className="text-xl font-bold text-white">The MECE Pillars</h2>
-            <p className="text-[10px] uppercase tracking-wider text-[#9A9A9E] mt-1">Mutually Exclusive, Collectively Exhaustive Structure</p>
+            <h2 className="text-xl font-semibold text-white">Core Ritual Areas</h2>
+            <p className="text-[10px] uppercase tracking-wider text-[#9A9A9E] mt-1">Fundamental pillars of daily balance</p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -174,10 +174,10 @@ export default function LandingPage() {
                 className="p-5 rounded-2xl bg-[#2C2C2E]/20 border border-[#2C2C2E] flex flex-col gap-2 transition-all hover:bg-[#2C2C2E]/35"
               >
                 <div className="flex items-center gap-2">
-                  <span className="text-lg">{p.icon}</span>
+                  <span>{p.icon}</span>
                   <h4 className="text-sm font-semibold text-white">{p.title}</h4>
                 </div>
-                <p className="text-xs text-[#9A9A9E] leading-relaxed">
+                <p className="text-xs text-[#9A9A9E] leading-relaxed font-normal">
                   {p.desc}
                 </p>
               </div>
@@ -188,7 +188,7 @@ export default function LandingPage() {
         {/* SECTION 4: WHY WE BUILT IT */}
         <section className="flex flex-col gap-6 py-6 border-t border-[#2C2C2E] pt-12">
           <div>
-            <h2 className="text-xl font-bold text-white">Why We Built It</h2>
+            <h2 className="text-xl font-semibold text-white">Why We Built It</h2>
             <p className="text-[10px] uppercase tracking-wider text-[#2A7F7F] mt-1">The Founders Philosophy</p>
           </div>
 
@@ -208,7 +208,7 @@ export default function LandingPage() {
         {/* SECTION 5: WHY THIS ACTUALLY WORKS */}
         <section className="flex flex-col gap-8 py-6 border-t border-[#2C2C2E] pt-12">
           <div>
-            <h2 className="text-xl font-bold text-white">The Science Layer</h2>
+            <h2 className="text-xl font-semibold text-white">The Science Layer</h2>
             <p className="text-[10px] uppercase tracking-wider text-[#9A9A9E] mt-1">Behavioral Medicine Principles</p>
           </div>
 
@@ -252,7 +252,7 @@ export default function LandingPage() {
         </section>
 
         {/* Footer */}
-        <footer className="text-center text-[10px] uppercase tracking-widest text-[#5C5C5E] border-t border-[#2C2C2E] pt-8 mt-12">
+        <footer className="text-center text-[10px] uppercase tracking-widest text-[#5C5C5E] border-t border-[#2C2C2E] pt-8 mt-12 font-normal">
           © 2026 TRELIS LIFE • STRUCTURE FOR A BETTER LIFE.
         </footer>
 

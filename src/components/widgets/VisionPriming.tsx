@@ -46,7 +46,13 @@ export default function VisionPriming() {
 
       <AnimatePresence mode="wait">
         {isEditing ? (
-          <motion.div key="edit" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+          <motion.div 
+            key="edit" 
+            initial={{ opacity: 0 }} 
+            animate={{ opacity: 1 }} 
+            exit={{ opacity: 0 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+          >
             <textarea
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
@@ -54,14 +60,20 @@ export default function VisionPriming() {
             />
             <button
               onClick={handleSave}
-              className="w-full py-2.5 rounded-lg text-sm font-medium bg-ink-primary text-surface transition-all"
+              className="w-full py-2.5 rounded-lg text-sm font-semibold bg-ink-primary text-surface transition-all"
             >
               Lock Vision
             </button>
           </motion.div>
         ) : (
-          <motion.div key="view" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-            <p className="text-base text-ink-primary font-medium leading-relaxed italic border-l-2 border-accent-teal pl-4 py-1">
+          <motion.div 
+            key="view" 
+            initial={{ opacity: 0 }} 
+            animate={{ opacity: 1 }} 
+            exit={{ opacity: 0 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+          >
+            <p className="text-base text-ink-primary font-semibold leading-relaxed italic border-l-2 border-accent-teal pl-4 py-1">
               &ldquo;{visionText}&rdquo;
             </p>
           </motion.div>

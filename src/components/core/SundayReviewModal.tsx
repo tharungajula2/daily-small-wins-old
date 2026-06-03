@@ -40,16 +40,17 @@ export default function SundayReviewModal() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
+        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
         className="fixed inset-0 z-[100] bg-canvas flex flex-col p-6 overflow-y-auto"
       >
         <div className="flex-1 flex flex-col items-center justify-center max-w-sm mx-auto w-full py-12">
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            transition={{ delay: 0.2 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 30, delay: 0.2 }}
             className="text-center mb-12"
           >
-            <h2 className="text-accent-teal text-xs font-bold tracking-[0.2em] uppercase mb-4">
+            <h2 className="text-accent-teal text-xs font-semibold tracking-[0.2em] uppercase mb-4">
               Weekly Debrief
             </h2>
             <h1 className="text-ink-primary text-3xl font-semibold tracking-tight">
@@ -61,7 +62,7 @@ export default function SundayReviewModal() {
             <motion.div
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.3 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 30, delay: 0.3 }}
               className="bg-surface p-5 rounded-2xl border border-muted shadow-sm flex flex-col items-center"
             >
               <span className="text-ink-secondary text-[10px] uppercase tracking-widest mb-2">Avg Pulse</span>
@@ -71,7 +72,7 @@ export default function SundayReviewModal() {
             <motion.div
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.4 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 30, delay: 0.4 }}
               className="bg-surface p-5 rounded-2xl border border-muted shadow-sm flex flex-col items-center"
             >
               <span className="text-ink-secondary text-[10px] uppercase tracking-widest mb-2">Consistency</span>
@@ -88,13 +89,13 @@ export default function SundayReviewModal() {
           <motion.div
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.5 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 30, delay: 0.5 }}
             className="text-center mb-12 px-4"
           >
             <p className="text-ink-secondary text-sm leading-relaxed mb-6">
               "Structure is the space within which we create."
             </p>
-            <p className="text-ink-primary text-sm font-medium">
+            <p className="text-ink-primary text-sm font-semibold">
               Take 5 minutes to review your Notes of Life and plan the week ahead.
             </p>
           </motion.div>
@@ -102,7 +103,7 @@ export default function SundayReviewModal() {
           <motion.button
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.6 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 30, delay: 0.6 }}
             whileTap={{ scale: 0.98 }}
             onClick={completeWeeklyReview}
             className="w-full py-5 rounded-2xl bg-ink-primary text-surface font-semibold shadow-lg shadow-ink-primary/10 hover:shadow-xl transition-all"

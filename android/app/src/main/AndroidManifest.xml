@@ -29,13 +29,7 @@
         </provider>
     </application>
 
-    <queries>
-        <package android:name="com.google.android.apps.healthdata" />
-    </queries>
-
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.health.READ_STEPS" />
-    <uses-permission android:name="android.permission.health.READ_SLEEP" />
 </manifest>

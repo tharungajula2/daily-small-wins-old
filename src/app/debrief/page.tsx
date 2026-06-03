@@ -6,8 +6,6 @@ import { useRitualStore } from '@/store/useRitualStore';
 import { motion, AnimatePresence } from 'framer-motion';
 import { createClient } from '@/lib/supabase/client';
 import { ChevronLeft, CheckCircle2, Sparkles, BookOpen } from 'lucide-react';
-import { getKey } from '@/lib/crypto/keyVault';
-import { encryptText } from '@/lib/crypto/journalCrypto';
 
 export default function SundayDebrief() {
   const router = useRouter();
@@ -63,14 +61,14 @@ export default function SundayDebrief() {
     try {
       // 1. Check if "Sunday Weekly Debrief" anchor already exists in the store
       let debriefAnchor = anchors.find(
-        (a) => a.title === 'Sunday Weekly Debrief' && a.pillarId === 'stress_mental'
+        (a) => a.title === 'Sunday Weekly Debrief'
       );
 
       // If it doesn't exist, create it dynamically
       if (!debriefAnchor) {
         addAnchor(
           'Sunday Weekly Debrief',
-          'stress_mental',
+          undefined,
           'reflection',
           undefined,
           'Three prompts: what worked, what broke down, and one change.'
@@ -79,25 +77,14 @@ export default function SundayDebrief() {
         // Find it in the newly updated state
         const updatedAnchors = useRitualStore.getState().anchors;
         debriefAnchor = updatedAnchors.find(
-          (a) => a.title === 'Sunday Weekly Debrief' && a.pillarId === 'stress_mental'
+          (a) => a.title === 'Sunday Weekly Debrief'
         );
       }
 
       if (debriefAnchor) {
         const structuredReflectionText = `WHAT WORKED:\n${worked}\n\nWHAT BROKE DOWN:\n${brokeDown}\n\nCHANGE FOR NEXT WEEK:\n${changeText}`;
         
-        let finalReflectionText = structuredReflectionText;
-        try {
-          const key = await getKey();
-          if (key) {
-            finalReflectionText = await encryptText(structuredReflectionText, key);
-          } else {
-            router.push('/journal-setup');
-            return;
-          }
-        } catch (err) {
-          console.error('Failed to encrypt weekly debrief:', err);
-        }
+        const finalReflectionText = structuredReflectionText;
 
         // 2. Complete and log reflection to Zustand and remote database
         toggleAnchor(debriefAnchor.id, false, finalReflectionText);

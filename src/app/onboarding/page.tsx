@@ -5,18 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { useRitualStore } from '@/store/useRitualStore';
-import { defaultStarterAnchors } from '@/utils/defaultAnchors';
-import { ChevronRight, ArrowLeft } from 'lucide-react';
-import Image from 'next/image';
-
-const PILLARS = [
-  { id: 'nutrition', title: 'Nutrition', icon: '🥑', description: 'Fuel your mind and body.' },
-  { id: 'movement', title: 'Movement', icon: '💪', description: 'Keep your physical engine active.' },
-  { id: 'sleep', title: 'Sleep', icon: '🌙', description: 'Power your recovery cycle.' },
-  { id: 'stress_mental', title: 'Stress & Mental', icon: '🧘', description: 'Re-center your perspective.' },
-  { id: 'social', title: 'Social Connection', icon: '🤝', description: 'Build intentional life lines.' },
-  { id: 'environment', title: 'Environment', icon: '🌱', description: 'Optimize your sensory space.' }
-];
+import { ArrowLeft } from 'lucide-react';
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -26,7 +15,8 @@ export default function OnboardingPage() {
   const [step, setStep] = useState(1);
   const [direction, setDirection] = useState(1);
   const [wakeTime, setWakeTime] = useState('07:00');
-  const [hardestPillar, setHardestPillar] = useState<string | null>(null);
+  const [sleepTime, setSleepTime] = useState('23:00');
+  const [firstAnchor, setFirstAnchor] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleNext = () => {
@@ -40,7 +30,7 @@ export default function OnboardingPage() {
   };
 
   const handleComplete = async () => {
-    if (!hardestPillar || isSubmitting) return;
+    if (isSubmitting) return;
     setIsSubmitting(true);
 
     try {
@@ -56,7 +46,7 @@ export default function OnboardingPage() {
         .from('user_state')
         .upsert({
           user_id: uid,
-          hardest_pillar: hardestPillar,
+          hardest_pillar: null,
           pause_tokens_remaining: 2,
           current_streak: 0,
           longest_streak: 0,
@@ -65,41 +55,25 @@ export default function OnboardingPage() {
 
       if (stateErr) throw stateErr;
 
-      // 2. Inject starter anchors to local Zustand store
-      // Clear old default anchors if they exist to prevent duplicates
+      // 2. Set wake/sleep windows in the store
+      const store = useRitualStore.getState();
+      store.setWakeWindow(wakeTime);
+      store.setSleepWindow(sleepTime);
+
+      // 3. Clear old anchors and insert first anchor if named
       useRitualStore.setState({ anchors: [] });
 
-      defaultStarterAnchors.forEach(a => {
+      if (firstAnchor.trim()) {
         addAnchor(
-          a.title,
-          a.pillarId,
-          a.type,
-          a.baselineTitle,
-          a.prompt,
+          firstAnchor.trim(),
+          null,
+          'action',
+          undefined,
+          undefined,
           [],
           ['all']
         );
-      });
-
-      // 3. Post-patch metrics to Supabase user_anchors table
-      setTimeout(async () => {
-        const { data: userAnchors } = await supabase
-          .from('user_anchors')
-          .select('id, title')
-          .eq('user_id', uid);
-
-        if (userAnchors) {
-          for (const item of userAnchors) {
-            const match = defaultStarterAnchors.find(da => da.title === item.title);
-            if (match && match.baselineTarget) {
-              await supabase
-                .from('user_anchors')
-                .update({ baseline_target: match.baselineTarget })
-                .eq('id', item.id);
-            }
-          }
-        }
-      }, 2000);
+      }
 
       // 4. Enter application
       router.push('/');
@@ -143,19 +117,19 @@ export default function OnboardingPage() {
 
           {/* Simple step indicator */}
           <span className="text-[10px] font-bold tracking-widest text-ink-secondary uppercase">
-            Step {step} of 5
+            Step {step} of 3
           </span>
 
           <div className="w-8" />
         </div>
 
-        {/* 5-step thin tick indicator */}
-        <div className="flex gap-1.5 w-full justify-between">
-          {[1, 2, 3, 4, 5].map((num) => (
+        {/* Subtle, calm dots progress indicator */}
+        <div className="flex justify-center gap-2 mt-2">
+          {[1, 2, 3].map((num) => (
             <div 
               key={num} 
-              className={`h-1 flex-1 rounded-full transition-all duration-300 ${
-                num <= step ? 'bg-accent-teal' : 'bg-muted'
+              className={`h-2 rounded-full transition-all duration-300 ${
+                num === step ? 'bg-accent-teal w-5' : 'bg-muted'
               }`}
             />
           ))}
@@ -172,169 +146,103 @@ export default function OnboardingPage() {
             initial="enter"
             animate="center"
             exit="exit"
-            transition={{ duration: 0.3, ease: 'easeInOut' }}
+            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
             className="w-full flex flex-col gap-6"
           >
-            {/* SCREEN 1: Welcome Screen */}
+            {/* SCREEN 1: Set Windows */}
             {step === 1 && (
               <div className="flex flex-col gap-6 text-left">
-                <div className="w-14 h-14 rounded-2xl bg-surface flex items-center justify-center shadow-sm select-none mb-2">
-                  <Image src="/logo-transparent.png" alt="Trelis Life Logo" width={36} height={36} className="object-contain" />
+                <div>
+                  <h2 className="text-2xl font-semibold tracking-tight text-ink-primary">
+                    Set your windows
+                  </h2>
+                  <p className="text-xs text-ink-secondary tracking-wide uppercase mt-1 font-semibold">
+                    Establish your target boundaries
+                  </p>
                 </div>
-                <h2 className="text-3xl font-bold tracking-tight text-ink-primary select-none">
-                  Hi.
-                </h2>
-                <p className="text-base text-ink-secondary leading-relaxed font-normal">
-                  Trelis Life is a daily checklist for the 6 things that decide how you feel.
+                <p className="text-sm text-ink-secondary leading-relaxed font-normal">
+                  Your daily Arc is built around these times. We use them to structure your morning start and evening wind-down window.
                 </p>
-                <p className="text-base text-ink-secondary leading-relaxed font-normal">
-                  No tracking, no judgment, just anchors.
-                </p>
+                
+                <div className="flex flex-col gap-4">
+                  <div className="bg-surface rounded-2xl border border-muted p-4 flex flex-col shadow-sm select-none gap-2">
+                    <span className="text-[10px] tracking-wider text-ink-secondary uppercase font-semibold">
+                      Wake Window Target
+                    </span>
+                    <input 
+                      type="time" 
+                      value={wakeTime}
+                      onChange={(e) => setWakeTime(e.target.value)}
+                      className="w-full bg-canvas border border-muted/50 text-ink-primary font-semibold text-center py-3 px-4 rounded-xl focus:outline-none focus:border-accent-teal text-2xl select-none"
+                    />
+                  </div>
+
+                  <div className="bg-surface rounded-2xl border border-muted p-4 flex flex-col shadow-sm select-none gap-2">
+                    <span className="text-[10px] tracking-wider text-ink-secondary uppercase font-semibold">
+                      Sleep Window Target
+                    </span>
+                    <input 
+                      type="time" 
+                      value={sleepTime}
+                      onChange={(e) => setSleepTime(e.target.value)}
+                      className="w-full bg-canvas border border-muted/50 text-ink-primary font-semibold text-center py-3 px-4 rounded-xl focus:outline-none focus:border-accent-teal text-2xl select-none"
+                    />
+                  </div>
+                </div>
               </div>
             )}
 
-            {/* SCREEN 2: Six Pillars Grid */}
+            {/* SCREEN 2: Meet The Arc */}
             {step === 2 && (
-              <div className="flex flex-col gap-4 text-left">
+              <div className="flex flex-col gap-6 text-left">
                 <div>
-                  <h2 className="text-2xl font-bold tracking-tight text-ink-primary">
-                    The 6 Pillars
+                  <h2 className="text-2xl font-semibold tracking-tight text-ink-primary">
+                    Meet The Arc
                   </h2>
-                  <p className="text-xs text-ink-secondary tracking-wide uppercase mt-1 font-medium">
-                    These form your Concentric Daily Pulse
+                  <p className="text-xs text-ink-secondary tracking-wide uppercase mt-1 font-semibold">
+                    The one promise you keep every day
                   </p>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3 mt-2">
-                  {PILLARS.map((p) => (
-                    <div 
-                      key={p.id} 
-                      className="p-4 rounded-xl bg-surface border border-muted flex flex-col gap-1.5 shadow-[0_1px_2px_rgba(0,0,0,0.02)]"
-                    >
-                      <span className="text-lg select-none">{p.icon}</span>
-                      <h4 className="text-xs font-semibold text-ink-primary select-none">
-                        {p.title}
-                      </h4>
-                      <p className="text-[10px] text-ink-secondary leading-normal font-normal">
-                        {p.description}
-                      </p>
-                    </div>
-                  ))}
+                <div className="bg-surface rounded-2xl border border-muted p-6 flex flex-col shadow-sm gap-4">
+                  <p className="text-sm text-ink-primary leading-relaxed font-normal">
+                    This is the foundational rhythm of Trelis Life.
+                  </p>
+                  <div className="border-l-2 border-accent-teal pl-3 py-1">
+                    <p className="text-xs text-ink-secondary leading-relaxed font-normal">
+                      The Arc opens in the morning when you wake, and closes at night with your wind-down reflections. It centers your day in a single, simple promise.
+                    </p>
+                  </div>
                 </div>
               </div>
             )}
 
-            {/* SCREEN 3: Wake Window Picker */}
+            {/* SCREEN 3: Name your first anchor */}
             {step === 3 && (
               <div className="flex flex-col gap-6 text-left">
                 <div>
-                  <h2 className="text-2xl font-bold tracking-tight text-ink-primary">
-                    Wake Window
+                  <h2 className="text-2xl font-semibold tracking-tight text-ink-primary">
+                    Your First Anchor
                   </h2>
-                  <p className="text-xs text-ink-secondary tracking-wide uppercase mt-1 font-medium">
-                    When do you usually wake up?
+                  <p className="text-xs text-ink-secondary tracking-wide uppercase mt-1 font-semibold">
+                    Name your daily anchor
                   </p>
                 </div>
-                <p className="text-sm text-ink-secondary leading-relaxed">
-                  We use this to organize your Morning Checklist Stack before the day takes over.
+                <p className="text-sm text-ink-secondary leading-relaxed font-normal">
+                  What's the one thing that, when you skip it, the day quietly falls apart?
                 </p>
                 
-                <div className="bg-surface rounded-2xl border border-muted p-6 flex flex-col items-center justify-center shadow-sm select-none gap-4">
+                <div className="bg-surface rounded-2xl border border-muted p-6 flex flex-col shadow-sm select-none gap-4">
                   <input 
-                    type="time" 
-                    value={wakeTime}
-                    onChange={(e) => setWakeTime(e.target.value)}
-                    className="w-full bg-canvas border border-muted text-ink-primary font-semibold text-center py-4 px-6 rounded-2xl focus:outline-none focus:border-accent-teal text-3xl select-none"
+                    type="text" 
+                    placeholder="e.g. Morning Walk, Read 10 Pages, Meditate"
+                    value={firstAnchor}
+                    onChange={(e) => setFirstAnchor(e.target.value)}
+                    className="w-full bg-canvas border border-muted text-ink-primary font-semibold text-left py-3 px-4 rounded-xl focus:outline-none focus:border-accent-teal text-base select-none"
                   />
-                  <span className="text-[10px] tracking-wider text-ink-secondary uppercase font-medium">
-                    Native Time Picker
-                  </span>
-                </div>
-              </div>
-            )}
-
-            {/* SCREEN 4: Pillar Weighting */}
-            {step === 4 && (
-              <div className="flex flex-col gap-4 text-left">
-                <div>
-                  <h2 className="text-2xl font-bold tracking-tight text-ink-primary">
-                    Friction Check
-                  </h2>
-                  <p className="text-xs text-ink-secondary tracking-wide uppercase mt-1 font-medium">
-                    Which one is hardest for you right now?
+                  <p className="text-[10px] text-ink-secondary leading-normal">
+                    Leave blank to skip. You can always add, edit, or customize your anchors later inside the app.
                   </p>
-                </div>
-                <p className="text-sm text-ink-secondary leading-relaxed">
-                  Your highest friction point is where structure matters most. We will watch this pillar closely.
-                </p>
-
-                <div className="flex flex-col gap-2 max-h-[45vh] overflow-y-auto pr-1">
-                  {PILLARS.map((p) => {
-                    const isSelected = hardestPillar === p.id;
-                    return (
-                      <div 
-                        key={p.id}
-                        onClick={() => setHardestPillar(p.id)}
-                        className={`p-3.5 rounded-xl border cursor-pointer transition-all flex items-center justify-between ${
-                          isSelected 
-                            ? 'border-accent-teal bg-accent-teal/[0.02] shadow-sm' 
-                            : 'border-muted bg-surface hover:border-muted/80'
-                        }`}
-                      >
-                        <div className="flex items-center gap-3">
-                          <span className="text-lg select-none">{p.icon}</span>
-                          <div className="flex flex-col">
-                            <span className="text-xs font-semibold text-ink-primary">
-                              {p.title}
-                            </span>
-                            <span className="text-[10px] text-ink-secondary">
-                              {p.description}
-                            </span>
-                          </div>
-                        </div>
-                        <div className={`h-4 w-4 rounded-full border flex items-center justify-center ${
-                          isSelected ? 'border-accent-teal bg-accent-teal' : 'border-muted'
-                        }`}>
-                          {isSelected && <span className="text-surface text-[10px] font-bold">✓</span>}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* SCREEN 5: Starter Templates Done */}
-            {step === 5 && (
-              <div className="flex flex-col gap-4 text-left">
-                <div>
-                  <h2 className="text-2xl font-bold tracking-tight text-ink-primary">
-                    Day 1 Ready
-                  </h2>
-                  <p className="text-xs text-ink-secondary tracking-wide uppercase mt-1 font-medium">
-                    Your starter anchors are configured
-                  </p>
-                </div>
-                <p className="text-sm text-ink-secondary leading-relaxed">
-                  We have added 8 starter anchors. You can modify, delete, or add custom anchors anytime.
-                </p>
-
-                <div className="flex flex-col gap-2 max-h-[35vh] overflow-y-auto bg-surface border border-muted rounded-2xl p-4 shadow-inner">
-                  {defaultStarterAnchors.map((a, idx) => (
-                    <div key={idx} className="flex items-center justify-between py-1.5 border-b border-muted/50 last:border-b-0">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs select-none">
-                          {PILLARS.find(p => p.id === a.pillarId)?.icon || '⚓'}
-                        </span>
-                        <span className="text-xs font-medium text-ink-primary truncate max-w-[200px]">
-                          {a.title}
-                        </span>
-                      </div>
-                      <span className="text-[8px] font-semibold tracking-wider text-ink-secondary bg-canvas px-1.5 py-0.5 rounded-sm select-none uppercase">
-                        {PILLARS.find(p => p.id === a.pillarId)?.title || 'Pillar'}
-                      </span>
-                    </div>
-                  ))}
                 </div>
               </div>
             )}
@@ -344,17 +252,12 @@ export default function OnboardingPage() {
 
       {/* 3. Footer Action Button */}
       <div className="mt-4">
-        {step < 5 ? (
+        {step < 3 ? (
           <button
             onClick={handleNext}
-            disabled={step === 4 && !hardestPillar}
-            className={`w-full py-4 rounded-2xl font-semibold text-sm uppercase tracking-widest transition-all flex items-center justify-center gap-2 active:scale-98 shadow-sm ${
-              step === 4 && !hardestPillar
-                ? 'bg-ink-tertiary/20 text-ink-tertiary cursor-not-allowed'
-                : 'bg-accent-teal text-surface hover:bg-accent-teal/95'
-            }`}
+            className="w-full py-4 rounded-2xl font-semibold text-sm uppercase tracking-widest transition-all flex items-center justify-center gap-2 active:scale-98 shadow-sm bg-accent-teal text-surface hover:bg-accent-teal/95"
           >
-            Continue <ChevronRight className="w-4 h-4" />
+            Continue
           </button>
         ) : (
           <button

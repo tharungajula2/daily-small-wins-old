@@ -4,23 +4,14 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
 import { createClient } from '@/lib/supabase/client';
-import { Heart, Activity, Check } from 'lucide-react';
-
-const PILLARS = [
-  { id: 'nutrition', label: 'N', fullName: 'Nutrition' },
-  { id: 'movement', label: 'M', fullName: 'Movement' },
-  { id: 'sleep', label: 'Sl', fullName: 'Sleep' },
-  { id: 'stress_mental', label: 'St', fullName: 'Stress & Mental' },
-  { id: 'social', label: 'So', fullName: 'Social' },
-  { id: 'environment', label: 'E', fullName: 'Environment' }
-];
+import { Heart, Activity } from 'lucide-react';
 
 export default function QuietPartner() {
   const supabase = createClient();
   const [partnerEmail, setPartnerEmail] = useState<string | null>(null);
   const [partnerUserId, setPartnerUserId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [pillarStatus, setPillarStatus] = useState<Array<{ id: string; label: string; fullName: string; completed: boolean }>>([]);
+  const [partnerDots, setPartnerDots] = useState<boolean[]>([false, false, false, false, false, false]);
   const [receivedNudges, setReceivedNudges] = useState<any[]>([]);
   const [sentNudgeType, setSentNudgeType] = useState<'thinking' | 'proud' | 'walk' | null>(null);
 
@@ -52,12 +43,13 @@ export default function QuietPartner() {
           setPartnerEmail(pEmail);
           setPartnerUserId(pUserId);
 
-          // 2. Fetch partner's active anchors
+          // 2. Fetch partner's active anchors (up to 6)
           const { data: anchors } = await supabase
             .from('user_anchors')
-            .select('id, pillar_id')
+            .select('id')
             .eq('user_id', pUserId)
-            .eq('is_active', true);
+            .eq('is_active', true)
+            .limit(6);
 
           // 3. Fetch partner's today's completed logs
           const todayStr = new Date().toLocaleDateString('en-CA');
@@ -67,23 +59,17 @@ export default function QuietPartner() {
             .eq('user_id', pUserId)
             .eq('date', todayStr);
 
-          // Calculate MECE completion status
-          const updatedPillars = PILLARS.map(pillar => {
-            const pillarAnchors = anchors?.filter(a => a.pillar_id === pillar.id) || [];
-            const hasAnchors = pillarAnchors.length > 0;
-            
-            const allCompleted = hasAnchors && pillarAnchors.every(anchor => {
-              const log = logs?.find(l => l.anchor_id === anchor.id);
-              return log?.completed === true;
-            });
-
-            return {
-              ...pillar,
-              completed: allCompleted
-            };
+          const dotStates = (anchors || []).map(anchor => {
+            const log = logs?.find(l => l.anchor_id === anchor.id);
+            return log ? !!log.completed : false;
           });
 
-          setPillarStatus(updatedPillars);
+          // Pad to exactly 6 dots
+          while (dotStates.length < 6) {
+            dotStates.push(false);
+          }
+
+          setPartnerDots(dotStates);
 
           // 4. Fetch incoming unread nudges
           const { data: nudges } = await supabase
@@ -178,36 +164,35 @@ export default function QuietPartner() {
     <motion.div
       initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
+      transition={{ type: 'spring', stiffness: 300, damping: 30 }}
       className="p-5 rounded-2xl bg-surface border border-muted/80 flex flex-col gap-4 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05),0_1px_3px_rgba(0,0,0,0.02)] mt-4"
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5">
-          <Heart className="w-3.5 h-3.5 text-accent-teal" />
-          <span className="text-[9px] uppercase tracking-widest text-ink-secondary font-semibold">Partner's Pulse</span>
+          <Heart className="w-4 h-4 text-accent-teal" />
+          <span className="text-sm uppercase tracking-wider text-ink-secondary font-semibold">Partner Presence</span>
         </div>
-        <span className="text-[9px] tracking-wider text-ink-secondary font-medium lowercase">
+        <span className="text-sm tracking-wider text-ink-secondary font-normal lowercase">
           {partnerEmail}
         </span>
       </div>
 
       {/* 6 Dots Row */}
-      <div className="flex items-center justify-between bg-canvas px-4 py-3 rounded-xl border border-muted/30">
-        {pillarStatus.map((pillar) => (
-          <div key={pillar.id} className="flex flex-col items-center gap-1">
-            <span className="text-[8px] text-ink-secondary font-semibold uppercase">{pillar.label}</span>
-            <div
-              className={`w-3.5 h-3.5 rounded-full transition-all duration-500 flex items-center justify-center ${
-                pillar.completed
-                  ? 'bg-accent-teal shadow-[0_0_8px_rgba(42,127,127,0.3)]'
-                  : 'border border-muted/80 bg-transparent'
+      <div className="bg-canvas p-4 rounded-xl border border-muted/30 flex flex-col gap-3">
+        <span className="text-xs uppercase tracking-wider text-ink-secondary font-semibold">Today's Presence</span>
+        <div className="flex gap-3 justify-center py-1">
+          {partnerDots.map((completed, index) => (
+            <div 
+              key={index} 
+              className={`h-4.5 w-4.5 rounded-full transition-all ${
+                completed 
+                  ? 'bg-teal-600 border border-teal-600' 
+                  : 'bg-gray-300 border border-gray-300'
               }`}
-            >
-              {pillar.completed && (
-                <Check className="w-2.5 h-2.5 text-white" strokeWidth={3} />
-              )}
-            </div>
-          </div>
-        ))}
+              title={completed ? 'Anchor completed' : 'Anchor incomplete'}
+            />
+          ))}
+        </div>
       </div>
 
       {/* Nudge Incoming Alert */}
@@ -218,17 +203,17 @@ export default function QuietPartner() {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
             className="p-3 bg-accent-teal/5 border border-accent-teal/15 rounded-xl flex items-center justify-between"
           >
             <div className="flex items-center gap-2">
-              <span className="text-xs">✨</span>
-              <span className="text-[10px] font-semibold text-ink-primary">
-                Partner nudge: <span className="text-accent-teal font-bold">{nudgeLabels[nudge.nudge_type]}</span>
+              <span className="text-sm font-semibold text-ink-primary">
+                Partner nudge: <span className="text-accent-teal font-semibold">{nudgeLabels[nudge.nudge_type]}</span>
               </span>
             </div>
             <button
               onClick={() => dismissNudge(nudge.id)}
-              className="text-[9px] uppercase tracking-wider text-ink-secondary hover:text-ink-primary font-bold px-2 py-1 rounded bg-canvas border border-muted/30"
+              className="text-xs uppercase tracking-wider text-ink-secondary hover:text-ink-primary font-semibold px-3 py-1.5 rounded-xl bg-canvas border border-muted/30"
             >
               Okay
             </button>
@@ -237,8 +222,8 @@ export default function QuietPartner() {
       </AnimatePresence>
 
       {/* Nudge Button grid */}
-      <div className="flex flex-col gap-1.5">
-        <span className="text-[8px] uppercase tracking-wider text-ink-secondary font-semibold">Send Silent Nudge</span>
+      <div className="flex flex-col gap-2">
+        <span className="text-xs uppercase tracking-wider text-ink-secondary font-semibold">Send Silent Nudge</span>
         <div className="grid grid-cols-3 gap-2">
           {(['thinking', 'proud', 'walk'] as const).map((type) => {
             const isSent = sentNudgeType === type;
@@ -246,8 +231,9 @@ export default function QuietPartner() {
               <motion.button
                 key={type}
                 whileTap={{ scale: 0.96 }}
+                transition={{ type: 'spring', stiffness: 300, damping: 30 }}
                 onClick={() => sendNudge(type)}
-                className={`py-2.5 px-1 rounded-xl text-[9px] uppercase tracking-wider font-semibold border transition-all ${
+                className={`py-2.5 px-1 rounded-xl text-xs uppercase tracking-wider font-semibold border transition-all ${
                   isSent
                     ? 'bg-accent-teal border-accent-teal text-white shadow-[0_2px_8px_rgba(42,127,127,0.2)]'
                     : 'bg-canvas border-muted/50 text-ink-primary hover:bg-[#eae9e4] hover:border-muted'

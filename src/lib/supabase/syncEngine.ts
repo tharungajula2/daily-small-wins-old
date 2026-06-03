@@ -62,11 +62,7 @@ export async function syncPullInitialState(localState: any, setLocalState: (part
       .eq('user_id', userId)
       .eq('date', today);
 
-    // 5. Pull Notes of Life
-    const { data: notesOfLife } = await supabase
-      .from('notes_of_life')
-      .select('*')
-      .eq('user_id', userId);
+
 
     // Conflict Resolution: Local wins.
     const updates: any = {};
@@ -184,19 +180,7 @@ export async function syncPullInitialState(localState: any, setLocalState: (part
       }
     }
 
-    if (notesOfLife && notesOfLife.length > 0) {
-      const currentNotes = localState.lifeNotes || [];
-      const missingNotes = notesOfLife.filter((cn: any) => !currentNotes.find((ln: any) => ln.id === cn.id));
-      if (missingNotes.length > 0) {
-        const mappedNotes = missingNotes.map((n: any) => ({
-          id: n.id,
-          content: n.content,
-          attribution: n.attribution || '',
-          date: n.created_at
-        }));
-        updates.lifeNotes = [...mappedNotes, ...currentNotes];
-      }
-    }
+
 
     // Apply updates to Zustand if any conflicts were resolved in favor of the cloud
     if (Object.keys(updates).length > 0) {
@@ -276,7 +260,7 @@ export async function syncPushAnchors(anchors: any[]) {
       id: a.id,
       user_id: userId,
       title: a.title,
-      pillar_id: a.pillarId,
+      pillar_id: a.pillarId || null,
       type: a.type,
       prompt: a.prompt || null,
       baseline_title: a.baselineTitle || null,
@@ -345,31 +329,6 @@ export async function syncPushAnchorLog(
   }
 }
 
-/**
- * Insert/UPSERT to notes_of_life
- */
-export async function syncPushNote(note: any) {
-  const supabase = createClient();
-  try {
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-    if (sessionError) throw sessionError;
-    if (!session?.user) return;
-    
-    const payload = {
-      id: note.id,
-      user_id: session.user.id,
-      content: note.content,
-      attribution: note.attribution || null,
-      created_at: note.date || new Date().toISOString()
-    };
-
-    const { error } = await supabase.from('notes_of_life').upsert(payload, { onConflict: 'id' });
-    if (error) throw error;
-    console.log("Sync Engine: Push Note Successful");
-  } catch (error: any) {
-    console.error("Sync Engine: Push Note Error", error.message || error.details || error);
-  }
-}
 
 /**
  * UPSERT to user_vision

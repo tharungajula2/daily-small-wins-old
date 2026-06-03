@@ -43,7 +43,7 @@ export default function PulseSparkline() {
               className={`w-3 rounded-t-sm ${getBarColor(bar.score)}`}
               initial={{ height: 0 }}
               animate={{ height: `${Math.max(bar.score, 4)}%` }}
-              transition={{ duration: 0.5, delay: index * 0.1 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 30, delay: index * 0.1 }}
               style={{ minHeight: bar.score > 0 ? '4px' : '2px' }}
             />
           </div>

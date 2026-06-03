@@ -2,32 +2,23 @@
 
 import { motion, useInView } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
+import { Haptics, ImpactStyle } from '@capacitor/haptics';
 
-export default function PulseScore({ 
-  score, 
-  morningScore = 0, 
-  eveningScore = 0, 
-  engineScore = 0 
-}: { 
-  score: number; 
-  morningScore?: number; 
-  eveningScore?: number; 
-  engineScore?: number; 
-}) {
-  const [displayScore, setDisplayScore] = useState(0);
+interface PulseScoreProps {
+  completedCount: number;
+  totalCount: number;
+}
+
+export default function PulseScore({ completedCount, totalCount }: PulseScoreProps) {
   const containerRef = useRef(null);
   const isInView = useInView(containerRef, { once: true });
 
-  // 1. Asymmetric grade thresholds
-  const getGradeInfo = (s: number) => {
-    if (s >= 90) return { title: 'Peak Day', color: '#D4AF37', desc: 'Optimal synchrony.' };
-    if (s >= 75) return { title: 'Strong Day', color: '#A0A0A0', desc: 'Excellent alignment.' };
-    if (s >= 55) return { title: 'Steady Day', color: '#2A7F7F', desc: 'Solid consistency.' };
-    if (s >= 30) return { title: 'Light Day', color: '#52BE80', desc: 'Anchors that landed today' };
-    return { title: 'Rest Day', color: '#85929E', desc: 'Tomorrow is a new day.' };
-  };
+  const pct = totalCount > 0 ? completedCount / totalCount : 0;
+  const score = Math.round(pct * 100);
+  const [displayScore, setDisplayScore] = useState(0);
 
-  const gradeInfo = getGradeInfo(score);
+  const isFullyCompleted = completedCount === totalCount && totalCount > 0;
+  const [wasFullyCompleted, setWasFullyCompleted] = useState(false);
 
   useEffect(() => {
     if (isInView) {
@@ -55,143 +46,122 @@ export default function PulseScore({
     }
   }, [score, isInView]);
 
-  // Circumferences for concentric rings
-  const circOuter = 2 * Math.PI * 84;
-  const circMiddle = 2 * Math.PI * 68;
-  const circInner = 2 * Math.PI * 52;
+  useEffect(() => {
+    if (isFullyCompleted && !wasFullyCompleted) {
+      const playHaptic = async () => {
+        try {
+          await Haptics.impact({ style: ImpactStyle.Light });
+        } catch (e) {
+          if (typeof window !== 'undefined' && 'vibrate' in navigator) {
+            navigator.vibrate(10);
+          }
+        }
+      };
+      playHaptic();
+      setWasFullyCompleted(true);
+    } else if (!isFullyCompleted) {
+      setWasFullyCompleted(false);
+    }
+  }, [isFullyCompleted, wasFullyCompleted]);
 
-  // Percentages for check-ins
-  const enginePct = engineScore / 70; // Engine is out of 70 max
-  const eveningPct = eveningScore / 20; // Evening is out of 20 max
-  const morningPct = morningScore / 10; // Morning is out of 10 max
+  // Seam-and-arc Ring dimensions
+  // Inside w-48 h-48 (192px), let's use radius r=75, center (96, 96)
+  const r = 75;
+  const circ = 2 * Math.PI * r; // ~471.24
+  const gapPct = 0.15; // 15% gap at the bottom
+  const drawableLength = circ * (1 - gapPct); // ~400.55
+  const gapLength = circ * gapPct; // ~70.69
+
+  // Rotation: standard starting angle is 0 (3 o'clock). 
+  // We want the gap centered at the bottom (270 degrees in SVG rotation, or 90 degrees).
+  // 90 degrees plus half the gap percentage in degrees (15% gap = 54 degrees -> half is 27 degrees).
+  // So rotation angle = 90 + 27 = 117 degrees.
+  const rotationAngle = 117;
+
+  const filledLength = pct * drawableLength;
+
+  // Simple state description based on completions
+  const getStatusInfo = () => {
+    if (totalCount === 0) return { title: 'Rest Day', color: '#85929E', desc: 'No anchors scheduled.' };
+    if (completedCount === totalCount) return { title: 'Complete ✦', color: '#2A7F7F', desc: 'All promises kept.' };
+    if (completedCount > 0) return { title: 'Steady', color: '#2A7F7F', desc: `${completedCount} of ${totalCount} kept` };
+    return { title: 'Rest', color: '#85929E', desc: 'The door is open.' };
+  };
+
+  const statusInfo = getStatusInfo();
 
   return (
     <div ref={containerRef} className="flex flex-col items-center justify-center my-6">
       <div className="relative w-48 h-48 flex items-center justify-center">
-        {/* Concentric Progress Rings */}
-        <svg className="absolute inset-0 w-full h-full transform -rotate-90 select-none">
-          {/* 1. OUTER RING: Daily Anchor Engine (70%) */}
+        {/* Seam-and-Arc Progress Ring */}
+        <motion.svg 
+          className="absolute inset-0 w-full h-full select-none" 
+          style={{ transformOrigin: '96px 96px' }}
+          animate={{
+            rotate: rotationAngle,
+            scale: isFullyCompleted ? 1.04 : 1
+          }}
+          transition={{
+            type: 'spring',
+            stiffness: 80,
+            damping: 25
+          }}
+        >
+          {/* Background Track with Seam */}
           <circle
             cx="96"
             cy="96"
-            r="84"
+            r={r}
             fill="transparent"
-            stroke="var(--color-muted)"
-            strokeWidth="8"
+            stroke="rgba(0, 0, 0, 0.05)"
+            strokeWidth="7"
+            strokeLinecap="round"
+            strokeDasharray={`${drawableLength} ${circ}`}
           />
+          {/* Foreground Active Arc */}
           <motion.circle
             cx="96"
             cy="96"
-            r="84"
+            r={r}
             fill="transparent"
-            stroke={gradeInfo.color} // Dynamic Asymmetric Grade Accent
-            strokeWidth="8"
+            stroke="#2A7F7F" // bg-accent-teal
+            strokeWidth="7"
             strokeLinecap="round"
-            initial={{ strokeDasharray: `0 ${circOuter}` }}
-            animate={isInView ? { strokeDasharray: `${enginePct * circOuter} ${circOuter}` } : {}}
-            transition={{ duration: 0.8, ease: "easeOut" }}
+            initial={{ strokeDasharray: `0 ${circ}` }}
+            animate={isInView ? { strokeDasharray: `${filledLength} ${circ}` } : {}}
+            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
           />
+        </motion.svg>
 
-          {/* 2. MIDDLE RING: Evening Check-In (20%) */}
-          <circle
-            cx="96"
-            cy="96"
-            r="68"
-            fill="transparent"
-            stroke="var(--color-muted)"
-            strokeWidth="8"
-          />
-          <motion.circle
-            cx="96"
-            cy="96"
-            r="68"
-            fill="transparent"
-            stroke="#6A5ACD" // Evening Slate Blue
-            strokeWidth="8"
-            strokeLinecap="round"
-            initial={{ strokeDasharray: `0 ${circMiddle}` }}
-            animate={isInView ? { strokeDasharray: `${eveningPct * circMiddle} ${circMiddle}` } : {}}
-            transition={{ duration: 0.8, ease: "easeOut", delay: 0.1 }}
-          />
-
-          {/* 3. INNER RING: Morning Check-In (10%) */}
-          <circle
-            cx="96"
-            cy="96"
-            r="52"
-            fill="transparent"
-            stroke="var(--color-muted)"
-            strokeWidth="8"
-          />
-
-          <motion.circle
-            cx="96"
-            cy="96"
-            r="52"
-            fill="transparent"
-            stroke="#D97706" // Morning Amber
-            strokeWidth="8"
-            strokeLinecap="round"
-            initial={{ strokeDasharray: `0 ${circInner}` }}
-            animate={isInView ? { strokeDasharray: `${morningPct * circInner} ${circInner}` } : {}}
-            transition={{ duration: 0.8, ease: "easeOut", delay: 0.2 }}
-          />
-        </svg>
-
-        {/* Inner Content - Supportively Framed & Mathematically Centered */}
+        {/* Inner Content - Mathematically Centered */}
         <div className="absolute inset-0 flex flex-col items-center justify-center text-center select-none z-10 w-full h-full">
-          <div className="flex flex-col items-center justify-center max-w-[76px] px-1 overflow-hidden">
-            {score >= 55 ? (
-              <>
-                <motion.span 
-                  initial={{ scale: 0.8, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ duration: 0.5, delay: 0.2 }}
-                  className="text-3xl font-mono font-bold leading-none tracking-tight"
-                  style={{ color: gradeInfo.color }}
-                >
-                  {displayScore}
-                </motion.span>
-                <span className="text-ink-secondary text-[8px] uppercase tracking-widest mt-1 font-semibold leading-none">
-                  Pulse
-                </span>
-              </>
-            ) : score >= 30 ? (
-              <>
-                <span className="text-xl leading-none mb-0.5">🌱</span>
-                <span className="text-ink-primary font-bold text-[9px] uppercase tracking-wide leading-none">
-                  Light
-                </span>
-                <span className="text-ink-secondary text-[7.5px] leading-snug mt-1 font-medium text-center">
-                  {gradeInfo.desc}
-                </span>
-              </>
-            ) : (
-              <>
-                <span className="text-xl leading-none mb-0.5">🧘</span>
-                <span className="text-ink-primary font-bold text-[9px] uppercase tracking-wide leading-none">
-                  Rest
-                </span>
-                <span className="text-ink-secondary text-[7.5px] leading-snug mt-1 font-medium text-center">
-                  {gradeInfo.desc}
-                </span>
-              </>
+          <div className="flex flex-col items-center justify-center max-w-[120px] px-2 overflow-hidden">
+            <span className="text-2xl font-mono font-semibold leading-none tracking-tight text-ink-primary">
+              {completedCount}/{totalCount}
+            </span>
+            <span className="text-ink-secondary text-xs uppercase tracking-wider mt-1.5 font-semibold leading-none">
+              Promises Kept
+            </span>
+            {completedCount === totalCount && totalCount > 0 && (
+              <span className="text-xs mt-1 text-accent-teal font-semibold leading-none animate-pulse">
+                Kept today
+              </span>
             )}
           </div>
         </div>
       </div>
 
-      {/* Dynamic Grade Badge */}
+      {/* Dynamic Status Badge */}
       <div className="mt-4 flex items-center justify-center">
         <span 
           style={{ 
-            color: gradeInfo.color, 
-            borderColor: `${gradeInfo.color}33`, 
-            backgroundColor: `${gradeInfo.color}0a` 
+            color: statusInfo.color, 
+            borderColor: `${statusInfo.color}33`, 
+            backgroundColor: `${statusInfo.color}0a` 
           }}
-          className="px-3 py-1 rounded-full border text-[9px] font-bold uppercase tracking-wider select-none animate-fade-in"
+          className="px-3 py-1 rounded-full border text-xs font-semibold uppercase tracking-wider select-none animate-fade-in"
         >
-          {gradeInfo.title}
+          {statusInfo.title}
         </span>
       </div>
 
@@ -208,7 +178,7 @@ export default function PulseScore({
                 <span className={`h-1 w-full rounded-full transition-all duration-300 ${isActive ? 'bg-accent-teal shadow-[0_0_8px_rgba(42,127,127,0.5)]' : 'bg-transparent'}`} />
               </div>
               {/* Day Letter */}
-              <span className={`text-xs font-semibold select-none tracking-tight transition-all duration-300 ${isActive ? 'text-accent-teal font-bold scale-110' : 'text-ink-secondary/40'}`}>
+              <span className={`text-xs font-semibold select-none tracking-tight transition-all duration-300 ${isActive ? 'text-accent-teal font-semibold scale-110' : 'text-ink-secondary/40'}`}>
                 {day}
               </span>
             </div>

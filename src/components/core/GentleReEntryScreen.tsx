@@ -13,6 +13,7 @@ export default function GentleReEntryScreen({ onResume }: GentleReEntryScreenPro
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
+      transition={{ type: 'spring', stiffness: 300, damping: 30 }}
       className="fixed inset-0 z-50 flex flex-col items-center justify-center p-8 bg-[#1E1B17] text-[#F7F6F2] font-serif select-none"
     >
       <div className="max-w-xs text-center flex flex-col items-center gap-12">

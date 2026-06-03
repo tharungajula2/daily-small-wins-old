@@ -33,6 +33,7 @@ export default function VisionPrimer() {
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -20 }}
+        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
         className="w-full relative rounded-2xl overflow-hidden bg-[#1C1C1E] border border-[#2C2C2E] shadow-lg mb-6 group transition-all"
       >
         {/* Soothing morning gradient background (the optional pinned backdrop) */}
@@ -59,7 +60,7 @@ export default function VisionPrimer() {
           </div>
 
           <div className="flex flex-col gap-1.5 py-1">
-            <span className="text-[9px] uppercase tracking-widest text-ink-secondary font-bold">
+            <span className="text-[9px] uppercase tracking-widest text-ink-secondary font-semibold">
               Morning Intention
             </span>
             <p className="text-sm font-semibold text-[#F7F6F2] leading-relaxed italic pr-4">
@@ -67,7 +68,7 @@ export default function VisionPrimer() {
             </p>
           </div>
 
-          <div className="flex items-center gap-1.5 text-[9px] text-[#2A7F7F]/90 font-medium select-none">
+          <div className="flex items-center gap-1.5 text-[9px] text-[#2A7F7F]/90 font-semibold select-none">
             <Sparkles className="w-3 h-3" />
             Visualized intent reduces cognitive drag by 30%.
           </div>

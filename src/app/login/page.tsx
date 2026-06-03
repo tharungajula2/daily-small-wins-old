@@ -90,6 +90,7 @@ export default function LoginPage() {
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
+        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
         className="w-full max-w-sm"
       >
         <div className="text-center mb-10 flex flex-col items-center">
@@ -98,7 +99,7 @@ export default function LoginPage() {
             alt="Trelis Logo" 
             className="w-16 h-16 object-contain mb-6 select-none"
           />
-          <h1 className="text-2xl text-ink-primary font-medium tracking-wide mb-2">TRELIS</h1>
+          <h1 className="text-2xl text-ink-primary font-semibold tracking-wide mb-2">TRELIS</h1>
           <p className="text-sm text-ink-secondary">Structure for a better life.</p>
         </div>
 
@@ -106,12 +107,13 @@ export default function LoginPage() {
           <motion.div 
             initial={{ opacity: 0 }} 
             animate={{ opacity: 1 }} 
+            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
             className="p-6 bg-canvas border border-success/30 rounded-2xl text-center"
           >
             <div className="w-12 h-12 bg-success/10 rounded-full flex items-center justify-center mx-auto mb-4">
               <span className="text-success text-xl">✓</span>
             </div>
-            <h3 className="text-ink-primary font-medium mb-2">
+            <h3 className="text-ink-primary font-semibold mb-2">
               {isResetMode ? 'Reset Link Sent' : 'Account Created'}
             </h3>
             <p className="text-sm text-ink-secondary">
@@ -155,7 +157,7 @@ export default function LoginPage() {
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: 'auto' }}
                     exit={{ opacity: 0, height: 0 }}
-                    transition={{ duration: 0.2 }}
+                    transition={{ type: 'spring', stiffness: 300, damping: 30 }}
                     className="overflow-hidden"
                   >
                     <label htmlFor="password" className="sr-only">Password</label>
@@ -182,7 +184,7 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={status === 'loading' || !email.trim() || (!isResetMode && !password)}
-                className={`w-full py-4 rounded-xl font-medium transition-all ${
+                className={`w-full py-4 rounded-xl font-semibold transition-all ${
                   email.trim() && (isResetMode || password) && status !== 'loading' 
                     ? 'bg-ink-primary text-surface hover:bg-ink-primary/95' 
                     : 'bg-muted text-ink-tertiary cursor-not-allowed'
@@ -202,14 +204,14 @@ export default function LoginPage() {
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: 'auto' }}
                     exit={{ opacity: 0, height: 0 }}
-                    transition={{ duration: 0.2 }}
+                    transition={{ type: 'spring', stiffness: 300, damping: 30 }}
                     className="flex flex-col gap-3 overflow-hidden"
                   >
                     <button
                       type="button"
                       onClick={handleSignUp}
                       disabled={status === 'loading' || !email.trim() || !password}
-                      className={`w-full py-4 rounded-xl font-medium border border-muted transition-all ${
+                      className={`w-full py-4 rounded-xl font-semibold border border-muted transition-all ${
                         email.trim() && password && status !== 'loading' 
                           ? 'bg-surface text-ink-primary hover:bg-canvas' 
                           : 'bg-transparent text-ink-tertiary cursor-not-allowed'
@@ -236,7 +238,7 @@ export default function LoginPage() {
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: 'auto' }}
                     exit={{ opacity: 0, height: 0 }}
-                    transition={{ duration: 0.2 }}
+                    transition={{ type: 'spring', stiffness: 300, damping: 30 }}
                     onClick={() => {
                       setIsResetMode(false);
                       setErrorMessage('');

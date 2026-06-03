@@ -3,18 +3,15 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import FeetOnFloor from '@/components/rituals/FeetOnFloor';
-import MorningCheckIn from '@/components/rituals/MorningCheckIn';
 import PulseScore from '@/components/core/PulseScore';
 import AnchorCard from '@/components/core/AnchorCard';
-import EveningCheckIn from '@/components/rituals/EveningCheckIn';
+import TheArcCard from '@/components/rituals/TheArcCard';
 import { useRitualStore } from '@/store/useRitualStore';
 import { syncPullInitialState } from '@/lib/supabase/syncEngine';
 import { motion, AnimatePresence } from 'framer-motion';
-import { SlidersHorizontal, ChevronDown, Settings } from 'lucide-react';
+import { Settings } from 'lucide-react';
 import AnchorManager from '@/components/widgets/AnchorManager';
-import WidgetManager from '@/components/widgets/WidgetManager';
 import VisionPriming from '@/components/widgets/VisionPriming';
-import NotesOfLife from '@/components/widgets/NotesOfLife';
 import QuietPartner from '@/components/core/QuietPartner';
 import SundayReviewModal from '@/components/core/SundayReviewModal';
 import { createClient } from '@/lib/supabase/client';
@@ -24,73 +21,33 @@ import VisionPrimer from '@/components/VisionPrimer';
 import { evaluateYesterdayStreak } from '@/utils/streakEngine';
 import GentleReEntryScreen from '@/components/core/GentleReEntryScreen';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
-import { App } from '@capacitor/app';
-import { useWearableSync } from '@/hooks/useWearableSync';
+import LandingPage from '@/components/core/LandingPage';
 
-const PILLAR_METADATA: Record<string, { title: string; icon: string; stripeColor: string }> = {
-  nutrition: { title: 'Nutrition', icon: '🥑', stripeColor: 'bg-accent-teal' },
-  movement: { title: 'Movement', icon: '💪', stripeColor: 'bg-[#3A86C8]' },
-  sleep: { title: 'Sleep', icon: '🌙', stripeColor: 'bg-[#6A5ACD]' },
-  stress_mental: { title: 'Stress & Mental', icon: '🧘', stripeColor: 'bg-[#D97706]' },
-  social: { title: 'Social Connection', icon: '🤝', stripeColor: 'bg-[#C084FC]' },
-  environment: { title: 'Environment', icon: '🌱', stripeColor: 'bg-success' },
-};
-
-export default function Dashboard() {
+function Dashboard() {
   const supabase = createClient();
   const router = useRouter();
   const { 
     feetOnFloorLogged, morningCheckInDone, sleepScore, moodScore, anchors, eveningCheckInDone,
-    isVisionEnabled, isNotesEnabled, currentStreak, lastActiveDate, setLastActiveDate,
-    lastFreshStartPrompt, setLastFreshStartPrompt
+    isVisionEnabled, currentStreak, lastActiveDate, setLastActiveDate,
+    lastFreshStartPrompt, setLastFreshStartPrompt, isRestDay, toggleRestDay
   } = useRitualStore();
   
-  const [hasHydrated, setHasHydrated] = useState(false);
   const [showGentleReEntry, setShowGentleReEntry] = useState(false);
   const [showFreshStart, setShowFreshStart] = useState(false);
+  const [showEvening, setShowEvening] = useState(false);
+  const [isManagingAnchors, setIsManagingAnchors] = useState(false);
+  const [userState, setUserState] = useState<{
+    user_id: string;
+    pause_tokens_remaining: number;
+    current_streak: number;
+    longest_streak: number;
+    lifetime_anchor_count: number;
+  } | null>(null);
 
-  const { syncWearables } = useWearableSync();
-
-  // Silent Background Wearable Automation Sync (Health Connect)
-  useEffect(() => {
-    if (hasHydrated) {
-      syncWearables();
-
-      let appStateListener: any = null;
-      try {
-        App.addListener('appStateChange', (state) => {
-          if (state.isActive) {
-            console.log('Trelis Lifecycle: App returned to focus. Syncing wearable metrics...');
-            syncWearables();
-          }
-        }).then(listener => {
-          appStateListener = listener;
-        });
-      } catch (err) {
-        console.log('Trelis Lifecycle: Capacitor App plugin unavailable on browser.', err);
-      }
-
-      return () => {
-        if (appStateListener) {
-          appStateListener.remove();
-        }
-      };
-    }
-  }, [hasHydrated, syncWearables]);
+  const [anchorMetadata, setAnchorMetadata] = useState<Record<string, { is_non_negotiable: boolean; baseline_target: number | null }>>({});
 
   useEffect(() => {
-    if (useRitualStore.persist.hasHydrated()) {
-      setHasHydrated(true);
-    } else {
-      const unsub = useRitualStore.persist.onFinishHydration(() => {
-        setHasHydrated(true);
-      });
-      return () => unsub();
-    }
-  }, []);
-
-  useEffect(() => {
-    if (hasHydrated && lastActiveDate) {
+    if (lastActiveDate) {
       try {
         const today = new Date();
         const lastDate = new Date(lastActiveDate);
@@ -107,7 +64,7 @@ export default function Dashboard() {
         console.error('Error evaluating lastActiveDate delta:', err);
       }
     }
-  }, [hasHydrated, lastActiveDate]);
+  }, [lastActiveDate]);
 
   const handleResume = () => {
     const todayStr = new Date().toLocaleDateString('en-CA');
@@ -116,45 +73,21 @@ export default function Dashboard() {
   };
 
   useEffect(() => {
-    if (hasHydrated) {
-      try {
-        const today = new Date();
-        const isMonday = today.getDay() === 1;
-        const isFirstOfMonth = today.getDate() === 1;
-        const todayStr = today.toLocaleDateString('en-CA');
-        
-        if ((isMonday || isFirstOfMonth) && lastFreshStartPrompt !== todayStr) {
-          setShowFreshStart(true);
-        }
-      } catch (err) {
-        console.error('Error evaluating fresh start day:', err);
+    try {
+      const today = new Date();
+      const isMonday = today.getDay() === 1;
+      const isFirstOfMonth = today.getDate() === 1;
+      const todayStr = today.toLocaleDateString('en-CA');
+      
+      if ((isMonday || isFirstOfMonth) && lastFreshStartPrompt !== todayStr) {
+        setShowFreshStart(true);
       }
+    } catch (err) {
+      console.error('Error evaluating fresh start day:', err);
     }
-  }, [hasHydrated, lastFreshStartPrompt]);
+  }, [lastFreshStartPrompt]);
 
-  const [showEvening, setShowEvening] = useState(false);
-  const [isManagingAnchors, setIsManagingAnchors] = useState(false);
-  const [isManagingWidgets, setIsManagingWidgets] = useState(false);
-  const [isAuthLoading, setIsAuthLoading] = useState(true);
-  const [collapsedPillars, setCollapsedPillars] = useState<Record<string, boolean>>({});
-  const [userState, setUserState] = useState<{
-    user_id: string;
-    pause_tokens_remaining: number;
-    current_streak: number;
-    longest_streak: number;
-    lifetime_anchor_count: number;
-  } | null>(null);
-
-  const [anchorMetadata, setAnchorMetadata] = useState<Record<string, { is_non_negotiable: boolean; baseline_target: number | null }>>({});
-
-  const togglePillarCollapse = (pId: string, activeAnchors: any[]) => {
-    setCollapsedPillars(prev => ({
-      ...prev,
-      [pId]: !(prev[pId] !== undefined ? prev[pId] : (activeAnchors.every(a => a.completed)))
-    }));
-  };
-
-  // Dedicated useEffect to load remote user state and anchor metadata without modifying auth listener
+  // Dedicated useEffect to load remote user state and anchor metadata
   useEffect(() => {
     let active = true;
 
@@ -234,102 +167,23 @@ export default function Dashboard() {
       }
     }
 
-    if (!isAuthLoading) {
-      loadExtraData();
-    }
+    loadExtraData();
 
     return () => {
       active = false;
     };
-  }, [isAuthLoading, currentStreak]);
+  }, [currentStreak]);
 
-  useEffect(() => {
-    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN') {
-        setIsAuthLoading(false);
-        if (!session) {
-          router.push('/login');
-        } else {
-          // Silently sync missing cloud data to local store on boot
-          syncPullInitialState(useRitualStore.getState(), useRitualStore.setState);
-        }
-      } else if (event === 'SIGNED_OUT') {
-        router.push('/login');
-      }
-    });
-
-    return () => {
-      authListener.subscription.unsubscribe();
-    };
-  }, []);
-
-  if (!hasHydrated || isAuthLoading) {
-    return (
-      <div className="min-h-screen max-w-md mx-auto bg-transparent flex flex-col justify-center px-8 gap-6 sm:border-x sm:border-muted shadow-sm">
-        <div className="flex flex-col gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-muted/20 animate-pulse" />
-          <div className="h-6 w-3/4 bg-muted/20 rounded-md animate-pulse" />
-          <div className="h-4 w-1/2 bg-muted/20 rounded-md animate-pulse" />
-        </div>
-        <div className="flex flex-col gap-4 mt-6">
-          <div className="h-24 w-full bg-muted/20 rounded-2xl animate-pulse" />
-          <div className="h-24 w-full bg-muted/20 rounded-2xl animate-pulse" />
-          <div className="h-24 w-full bg-muted/20 rounded-2xl animate-pulse" />
-        </div>
-      </div>
-    );
-  }
   // daily string matcher
   const activeTodayAnchors = anchors.filter(a => isAnchorActiveForDay(a.frequency));
 
-  const getPulseDetails = () => {
-    const morningScore = morningCheckInDone ? 10 : 0;
-    const eveningScore = eveningCheckInDone ? 20 : 0;
-    let engineScore = 0;
+  const totalPersonalAnchors = activeTodayAnchors.length;
+  const completedPersonalAnchors = activeTodayAnchors.filter(a => a.completed).length;
 
-    // Group activeTodayAnchors by pillarId to determine unique active pillars (denominator)
-    const pillarsMap: Record<string, typeof activeTodayAnchors> = {};
-    activeTodayAnchors.forEach(anchor => {
-      if (!pillarsMap[anchor.pillarId]) {
-        pillarsMap[anchor.pillarId] = [];
-      }
-      pillarsMap[anchor.pillarId].push(anchor);
-    });
+  const totalCount = 2 + totalPersonalAnchors;
+  const completedCount = (feetOnFloorLogged ? 1 : 0) + (eveningCheckInDone ? 1 : 0) + completedPersonalAnchors;
 
-    const activePillarIds = Object.keys(pillarsMap);
-
-    if (activePillarIds.length > 0) {
-      let totalPillarsCompletion = 0;
-
-      activePillarIds.forEach(pId => {
-        const pillarAnchors = pillarsMap[pId];
-        let completedValueSum = 0;
-
-        pillarAnchors.forEach(a => {
-          if (a.completed) {
-            completedValueSum += a.usedBaseline ? 0.5 : 1.0;
-          }
-        });
-
-        const pillarCompletion = completedValueSum / pillarAnchors.length;
-        totalPillarsCompletion += pillarCompletion;
-      });
-
-      const averagePillarCompletion = totalPillarsCompletion / activePillarIds.length;
-      engineScore = Math.round(averagePillarCompletion * 70);
-    }
-
-    const totalScore = morningScore + eveningScore + engineScore;
-
-    return {
-      totalScore,
-      morningScore,
-      eveningScore,
-      engineScore
-    };
-  };
-
-  const allCompleted = activeTodayAnchors.length > 0 && activeTodayAnchors.every(a => a.completed);
+  const allCompleted = completedCount === totalCount;
 
   return (
     <main className="flex flex-col min-h-screen max-w-md mx-auto relative shadow-md bg-transparent sm:border-x sm:border-muted">
@@ -374,7 +228,7 @@ export default function Dashboard() {
       <header className="h-16 flex items-center justify-between px-6 border-b border-muted/50 bg-surface/90 backdrop-blur-md sticky top-0 z-30 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
         <span 
           suppressHydrationWarning
-          className="text-[10px] font-bold tracking-widest text-ink-secondary select-none w-20 text-left"
+          className="text-[10px] font-semibold tracking-widest text-ink-secondary select-none w-20 text-left"
         >
           {new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }).replace(',', '').toUpperCase()}
         </span>
@@ -386,19 +240,11 @@ export default function Dashboard() {
             height={28} 
             className="object-contain"
           />
-          <h1 className="text-xl font-bold tracking-widest text-ink-primary uppercase">
+          <h1 className="text-xl font-semibold tracking-widest text-ink-primary uppercase">
             Trelis
           </h1>
         </div>
-        <div className="w-20 flex justify-end gap-1.5">
-          <motion.button 
-            whileTap={{ scale: 0.95 }}
-            onClick={() => setIsManagingWidgets(true)}
-            className="w-8 h-8 flex items-center justify-center rounded-xl bg-canvas border border-muted/50 text-ink-secondary hover:text-accent-teal hover:border-accent-teal/30 hover:bg-surface hover:shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] transition-all duration-300 select-none cursor-pointer focus:outline-none"
-            title="Manage Widgets"
-          >
-            <SlidersHorizontal className="w-3.5 h-3.5" />
-          </motion.button>
+        <div className="w-20 flex justify-end">
           <motion.button 
             whileTap={{ scale: 0.95 }}
             onClick={() => router.push('/settings')}
@@ -414,7 +260,7 @@ export default function Dashboard() {
         {new Date().getDay() === 0 && useRitualStore.getState().lastWeeklyReviewDate !== new Date().toISOString().split('T')[0] && (
           <div className="mx-6 mt-4 p-4 rounded-2xl bg-[#2A7F7F]/5 border border-[#2A7F7F]/10 flex items-center justify-between gap-4 animate-in fade-in slide-in-from-top-2 duration-300">
             <div className="flex-1">
-              <span className="text-[9px] uppercase tracking-widest text-[#2A7F7F] font-bold block">Sunday Reflection</span>
+              <span className="text-[9px] uppercase tracking-widest text-[#2A7F7F] font-semibold block">Sunday Reflection</span>
               <h3 className="text-xs font-semibold text-ink-primary mt-1">Weekly Debrief Open</h3>
               <p className="text-[10px] text-ink-secondary mt-0.5 leading-relaxed">
                 Take 5 minutes to close out your week, evaluate slipups, and set your new anchors.
@@ -422,7 +268,7 @@ export default function Dashboard() {
             </div>
             <button
               onClick={() => router.push('/debrief')}
-              className="px-3.5 py-2 rounded-xl bg-[#2A7F7F] text-white text-[10px] font-bold shadow-md hover:bg-[#206363] transition-all whitespace-nowrap"
+              className="px-3.5 py-2 rounded-xl bg-[#2A7F7F] text-white text-[10px] font-semibold shadow-md hover:bg-[#206363] transition-all whitespace-nowrap"
             >
               Start
             </button>
@@ -433,31 +279,65 @@ export default function Dashboard() {
           <FeetOnFloor />
         ) : !eveningCheckInDone ? (
           <div className="flex flex-col animate-in fade-in duration-500">
-            {!morningCheckInDone ? (
-               <>
-                 <FeetOnFloor />
-                 <MorningCheckIn />
-               </>
-            ) : (
-              <div className="animate-in slide-in-from-bottom-2 fade-in duration-500 flex flex-col items-center gap-6 py-6 w-full">
+            <div className="animate-in slide-in-from-bottom-2 fade-in duration-500 flex flex-col items-center gap-6 py-6 w-full">
                   {/* Premium HUD Bar */}
                   <div className="w-full px-6">
                     <div className="w-full bg-surface rounded-3xl p-5 border border-muted/80 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05),0_1px_3px_rgba(0,0,0,0.02)] grid grid-cols-3 hover:shadow-[0_6px_24px_-4px_rgba(0,0,0,0.08)] transition-all">
-                      {/* Left: Streak */}
+                      {/* Left: Promises Kept */}
                       <div className="flex flex-col items-center justify-center text-center border-r border-muted/30 pr-1">
-                        <div className="w-9 h-9 rounded-xl bg-canvas flex items-center justify-center text-lg shadow-sm mb-1.5 select-none">
-                          {(userState?.current_streak ?? currentStreak ?? 0) >= 7 ? '🔥' : '🌱'}
+                        <div className="w-9 h-9 rounded-xl bg-accent-teal/10 flex items-center justify-center shadow-sm mb-1.5 select-none">
+                          <svg className="w-4 h-4 text-accent-teal" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                          </svg>
                         </div>
-                        <span className="text-xs font-bold text-ink-primary select-none leading-none">
-                          {userState?.current_streak ?? currentStreak ?? 0} {(userState?.current_streak ?? currentStreak ?? 0) === 1 ? 'Day' : 'Days'}
+                        <span className="text-sm font-semibold text-accent-teal select-none leading-none">
+                          {userState?.lifetime_anchor_count ?? 0}
                         </span>
                         <span className="text-[8px] tracking-wider text-ink-secondary uppercase font-semibold select-none mt-1.5 leading-none">
-                          Current Streak
+                          Promises Kept
                         </span>
                       </div>
 
-                      {/* Middle: Pause Tokens */}
-                      <div className="flex flex-col items-center justify-center text-center border-r border-muted/30 px-1 select-none">
+                      {/* Middle: Streak */}
+                      {(() => {
+                        const streakVal = userState?.current_streak ?? currentStreak ?? 0;
+                        const isPaused = isRestDay;
+                        return (
+                          <div className="flex flex-col items-center justify-center text-center border-r border-muted/30 px-1">
+                            <div className={`w-9 h-9 rounded-xl flex items-center justify-center shadow-sm mb-1.5 select-none transition-colors ${
+                              isPaused 
+                                ? 'bg-muted/30 text-ink-secondary' 
+                                : streakVal === 0 
+                                  ? 'bg-canvas text-ink-secondary' 
+                                  : 'bg-canvas text-accent-teal'
+                            }`}>
+                              {isPaused ? (
+                                <svg className="w-4 h-4 text-ink-secondary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <rect x="14" y="4" width="4" height="16" rx="1"/>
+                                  <rect x="6" y="4" width="4" height="16" rx="1"/>
+                                </svg>
+                              ) : streakVal === 0 ? (
+                                <svg className="w-4 h-4 text-accent-teal" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <path d="M2 22c1.25-6.7 5.85-11.8 11.75-12.7c-2.3 2.1-3.6 5-3.75 8.7c0 0 0 .1 0 0m2-15c1.4-1.2 3.4-1.7 5-1.1c.9.4 1.7.9 2 1.8c.2.6.2 1.3 0 1.9c-.4 1.1-1.3 2-2 2.6c-2.1 1.7-4.9 2.5-7.5 2.8"/>
+                                </svg>
+                              ) : (
+                                <svg className="w-4 h-4 text-accent-teal" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>
+                                </svg>
+                              )}
+                            </div>
+                            <span className={`text-xs font-semibold select-none leading-none ${isPaused ? 'text-ink-secondary' : 'text-ink-primary'}`}>
+                              {isPaused ? 'Resting' : streakVal === 0 ? 'Fresh Arc' : `${streakVal} Day${streakVal === 1 ? '' : 's'}`}
+                            </span>
+                            <span className="text-[8px] tracking-wider text-ink-secondary uppercase font-semibold select-none mt-1.5 leading-none">
+                              Current Streak
+                            </span>
+                          </div>
+                        );
+                      })()}
+
+                      {/* Right: Pause Tokens */}
+                      <div className="flex flex-col items-center justify-center text-center pl-1 select-none">
                         <div className="h-9 flex items-center justify-center mb-1.5">
                           <div className="flex gap-1.5">
                             {[1, 2, 3].map((num) => {
@@ -467,33 +347,29 @@ export default function Dashboard() {
                                 <span 
                                   key={num} 
                                   className={`h-2.5 w-2.5 rounded-full transition-all duration-300 ${
-                                    isActive 
-                                      ? 'bg-accent-teal shadow-[0_0_8px_rgba(42,127,127,0.5)]' 
-                                      : 'bg-muted'
+                                    isRestDay && num === remaining
+                                      ? 'bg-accent-teal/40 animate-pulse'
+                                      : isActive 
+                                        ? 'bg-accent-teal shadow-[0_0_8px_rgba(42,127,127,0.5)]' 
+                                        : 'bg-muted'
                                   }`}
                                 />
                               );
                             })}
                           </div>
                         </div>
-                        <span className="text-xs font-bold text-ink-primary leading-none">
-                          {userState?.pause_tokens_remaining ?? 2} Tokens
-                        </span>
+                        <button
+                          onClick={() => toggleRestDay()}
+                          className={`px-2 py-0.5 rounded-full text-[9px] font-semibold transition-colors leading-none border select-none ${
+                            isRestDay 
+                              ? 'bg-accent-teal/10 text-accent-teal border-accent-teal/20' 
+                              : 'bg-canvas text-ink-secondary border-muted/50 hover:bg-muted/20'
+                          }`}
+                        >
+                          {isRestDay ? 'Rest active' : 'Pause today'}
+                        </button>
                         <span className="text-[8px] tracking-wider text-ink-secondary uppercase font-semibold mt-1.5 leading-none">
-                          Pause Tokens
-                        </span>
-                      </div>
-
-                      {/* Right: Lifetime Completed */}
-                      <div className="flex flex-col items-center justify-center text-center pl-1">
-                        <div className="w-9 h-9 rounded-xl bg-canvas flex items-center justify-center text-md shadow-sm mb-1.5 select-none">
-                          🏆
-                        </div>
-                        <span className="text-xs font-bold text-ink-primary select-none leading-none">
-                          {userState?.lifetime_anchor_count ?? 0}
-                        </span>
-                        <span className="text-[8px] tracking-wider text-ink-secondary uppercase font-semibold select-none mt-1.5 leading-none">
-                          Lifetime Done
+                          {userState?.pause_tokens_remaining ?? 2} Tokens
                         </span>
                       </div>
                     </div>
@@ -504,17 +380,10 @@ export default function Dashboard() {
                   </div>
 
                   <div className="w-full px-6">
-                    {(() => {
-                      const { totalScore, morningScore, eveningScore, engineScore } = getPulseDetails();
-                      return (
-                        <PulseScore 
-                          score={totalScore} 
-                          morningScore={morningScore} 
-                          eveningScore={eveningScore} 
-                          engineScore={engineScore} 
-                        />
-                      );
-                    })()}
+                    <PulseScore 
+                      completedCount={completedCount} 
+                      totalCount={totalCount} 
+                    />
                   </div>
 
                  {isVisionEnabled && (
@@ -529,6 +398,7 @@ export default function Dashboard() {
                       <motion.div
                         initial={{ opacity: 0, y: 15 }}
                         animate={{ opacity: 1, y: 0 }}
+                        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
                         className="w-full bg-surface rounded-3xl p-8 border border-muted/80 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05),0_1px_3px_rgba(0,0,0,0.02)] flex flex-col items-center text-center gap-6 relative overflow-hidden animate-fade-in hover:shadow-[0_6px_24px_-4px_rgba(0,0,0,0.08)] transition-all"
                       >
                         {/* 1.2s Soft Sparkle Animations (No Confetti) */}
@@ -558,8 +428,10 @@ export default function Dashboard() {
                           })}
                         </div>
 
-                        <div className="w-16 h-16 rounded-full bg-accent-teal/5 flex items-center justify-center text-2xl select-none shadow-sm">
-                          🧘
+                        <div className="w-16 h-16 rounded-full bg-accent-teal/5 flex items-center justify-center select-none shadow-sm">
+                          <svg className="w-6 h-6 text-accent-teal" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="20 6 9 17 4 12" />
+                          </svg>
                         </div>
 
                         <div className="flex flex-col gap-2">
@@ -583,69 +455,16 @@ export default function Dashboard() {
                         </button>
                       </motion.div>
                     ) : (
-                      ['nutrition', 'movement', 'sleep', 'stress_mental', 'social', 'environment'].map(pId => {
-                        const meta = PILLAR_METADATA[pId];
-                        const pillarAnchors = activeTodayAnchors.filter(a => a.pillarId === pId);
-                        if (pillarAnchors.length === 0) return null;
-                        
-                        const isDone = pillarAnchors.every(a => a.completed);
-                        const isCollapsed = collapsedPillars[pId] !== undefined ? collapsedPillars[pId] : isDone;
-                        const completedCount = pillarAnchors.filter(a => a.completed).length;
-
-                        return (
-                          <div 
-                            key={pId} 
-                            className="w-full bg-surface rounded-3xl p-6 border border-muted/80 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05),0_1px_3px_rgba(0,0,0,0.02)] flex flex-col transition-all duration-300 hover:shadow-[0_6px_24px_-4px_rgba(0,0,0,0.08)]"
-                          >
-                            {/* Pillar Header with lattice-stripe */}
-                            <div 
-                              onClick={() => togglePillarCollapse(pId, pillarAnchors)} 
-                              className="flex justify-between items-end cursor-pointer select-none group"
-                            >
-                              <div>
-                                <div className="flex items-center gap-2">
-                                  <span className="text-lg">{meta.icon}</span>
-                                  <h4 className="text-lg font-semibold tracking-wide text-ink-primary group-hover:text-accent-teal transition-colors">
-                                    {meta.title}
-                                  </h4>
-                                </div>
-                                {/* 4px lattice-stripe under title */}
-                                <div className={`h-[4px] w-12 rounded-full mt-1.5 transition-all ${meta.stripeColor} ${isDone ? 'opacity-40 w-8' : 'w-12'}`} />
-                              </div>
-                              
-                              <div className="flex items-center gap-2">
-                                <span className="text-xs font-semibold text-ink-secondary">
-                                  {completedCount}/{pillarAnchors.length}
-                                </span>
-                                <ChevronDown 
-                                  className={`w-4 h-4 text-ink-secondary transition-transform duration-300 ${isCollapsed ? 'rotate-0' : 'rotate-180'}`} 
-                                />
-                              </div>
-                            </div>
-
-                            {/* Collapsible content area */}
-                            <AnimatePresence initial={false}>
-                              {!isCollapsed && (
-                                <motion.div
-                                  initial={{ height: 0, opacity: 0 }}
-                                  animate={{ height: 'auto', opacity: 1 }}
-                                  exit={{ height: 0, opacity: 0 }}
-                                  transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                                  className="overflow-hidden flex flex-col gap-2.5 pt-3"
-                                >
-                                  {pillarAnchors.map(anchor => (
-                                    <AnchorCard 
-                                      key={anchor.id} 
-                                      anchor={anchor} 
-                                      metadata={anchorMetadata[anchor.id]} 
-                                    />
-                                  ))}
-                                </motion.div>
-                              )}
-                            </AnimatePresence>
-                          </div>
-                        );
-                      })
+                      <div className="flex flex-col gap-3">
+                        <TheArcCard />
+                        {activeTodayAnchors.map(anchor => (
+                          <AnchorCard 
+                            key={anchor.id} 
+                            anchor={anchor} 
+                            metadata={anchorMetadata[anchor.id]} 
+                          />
+                        ))}
+                      </div>
                     )}
 
                     <button
@@ -655,39 +474,25 @@ export default function Dashboard() {
                       + Add New Anchor
                     </button>
 
-                    {isNotesEnabled && (
-                      <NotesOfLife />
-                    )}
                     <QuietPartner />
-                 </div>
-
-                 {!showEvening ? (
-                   <button 
-                     onClick={() => setShowEvening(true)}
-                     className="mt-8 text-sm text-ink-secondary hover:text-ink-primary transition-colors border-b border-transparent hover:border-ink-primary pb-1"
-                   >
-                     Begin Evening Wind-down
-                   </button>
-                 ) : (
-                   <div className="w-full px-6">
-                     <EveningCheckIn />
-                   </div>
-                 )}
+                  </div>
               </div>
-            )}
           </div>
         ) : (
           <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
             className="flex flex-col items-center justify-center h-[70vh] px-6 text-center"
           >
             <div className="w-16 h-16 rounded-full bg-accent-teal/10 flex items-center justify-center mb-6">
-              <span className="text-2xl">🌙</span>
+              <svg className="w-6 h-6 text-accent-teal" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+              </svg>
             </div>
-            <h2 className="text-ink-primary text-xl font-medium mb-2">Day Complete</h2>
+            <h2 className="text-ink-primary text-xl font-semibold mb-2">Day Complete</h2>
             <p className="text-ink-secondary text-sm">
-              Your thoughts are parked. <br/> Nothing carries over to the bed. <br/> See you tomorrow.
+              Your thoughts are parked. <br /> Nothing carries over to the bed. <br /> See you tomorrow.
             </p>
           </motion.div>
         )}
@@ -696,12 +501,88 @@ export default function Dashboard() {
       <AnimatePresence>
         {isManagingAnchors && <AnchorManager onClose={() => setIsManagingAnchors(false)} />}
       </AnimatePresence>
-      <AnimatePresence>
-        {isManagingWidgets && <WidgetManager onClose={() => setIsManagingWidgets(false)} />}
-      </AnimatePresence>
+
       <AnimatePresence>
         {showGentleReEntry && <GentleReEntryScreen onResume={handleResume} />}
       </AnimatePresence>
     </main>
   );
+}
+
+export default function Page() {
+  const supabase = createClient();
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [hasHydrated, setHasHydrated] = useState(false);
+
+  useEffect(() => {
+    if (useRitualStore.persist.hasHydrated()) {
+      setHasHydrated(true);
+    } else {
+      const unsub = useRitualStore.persist.onFinishHydration(() => {
+        setHasHydrated(true);
+      });
+      return () => unsub();
+    }
+  }, []);
+
+  useEffect(() => {
+    // 1. Initial check
+    async function checkInitialSession() {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          setIsAuthenticated(true);
+          syncPullInitialState(useRitualStore.getState(), useRitualStore.setState);
+        } else {
+          setIsAuthenticated(false);
+        }
+      } catch (err) {
+        console.error('Error fetching initial session:', err);
+        setIsAuthenticated(false);
+      } finally {
+        setIsAuthLoading(false);
+      }
+    }
+
+    checkInitialSession();
+
+    // 2. Set up auth listener
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session) {
+        setIsAuthenticated(true);
+        syncPullInitialState(useRitualStore.getState(), useRitualStore.setState);
+      } else {
+        setIsAuthenticated(false);
+      }
+      setIsAuthLoading(false);
+    });
+
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
+  }, []);
+
+  if (!hasHydrated || isAuthLoading) {
+    return (
+      <div className="min-h-screen max-w-md mx-auto bg-transparent flex flex-col justify-center px-8 gap-6 sm:border-x sm:border-muted shadow-sm">
+        <div className="flex flex-col gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-muted/20 animate-pulse" />
+          <div className="h-6 w-3/4 bg-muted/20 rounded-md animate-pulse" />
+          <div className="h-4 w-1/2 bg-muted/20 rounded-md animate-pulse" />
+        </div>
+        <div className="flex flex-col gap-4 mt-6">
+          <div className="h-24 w-full bg-muted/20 rounded-2xl animate-pulse" />
+          <div className="h-24 w-full bg-muted/20 rounded-2xl animate-pulse" />
+          <div className="h-24 w-full bg-muted/20 rounded-2xl animate-pulse" />
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <LandingPage />;
+  }
+
+  return <Dashboard />;
 }
