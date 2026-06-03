@@ -366,6 +366,12 @@ npx cap open android
 
 ---
 
+### D. Hotfixes & Database Wiping (v2.0.0 Polish)
+1. **Morning Tap Time Format**: Modified `TheArcCard.tsx` to parse the raw ISO 8601 strings stored in the database/Zustand store and format them nicely to standard localized hours (e.g. `7:33 AM`), utilizing a client-side mount state check (`mounted` boolean) to completely eliminate React hydration warnings.
+2. **Database Cleansing & Blank Slate**: Executed PostgreSQL scripts to delete all records from `public` tables (`anchor_logs`, `daily_rituals`, `user_anchors`, etc.) and all users from `auth.users` to provide a true "Day 1" blank slate.
+
+---
+
 ## 8. GOOGLE PLAY COMPLIANCE & DISCLAIMERS
 
 ### Medical Disclaimer
