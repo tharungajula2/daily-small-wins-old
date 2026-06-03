@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
 import { useRitualStore } from '@/store/useRitualStore';
 import { Moon, Sun, Shield, Check, ChevronDown, ChevronUp } from 'lucide-react';
+import { format } from 'date-fns';
 
 export default function TheArcCard() {
   const {
@@ -21,6 +22,26 @@ export default function TheArcCard() {
   const [isExpanded, setIsExpanded] = useState(false);
   const [win, setWin] = useState('');
   const [parkingLot, setParkingLot] = useState('');
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const getWakeTimeDisplay = () => {
+    if (!feetOnFloorLogged) return 'Tap on waking';
+    if (!wakeTime) return 'Checked in';
+    if (!mounted) return 'Checked in';
+    try {
+      const date = new Date(wakeTime);
+      if (!isNaN(date.getTime())) {
+        return `Checked in at ${format(date, 'h:mm a')}`;
+      }
+    } catch (e) {
+      // fallback
+    }
+    return `Checked in at ${wakeTime}`;
+  };
 
   const handleCloseDay = async () => {
     try {
@@ -59,7 +80,7 @@ export default function TheArcCard() {
             <span className="text-[10px] font-semibold uppercase tracking-wider">Morning Tap</span>
           </div>
           <span className="text-xs font-semibold text-ink-primary break-words leading-relaxed">
-            {feetOnFloorLogged ? `Checked in at ${wakeTime}` : 'Tap on waking'}
+            {getWakeTimeDisplay()}
           </span>
           <span className="text-[9px] text-ink-secondary leading-relaxed break-words">
             Target wake: {wakeWindow}
