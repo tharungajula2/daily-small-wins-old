@@ -364,11 +364,11 @@ npx cap sync
 npx cap open android
 ```
 
----
-
 ### D. Hotfixes & Database Wiping (v2.0.0 Polish)
 1. **Morning Tap Time Format**: Modified `TheArcCard.tsx` to parse the raw ISO 8601 strings stored in the database/Zustand store and format them nicely to standard localized hours (e.g. `7:33 AM`), utilizing a client-side mount state check (`mounted` boolean) to completely eliminate React hydration warnings.
 2. **Database Cleansing & Blank Slate**: Executed PostgreSQL scripts to delete all records from `public` tables (`anchor_logs`, `daily_rituals`, `user_anchors`, etc.) and all users from `auth.users` to provide a true "Day 1" blank slate.
+3. **PWA Landing Page & Circadian Mapping**: Rewrote `LandingPage.tsx` using exact product copy and integrated the `useCircadian` provider to ensure colors adapt beautifully to the time of day.
+4. **Production SEO & Open Graph (OG) Integration**: Upgraded `src/app/layout.tsx` metadata with complete OG tags, separate `Viewport` structure for light/dark theme color media queries, and configured `/manifest.json` for proper iOS and Android home screen installability.
 
 ---
 
