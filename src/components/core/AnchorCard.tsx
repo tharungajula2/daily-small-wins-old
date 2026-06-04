@@ -19,12 +19,18 @@ export default function AnchorCard({
   const toggleSubItem = useRitualStore((state) => state.toggleSubItem);
   const anchors = useRitualStore((state) => state.anchors);
   const focusThreeIds = useRitualStore((state) => state.focusThreeIds);
+  const addGather = useRitualStore((state) => state.addGather);
+  const deleteGather = useRitualStore((state) => state.deleteGather);
   
   const isFocusThreeActive = focusThreeIds && focusThreeIds.length > 0;
   const isMuted = isFocusThreeActive && !focusThreeIds.includes(anchor.id) && !anchor.completed;
   
   const [justCompleted, setJustCompleted] = useState(false);
   const [isTooltipOpen, setIsTooltipOpen] = useState(false);
+  const [isGatherDrawerOpen, setIsGatherDrawerOpen] = useState(false);
+  const [gatherLabel, setGatherLabel] = useState('');
+  const [gatherTagsInput, setGatherTagsInput] = useState('');
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
   
   const getTooltipText = (title: string) => {
     const normalized = title.toLowerCase().trim();
@@ -61,6 +67,43 @@ export default function AnchorCard({
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [reflectionInput, setReflectionInput] = useState('');
   const [currentPrompt, setCurrentPrompt] = useState('');
+
+  const handleAddGather = async () => {
+    if (!gatherLabel.trim() && selectedTags.length === 0 && !gatherTagsInput.trim()) return;
+    try { await Haptics.impact({ style: ImpactStyle.Light }); } catch (e) {}
+    
+    const manualTags = gatherTagsInput
+      .split(',')
+      .map(t => t.trim().replace(/^#/, ''))
+      .filter(t => t.length > 0);
+      
+    const allTags = Array.from(new Set([...selectedTags, ...manualTags]));
+      
+    addGather(anchor.id, gatherLabel.trim() || undefined, allTags);
+    setGatherLabel('');
+    setGatherTagsInput('');
+    setSelectedTags([]);
+  };
+
+  const getSuggestedTags = (title: string) => {
+    const normalized = title.toLowerCase().trim();
+    if (normalized.includes('water') || normalized.includes('hydrate')) {
+      return ['hydration', 'glass', 'bottle', 'morning'];
+    }
+    if (normalized.includes('step') || normalized.includes('walk') || normalized.includes('run')) {
+      return ['cardio', 'walk', 'sunlight', 'active'];
+    }
+    if (normalized.includes('gym') || normalized.includes('workout') || normalized.includes('lift')) {
+      return ['strength', 'fitness', 'lifting', 'gym'];
+    }
+    if (normalized.includes('read') || normalized.includes('book') || normalized.includes('study')) {
+      return ['learning', 'focus', 'mind', 'growth'];
+    }
+    return ['active', 'focus', 'health', 'daily'];
+  };
+  
+  const suggestedTags = getSuggestedTags(anchor.title);
+  const todayGathers = anchor.gathers || [];
 
   // Drawer state for Checklist Stack Type
   const [isStackDrawerOpen, setIsStackDrawerOpen] = useState(false);
@@ -152,7 +195,7 @@ export default function AnchorCard({
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2.5 flex-wrap">
               <h4 className="text-sm font-semibold text-ink-primary leading-relaxed break-words">
-                {anchor.title}
+                {anchor.codename || anchor.title}
               </h4>
               <span className="bg-accent-teal/10 text-accent-teal text-[8px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full flex items-center gap-1 select-none">
                 <span className="text-[9px]">✓</span> Logged
@@ -172,12 +215,20 @@ export default function AnchorCard({
               Reflection Logged
             </p>
           </div>
-          <button
-            onClick={handleTap} // Untoggles it
-            className="text-[10px] tracking-wider uppercase font-semibold text-accent-teal hover:text-accent-teal/80 transition-colors ml-4 flex-shrink-0"
-          >
-            Reset
-          </button>
+          <div className="flex items-center gap-3 flex-shrink-0 ml-4">
+            <button
+              onClick={() => setIsGatherDrawerOpen(true)}
+              className="px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-accent-teal border border-accent-teal/20 rounded-md hover:bg-accent-teal/5 transition-all select-none cursor-pointer focus:outline-none bg-surface"
+            >
+              + Log
+            </button>
+            <button
+              onClick={handleTap} // Untoggles it
+              className="text-[10px] tracking-wider uppercase font-semibold text-accent-teal hover:text-accent-teal/80 transition-colors flex-shrink-0"
+            >
+              Reset
+            </button>
+          </div>
         </div>
 
         <div className="pl-3 border-l-2 border-accent-teal/40 py-0.5">
@@ -227,7 +278,7 @@ export default function AnchorCard({
                   ? (anchor.usedBaseline ? 'text-accent-amber' : 'text-success line-through') 
                   : 'text-ink-primary'
               }`}>
-                {anchor.title}
+                {anchor.codename || anchor.title}
               </p>
               {tooltipText && (
                 <button
@@ -258,27 +309,38 @@ export default function AnchorCard({
             </p>
           </div>
           
-          <motion.button
-            whileTap={{ scale: 0.9 }}
-            onClick={(e) => handleTap(e)}
-            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-            className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-colors flex-shrink-0 ${
-              anchor.completed 
-                ? (anchor.usedBaseline ? 'bg-accent-amber border-accent-amber' : 'bg-success border-success') 
-                : 'border-muted hover:border-accent-teal/50'
-            }`}
-          >
-            {anchor.completed && (
-              <motion.span 
-                initial={{ scale: 0 }} 
-                animate={{ scale: 1 }} 
-                transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                className="text-surface text-sm"
-              >
-                ✓
-              </motion.span>
-            )}
-          </motion.button>
+          <div className="flex items-center gap-3 flex-shrink-0">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsGatherDrawerOpen(true);
+              }}
+              className="px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-accent-teal border border-accent-teal/20 rounded-md hover:bg-accent-teal/5 transition-all select-none cursor-pointer focus:outline-none"
+            >
+              + Log
+            </button>
+            <motion.button
+              whileTap={{ scale: 0.9 }}
+              onClick={(e) => handleTap(e)}
+              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+              className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-colors flex-shrink-0 ${
+                anchor.completed 
+                  ? (anchor.usedBaseline ? 'bg-accent-amber border-accent-amber' : 'bg-success border-success') 
+                  : 'border-muted hover:border-accent-teal/50'
+              }`}
+            >
+              {anchor.completed && (
+                <motion.span 
+                  initial={{ scale: 0 }} 
+                  animate={{ scale: 1 }} 
+                  transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                  className="text-surface text-sm"
+                >
+                  ✓
+                </motion.span>
+              )}
+            </motion.button>
+          </div>
         </div>
 
         <AnimatePresence>
@@ -341,7 +403,7 @@ export default function AnchorCard({
                   REFLECTION
                 </p>
                 <h3 className="text-lg font-semibold text-ink-primary mt-1">
-                  {anchor.title}
+                  {anchor.codename || anchor.title}
                 </h3>
               </div>
 
@@ -426,7 +488,7 @@ export default function AnchorCard({
                 </p>
                 <div className="flex items-center justify-between mt-1">
                   <h3 className="text-lg font-semibold text-ink-primary">
-                    {anchor.title}
+                    {anchor.codename || anchor.title}
                   </h3>
                   <span className="text-xs font-semibold text-accent-teal bg-accent-teal/10 px-2.5 py-1 rounded-full">
                     {progressText}
@@ -475,6 +537,177 @@ export default function AnchorCard({
                 className="w-full py-3.5 text-xs uppercase tracking-widest font-semibold bg-surface border border-muted rounded-xl text-ink-primary hover:bg-canvas transition-all active:scale-98 mt-2"
               >
                 Close Checklist
+              </button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+      {/* Gather Transaction Log Drawer */}
+      <AnimatePresence>
+        {isGatherDrawerOpen && (
+          <div className="fixed inset-0 z-50 flex items-end justify-center">
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+              onClick={() => setIsGatherDrawerOpen(false)}
+              className="absolute inset-0 bg-black/40 backdrop-blur-xs"
+            />
+
+            {/* Content Drawer */}
+            <motion.div
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+              className="relative w-full max-w-md bg-canvas rounded-t-3xl border-t border-muted shadow-2xl p-6 flex flex-col gap-5 z-10 pb-10"
+            >
+              {/* Drag Handle */}
+              <div className="w-12 h-1 bg-muted rounded-full self-center -mt-2 mb-2" />
+
+              <div>
+                <p className="text-[10px] tracking-widest font-semibold text-accent-teal uppercase">
+                  TRANSACTION LOGGER
+                </p>
+                <h3 className="text-lg font-semibold text-ink-primary mt-1">
+                  Gather: {anchor.codename || anchor.title}
+                </h3>
+                {anchor.keepDefinition && (
+                  <p className="text-xs text-ink-secondary mt-0.5">
+                    Target Keep: {anchor.keepDefinition}
+                  </p>
+                )}
+              </div>
+
+              {/* Input Fields */}
+              <div className="flex flex-col gap-3">
+                <div>
+                  <label className="text-[10px] font-semibold uppercase tracking-widest text-ink-tertiary block mb-1">
+                    Value / Note
+                  </label>
+                  <input
+                    type="text"
+                    value={gatherLabel}
+                    onChange={(e) => setGatherLabel(e.target.value)}
+                    placeholder="e.g. 500ml, 8000 steps, cold plunge done"
+                    className="w-full p-3 rounded-xl border border-muted bg-surface text-sm text-ink-primary focus:outline-none focus:border-accent-teal transition-all"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[10px] font-semibold uppercase tracking-widest text-ink-tertiary block mb-1">
+                    Tags (Optional, comma separated)
+                  </label>
+                  <input
+                    type="text"
+                    value={gatherTagsInput}
+                    onChange={(e) => setGatherTagsInput(e.target.value)}
+                    placeholder="e.g. morning, outdoor"
+                    className="w-full p-3 rounded-xl border border-muted bg-surface text-sm text-ink-primary focus:outline-none focus:border-accent-teal transition-all"
+                  />
+                </div>
+
+                {/* Suggested Quick Tags */}
+                <div>
+                  <p className="text-[9px] text-ink-tertiary font-semibold uppercase tracking-wider mb-1.5">
+                    Quick Tags
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {suggestedTags.map((tag) => {
+                      const isSelected = selectedTags.includes(tag);
+                      return (
+                        <button
+                          key={tag}
+                          type="button"
+                          onClick={() => {
+                            if (isSelected) {
+                              setSelectedTags(selectedTags.filter(t => t !== tag));
+                            } else {
+                              setSelectedTags([...selectedTags, tag]);
+                            }
+                          }}
+                          className={`px-2 py-1 text-[10px] font-medium rounded-md border transition-all ${
+                            isSelected
+                              ? 'bg-accent-teal/10 text-accent-teal border-accent-teal/30 font-semibold'
+                              : 'bg-surface border-muted/80 text-ink-secondary hover:border-ink-secondary/35'
+                          }`}
+                        >
+                          #{tag}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              {/* Log Button */}
+              <button
+                onClick={handleAddGather}
+                disabled={!gatherLabel.trim() && selectedTags.length === 0 && !gatherTagsInput.trim()}
+                className={`w-full py-3 rounded-xl text-xs uppercase tracking-widest font-semibold transition-all active:scale-98 ${
+                  gatherLabel.trim() || selectedTags.length > 0 || gatherTagsInput.trim()
+                    ? 'bg-accent-teal text-surface hover:bg-accent-teal/95'
+                    : 'bg-ink-tertiary/20 text-ink-tertiary cursor-not-allowed'
+                }`}
+              >
+                Log Entry
+              </button>
+
+              {/* Today's Gathers List */}
+              <div className="flex flex-col gap-2 pt-2 border-t border-muted/50">
+                <label className="text-[10px] font-semibold uppercase tracking-widest text-ink-tertiary">
+                  Today's Transaction Logs
+                </label>
+                {todayGathers.length > 0 ? (
+                  <div className="space-y-2 max-h-36 overflow-y-auto pr-1">
+                    {todayGathers.map((g) => (
+                      <div key={g.id} className="flex items-center justify-between p-3 bg-surface border border-muted/65 rounded-xl">
+                        <div className="flex flex-col gap-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-ink-primary font-semibold break-words">
+                              {g.label || 'Logged'}
+                            </span>
+                            <span className="text-[9px] text-ink-tertiary">
+                              {g.createdAt ? new Date(g.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                            </span>
+                          </div>
+                          {g.tags && g.tags.length > 0 && (
+                            <div className="flex flex-wrap gap-1">
+                              {g.tags.map(t => (
+                                <span key={t} className="text-[9px] text-accent-teal/80 bg-accent-teal/5 border border-accent-teal/10 px-1 rounded-sm">
+                                  #{t}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        <button
+                          onClick={async () => {
+                            try { await Haptics.impact({ style: ImpactStyle.Medium }); } catch (e) {}
+                            deleteGather(anchor.id, g.id);
+                          }}
+                          className="text-xs text-error hover:text-error/80 px-2 font-semibold uppercase tracking-wider text-[10px]"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-3 bg-surface border border-dashed border-muted rounded-xl">
+                    <p className="text-xs text-ink-tertiary">No logs captured today yet.</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Close Drawer Button */}
+              <button
+                onClick={() => setIsGatherDrawerOpen(false)}
+                className="w-full py-3 text-xs uppercase tracking-widest font-semibold border border-muted bg-surface rounded-xl text-ink-secondary hover:text-ink-primary transition-all active:scale-98"
+              >
+                Close Transaction Logger
               </button>
             </motion.div>
           </div>

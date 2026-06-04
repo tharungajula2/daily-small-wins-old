@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
 import { useRitualStore } from '@/store/useRitualStore';
+import { MORNING_INTENTIONS } from '@/utils/prompts';
 
 export default function VisionPriming() {
   const { visionText, setVisionText, hasSeenVisionTooltip, dismissTooltip } = useRitualStore();
@@ -58,6 +59,24 @@ export default function VisionPriming() {
               onChange={(e) => setInputValue(e.target.value)}
               className="w-full bg-surface border border-muted rounded-xl p-4 text-sm text-ink-primary focus:outline-none focus:border-accent-teal transition-colors min-h-[100px] mb-3 leading-relaxed"
             />
+            {/* Morning Intention Suggestions */}
+            <div className="mb-4">
+              <span className="block text-[9px] uppercase tracking-widest text-ink-tertiary font-bold mb-1.5 ml-1">
+                Suggested Intentions
+              </span>
+              <div className="flex flex-wrap gap-1.5">
+                {MORNING_INTENTIONS.map((intention) => (
+                  <button
+                    key={intention}
+                    type="button"
+                    onClick={() => setInputValue(intention)}
+                    className="px-2 py-1 text-[10px] bg-canvas border border-muted/80 text-ink-secondary rounded-md hover:border-accent-teal transition-all text-left"
+                  >
+                    {intention}
+                  </button>
+                ))}
+              </div>
+            </div>
             <button
               onClick={handleSave}
               className="w-full py-2.5 rounded-lg text-sm font-semibold bg-ink-primary text-surface transition-all"
@@ -65,6 +84,7 @@ export default function VisionPriming() {
               Lock Vision
             </button>
           </motion.div>
+
         ) : (
           <motion.div 
             key="view" 

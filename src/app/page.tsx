@@ -6,14 +6,13 @@ import FeetOnFloor from '@/components/rituals/FeetOnFloor';
 import PulseScore from '@/components/core/PulseScore';
 import AnchorCard from '@/components/core/AnchorCard';
 import TheArcCard from '@/components/rituals/TheArcCard';
-import { useRitualStore } from '@/store/useRitualStore';
+import { useRitualStore, getLifetimeKeeps } from '@/store/useRitualStore';
 import { syncPullInitialState } from '@/lib/supabase/syncEngine';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Settings } from 'lucide-react';
 import AnchorManager from '@/components/widgets/AnchorManager';
 import VisionPriming from '@/components/widgets/VisionPriming';
 import QuietPartner from '@/components/core/QuietPartner';
-import SundayReviewModal from '@/components/core/SundayReviewModal';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import { isAnchorActiveForDay } from '@/utils/dayMatcher';
@@ -22,6 +21,7 @@ import { evaluateYesterdayStreak } from '@/utils/streakEngine';
 import GentleReEntryScreen from '@/components/core/GentleReEntryScreen';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
 import LandingPage from '@/components/core/LandingPage';
+import TrellisGarden from '@/components/core/TrellisGarden';
 
 function Dashboard() {
   const supabase = createClient();
@@ -31,6 +31,8 @@ function Dashboard() {
     isVisionEnabled, currentStreak, lastActiveDate, setLastActiveDate,
     lastFreshStartPrompt, setLastFreshStartPrompt, isRestDay, toggleRestDay
   } = useRitualStore();
+  
+  const lifetimeKeeps = useRitualStore(state => getLifetimeKeeps(state));
   
   const [showGentleReEntry, setShowGentleReEntry] = useState(false);
   const [showFreshStart, setShowFreshStart] = useState(false);
@@ -45,6 +47,31 @@ function Dashboard() {
   } | null>(null);
 
   const [anchorMetadata, setAnchorMetadata] = useState<Record<string, { is_non_negotiable: boolean; baseline_target: number | null }>>({});
+
+  type CircadianPhase = 'morning' | 'day' | 'evening' | 'night';
+  const [circadianPhase, setCircadianPhase] = useState<CircadianPhase>('day');
+
+  useEffect(() => {
+    const getPhase = (): CircadianPhase => {
+      const hours = new Date().getHours();
+      if (hours >= 5 && hours < 10) return 'morning';
+      if (hours >= 10 && hours < 17) return 'day';
+      if (hours >= 17 && hours < 21) return 'evening';
+      return 'night';
+    };
+    setCircadianPhase(getPhase());
+    const interval = setInterval(() => {
+      setCircadianPhase(getPhase());
+    }, 60000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const phaseGradients: Record<CircadianPhase, string> = {
+    morning: 'from-[#FFFDF9] via-[#F7F6F2] to-[#F3EFE0] dark:from-[#1C2020] dark:via-[#1E1B17] dark:to-[#251D18]',
+    day: 'from-[#F2F7F7] via-[#F7F6F2] to-[#EFF5F5] dark:from-[#181F1F] dark:via-[#1E1B17] dark:to-[#1C1F1F]',
+    evening: 'from-[#FAF4EC] via-[#F7F6F2] to-[#ECE5D8] dark:from-[#251D18] dark:via-[#1E1B17] dark:to-[#1A1A1E]',
+    night: 'from-[#F3EFE9] via-[#F7F6F2] to-[#E3DDD1] dark:from-[#1A1A1E] dark:via-[#1E1B17] dark:to-[#121214]'
+  };
 
   useEffect(() => {
     if (lastActiveDate) {
@@ -116,6 +143,20 @@ function Dashboard() {
           localStorage.setItem(lastEvalKey, todayStr);
         }
 
+        // Fetch baseline historical counts (up to today, excluding today)
+        const [keepsBeforeToday, gathersBeforeToday, ritualsBeforeToday] = await Promise.all([
+          supabase.from('anchor_keeps').select('*', { count: 'exact', head: true }).eq('user_id', uid).lt('log_date', todayStr),
+          supabase.from('anchor_gathers').select('*', { count: 'exact', head: true }).eq('user_id', uid).lt('log_date', todayStr),
+          supabase.from('daily_rituals').select('*', { count: 'exact', head: true }).eq('user_id', uid).lt('date', todayStr)
+        ]);
+
+        const historicalKeeps = (keepsBeforeToday.count || 0) + (ritualsBeforeToday.count || 0);
+        const historicalGathers = gathersBeforeToday.count || 0;
+        
+        if (active) {
+          state.setHistoricalCounts(historicalKeeps, historicalGathers);
+        }
+
         // 1. Fetch user state
         const { data: stateData, error: stateErr } = await supabase
           .from('user_state')
@@ -175,7 +216,7 @@ function Dashboard() {
   }, [currentStreak]);
 
   // daily string matcher
-  const activeTodayAnchors = anchors.filter(a => isAnchorActiveForDay(a.frequency));
+  const activeTodayAnchors = anchors.filter(a => a.isActive !== false && isAnchorActiveForDay(a.frequency));
 
   const totalPersonalAnchors = activeTodayAnchors.length;
   const completedPersonalAnchors = activeTodayAnchors.filter(a => a.completed).length;
@@ -186,8 +227,7 @@ function Dashboard() {
   const allCompleted = completedCount === totalCount;
 
   return (
-    <main className="flex flex-col min-h-screen max-w-md mx-auto relative shadow-md bg-transparent sm:border-x sm:border-muted">
-      <SundayReviewModal />
+    <main className={`flex flex-col min-h-screen max-w-md mx-auto relative shadow-md bg-gradient-to-b ${phaseGradients[circadianPhase]} sm:border-x sm:border-muted transition-all duration-1000`}>
       
       <AnimatePresence>
         {showFreshStart && (
@@ -226,12 +266,20 @@ function Dashboard() {
       </AnimatePresence>
       
       <header className="h-16 flex items-center justify-between px-6 border-b border-muted/50 bg-surface/90 backdrop-blur-md sticky top-0 z-30 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
-        <span 
-          suppressHydrationWarning
-          className="text-[10px] font-semibold tracking-widest text-ink-secondary select-none w-20 text-left"
-        >
-          {new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }).replace(',', '').toUpperCase()}
-        </span>
+        <div className="flex flex-col text-left select-none w-24">
+          <span 
+            suppressHydrationWarning
+            className="text-[9px] font-semibold tracking-widest text-ink-secondary leading-none"
+          >
+            {new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }).replace(',', '').toUpperCase()}
+          </span>
+          <span className="text-[8px] uppercase tracking-wider text-accent-teal font-semibold mt-1 flex items-center gap-1 leading-none select-none">
+            {circadianPhase === 'morning' && '🌅 Dawn'}
+            {circadianPhase === 'day' && '☀️ Meridian'}
+            {circadianPhase === 'evening' && '🌆 Dusk'}
+            {circadianPhase === 'night' && '🌌 Vigil'}
+          </span>
+        </div>
         <div className="flex items-center gap-2">
           <Image 
             src="/logo-transparent.png" 
@@ -257,7 +305,7 @@ function Dashboard() {
       </header>
 
       <div className="flex-1 overflow-y-auto pb-20">
-        {new Date().getDay() === 0 && useRitualStore.getState().lastWeeklyReviewDate !== new Date().toISOString().split('T')[0] && (
+        {new Date().getDay() === 0 && useRitualStore.getState().lastWeeklyReviewDate !== new Date().toLocaleDateString('en-CA') && (
           <div className="mx-6 mt-4 p-4 rounded-2xl bg-[#2A7F7F]/5 border border-[#2A7F7F]/10 flex items-center justify-between gap-4 animate-in fade-in slide-in-from-top-2 duration-300">
             <div className="flex-1">
               <span className="text-[9px] uppercase tracking-widest text-[#2A7F7F] font-semibold block">Sunday Reflection</span>
@@ -291,7 +339,7 @@ function Dashboard() {
                           </svg>
                         </div>
                         <span className="text-sm font-semibold text-accent-teal select-none leading-none">
-                          {userState?.lifetime_anchor_count ?? 0}
+                          {lifetimeKeeps}
                         </span>
                         <span className="text-[8px] tracking-wider text-ink-secondary uppercase font-semibold select-none mt-1.5 leading-none">
                           Promises Kept
@@ -386,6 +434,7 @@ function Dashboard() {
                     />
                   </div>
 
+
                  {isVisionEnabled && (
                    <div className="w-full px-6">
                      <VisionPriming />
@@ -473,6 +522,8 @@ function Dashboard() {
                     >
                       + Add New Anchor
                     </button>
+
+                    <TrellisGarden />
 
                     <QuietPartner />
                   </div>

@@ -5,12 +5,14 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
 import { useRitualStore } from '@/store/useRitualStore';
+import { MORNING_TAP_LINES } from '@/utils/prompts';
 
 export default function FeetOnFloor() {
   const [isAnimating, setIsAnimating] = useState(false);
+  const [phraseIndex, setPhraseIndex] = useState(5); // Default to "I'm here. Still breathing."
   
   // Zustand state
-  const { feetOnFloorLogged, currentStreak, markFeetOnFloor } = useRitualStore();
+  const { feetOnFloorLogged, currentStreak, markFeetOnFloor, morningTapText, setMorningTapText } = useRitualStore();
 
   const todayDate = format(new Date(), 'EEEE, MMMM do');
   const encouragement = "Begin.";
@@ -77,9 +79,18 @@ export default function FeetOnFloor() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0, y: 4 }}
-              className="text-ink-primary text-base font-semibold px-4 text-center leading-snug"
+              onClick={(e) => {
+                e.stopPropagation();
+                const currentIdx = MORNING_TAP_LINES.indexOf(morningTapText);
+                const nextIdx = (currentIdx === -1 ? 0 : currentIdx + 1) % MORNING_TAP_LINES.length;
+                setMorningTapText(MORNING_TAP_LINES[nextIdx]);
+              }}
+              className="text-ink-primary text-sm font-semibold px-4 text-center leading-snug hover:opacity-80 transition-opacity select-none"
             >
-              I'm here.<br/>Still breathing.
+              {morningTapText}
+              <span className="block text-[8px] text-ink-tertiary mt-2 uppercase tracking-widest font-normal">
+                (Tap text to cycle)
+              </span>
             </motion.span>
           ) : (
             <motion.div
@@ -98,6 +109,7 @@ export default function FeetOnFloor() {
           )}
         </AnimatePresence>
       </motion.button>
+
 
       {/* Post-Action Instruction */}
       <div className="mt-16 h-12">

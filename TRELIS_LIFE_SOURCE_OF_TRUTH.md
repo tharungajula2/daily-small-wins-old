@@ -29,6 +29,10 @@ Trelis Life is a premium daily routine companion designed to instill structural 
    };
    ```
 6. **Two Font-Weights Rule**: Never use more than two font weights (400 and 600) on any single screen.
+7. **Unified Local Timezone Rule**: All date-string evaluations, log indexing, and review conditions strictly use device local time via `toLocaleDateString('en-CA')` (YYYY-MM-DD local format). This completely eliminates off-by-one or dropped-logs bugs common with UTC-based date operations.
+8. **Strict Metrics Architecture**:
+   - **Keeps (Promises Kept)**: The Arc counts as exactly **1 Keep per day** (canonically evaluated when the morning check-in is logged). Custom user anchors count as 1 Keep upon checkbox completion. Both live state selectors and database baseline checks query the exact same logic.
+   - **Gathers (Blooms)**: Gather layers track context logs (text labels, tags) for custom anchors. The evening check-in win is treated strictly as reflection note and does not contribute to Gathers or trigger visual vine blossoms.
 
 ### Deprecated Pillar Architecture (Purged in v2.0.0)
 The legacy six Mutually Exclusive, Collectively Exhaustive (MECE) pillars (Nutrition, Movement, Sleep, Stress/Mental, Social, Environment) have been completely purged from the application layer. Instead of rigid folders or categories, the app is centered on:
@@ -78,19 +82,49 @@ CREATE TABLE public.user_anchors (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
     title text NOT NULL,
-    pillar_id text CHECK (pillar_id IN ('nutrition', 'movement', 'sleep', 'stress_mental', 'social', 'environment')), -- Nullable / Deprecated in v2.0.0
-    type text NOT NULL CHECK (type IN ('action', 'reflection')),
+    pillar_id text CHECK (pillar_id IN ('nutrition', 'movement', 'sleep', 'stress_mental', 'social', 'environment')), -- Deprecated in v2.0.0
+    type text, -- Deprecated in favor of Keep + Gather model
     prompt text,
-    baseline_title text,
-    baseline_target integer,
+    baseline_title text, -- Deprecated in favor of Keep + Gather model
+    baseline_target integer, -- Deprecated in favor of Keep + Gather model
     is_active boolean DEFAULT true,
     frequency text[] DEFAULT '{all}'::text[],
-    sub_items jsonb DEFAULT '[]'::jsonb
+    sub_items jsonb DEFAULT '[]'::jsonb, -- Deprecated in favor of Keep + Gather model
+    codename text,
+    keep_definition text,
+    is_permanent boolean DEFAULT false
 );
 ```
 
-#### Table 2: `public.anchor_logs`
-Tracks completed habits, baselines used, and reflections.
+#### Table 2: `public.anchor_keeps`
+Tracks completed Keep layers for anchors (one-tap checkbox log).
+```sql
+CREATE TABLE public.anchor_keeps (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    anchor_id uuid REFERENCES public.user_anchors(id) ON DELETE CASCADE,
+    user_id uuid REFERENCES public.profiles(id) ON DELETE CASCADE,
+    log_date date DEFAULT CURRENT_DATE,
+    created_at timestamp with time zone DEFAULT now(),
+    UNIQUE (user_id, anchor_id, log_date)
+);
+```
+
+#### Table 2b: `public.anchor_gathers`
+Tracks Gather layers for anchors (context logs, tags, simple text label).
+```sql
+CREATE TABLE public.anchor_gathers (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    anchor_id uuid REFERENCES public.user_anchors(id) ON DELETE CASCADE,
+    user_id uuid REFERENCES public.profiles(id) ON DELETE CASCADE,
+    log_date date DEFAULT CURRENT_DATE,
+    label text,
+    tags text[] DEFAULT '{}'::text[],
+    created_at timestamp with time zone DEFAULT now()
+);
+```
+
+#### Table 2c: `public.anchor_logs` (Legacy/Deprecated)
+Tracks completed legacy habits. Deprecated in favor of `public.anchor_keeps` and `public.anchor_gathers`.
 ```sql
 CREATE TABLE public.anchor_logs (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -114,7 +148,7 @@ CREATE TABLE public.user_state (
     pause_tokens_reset_on date DEFAULT ((date_trunc('month'::text, (CURRENT_DATE + '1 month'::interval)))::date),
     current_streak integer DEFAULT 0,
     longest_streak integer DEFAULT 0,
-    lifetime_anchor_count bigint DEFAULT 0,
+    lifetime_anchor_count bigint DEFAULT 0, -- Deprecated/Purged in v2.0.0 (dynamically selected from aggregate keep counts)
     hardest_pillar text, -- Deprecated/Ignored in 2.0.0
     hardest_pillar_until date -- Deprecated/Ignored in 2.0.0
 );
@@ -176,15 +210,17 @@ RLS is active on all tables. Queries utilize optimized caching subqueries to byp
 ### A. Zustand Offline-First Sync Store (`useRitualStore.ts`)
 The offline cache acts as the single source of truth for immediate UI rendering.
 - **State Properties:**
-  - `anchors`: Array of UserAnchor objects.
-  - `todayLogs`: Array of AnchorLog objects for the current date.
+  - `anchors`: Array of UserAnchor objects with UUID, title, codename, is_active, is_permanent, frequency, and keep_definition.
+  - `anchorKeeps`: List of today's logged Keep instances.
+  - `anchorGathers`: List of today's logged Gather context records.
   - `hasHydrated`: Hydration completion boolean.
   - `pauseTokens`: Count of remaining streak freezes.
   - `currentStreak`, `longestStreak`, `lifetimeAnchorCount`: Habit gamification scores.
   - `lastActiveDate`: Calendar date string of the user's last interactive action.
   - `isVisionEnabled`: Vision priming enabled toggle.
 - **Actions:**
-  - `toggleAnchor(anchorId, usedBaseline, reflectionText)`: Toggles anchor completion locally and queues Supabase background synchronization.
+  - `toggleKeep(anchorId)`: Toggles Keep completion status locally and queues background upsert/delete on `anchor_keeps`.
+  - `addGather(anchorId, label, tags)`: Add gather details with tags and context labels to `anchor_gathers`.
   - `setSyncState(...)`: Synchronizes local caches with backend database snapshots.
 - **Conflict Resolution Hierarchy:** **Local State Always Wins.**
 
@@ -199,15 +235,15 @@ Streaks are calculated utilizing high-forgiveness guidelines that reject pressur
 
 ---
 
-### C. The Circadian Theme Engine (`CircadianProvider.tsx`)
-A clock evaluator evaluates system variables at 5-minute intervals, applying transition styles to coordinate with chronological circadian flows:
+### C. The Circadian Theme Engine (`page.tsx` & layout hooks)
+A clock evaluator evaluates system variables at 1-minute intervals, applying high-fidelity gradient shift styles to coordinate with chronological circadian flows:
 
 | Profile Timeframe | Local Hour Boundaries | Tailwind Color Theme Tokens | Ambient Tone |
 | :--- | :--- | :--- | :--- |
-| **Morning** | `06:00 - 09:59` | `bg-[#F7F6F2] text-[#1C1C1E]` | Warm museum canvas |
-| **Day** | `10:00 - 17:59` | `bg-[#FFFFFF] text-[#1C1C1E]` | Clean neutral crisp |
-| **Evening** | `18:00 - 20:59` | `bg-[#F1EAD9] text-[#2A2520]` | Muted sepia warmth |
-| **Night** | `21:00 - 05:59` | `bg-[#1E1B18] text-[#E5DDCB]` | Luxury dark ambient |
+| **Morning / Dawn** | `05:00 - 09:59` | `bg-gradient-to-b from-[#FFFDF9] via-[#F7F6F2] to-[#F3EFE0]` | Warm dawn aura |
+| **Day / Meridian** | `10:00 - 16:59` | `bg-gradient-to-b from-[#F2F7F7] via-[#F7F6F2] to-[#EFF5F5]` | Clean daylight |
+| **Evening / Dusk** | `17:00 - 20:59` | `bg-gradient-to-b from-[#FAF4EC] via-[#F7F6F2] to-[#ECE5D8]` | Twilight amber glow |
+| **Night / Vigil** | `21:00 - 04:59` | `bg-gradient-to-b from-[#F3EFE9] via-[#F7F6F2] to-[#E3DDD1]` | Cooling nightwatch slate/dark |
 
 ---
 
@@ -235,7 +271,6 @@ The frontend is built on Next.js 15 App Router structures optimized to export st
 - `/`: Main entry point of the application. If the visitor is unauthenticated, it renders the public Landing Page natively (with custom animations and science layers). If the user is authenticated, it renders the primary Dashboard.
 - `/login`: Magic-link authenticated landing page. Bypasses passwords. Surfaced terms state compliance disclaimers.
 - `/debrief`: Sunday Weekly Debrief screen. Gated to standard Sundays (`Date.getDay() === 0`).
-- `/history`: Sparkline completion view showing 30-day behavioral adherence rates and the Quiet Tracks component (which displays a simple row of small dots for the last 7 days per anchor).
 - `/settings`: Configurations for targets, wakeup hours, custom supplements, vision intentions, and account termination.
 
 ---
@@ -290,11 +325,15 @@ This section details exactly how a user experiences and interacts with every sys
    - **Flat Anchor List**: Displays today's active anchors in a clean, flat card list (no folders, categories, or filters).
    - **Partner Presence (Quiet Partner)**: A card showing the linked partner's email address and exactly 6 binary completion dots (colored green/teal when completed, gray when incomplete) for their active anchors today. Absolutely zero numbers, scores, or streaks are shared. Shows 3 pre-written nudge buttons: "Thinking of you", "Proud of you", "Want to walk?".
 2. **User Interaction**:
-   - **Toggling Anchors**:
-     * **Action Anchor**: Tapping the checkbox completes the item. The checkbox fills with solid green, the title gets struck through, and a light haptic vibration fires.
-     * **Baseline Anchor**: If a user is having a low-energy day, incomplete anchors display a secondary link: `↳ Drop to Baseline: [Title]`. Tapping this registers a "Baseline Completion," turning the card gold/amber. The streak is preserved.
+    - **Toggling Keep Layer**:
+      * Tapping the checkbox completes the Keep action. The checkbox fills with solid teal, the title gets struck through, and a light haptic vibration fires.
+      * Completing the Keep layer preserves the streak and counts towards Promises Kept and active streak indicators.
+    - **Gathering Context**:
+      * Tapping the gather icon opens a clean input/modal to log a Gather instance. The user can add a simple text label and select tags. Long-form journaling is rejected.
+      * Logged gathers represent leafy growth or flowers on the trellis visualizers.
 3. **Internal Mechanics & Database Outputs**:
-   - Completed anchors invoke a background upsert to `public.anchor_logs` recording the status, timestamp, and baseline variables.
+    - Completed Keeps invoke a background sync to `public.anchor_keeps` (upsert/delete).
+    - Logged Gathers invoke a background sync to `public.anchor_gathers` (upsert/delete).
 
 ---
 
@@ -313,10 +352,12 @@ This section details exactly how a user experiences and interacts with every sys
 
 ---
 
-### F. Historical Sparklines (`/history`)
+### F. Trellis Garden Visualization (Dashboard Core)
 1. **Visual Layout**:
-   - **Section 1: The Sparkline**: A minimal, smooth vector wave representing the user's Pulse Score over the last 30 days. No axis labels, no grids—just a clean trend line.
-   - **Section 2: Quiet Tracks**: A minimalist history showing a row of small dots for the last 7 days per anchor. A completed day is filled with a calm teal color, while a missed day is represented by an empty dot. No red highlights or guilt mechanics are used.
+   - **Organic Vine Structure**: Located at the bottom of the main dashboard page. Displays a set of up to 5 climbing vines representing the user's anchors (including the permanent Arc keystone anchor).
+   - **Daily Growth Nodes**: Each day's checked status is evaluated. If an anchor was completed (Keep), the vine grows a round green node for that day. Missed days remain as a thin line thread.
+   - **Blossoming Gathers**: For user-defined custom anchors, logged gathers sprout leaves and flower blooms dynamically along the vine. The keystone Arc vine remains clean and unbloomed (representing purely keep status), preserving a clean, calm aesthetic.
+   - **Grayscale Visuals**: Inactive or retired anchors are displayed in a muted gray aesthetic, maintaining the calm and quiet UI philosophy.
 
 ---
 

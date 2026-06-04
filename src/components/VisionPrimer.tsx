@@ -47,7 +47,7 @@ export default function VisionPrimer() {
             <div className="flex items-center gap-2">
               <Sunrise className="w-4 h-4 text-accent-teal" />
               <span className="text-[10px] uppercase tracking-widest font-semibold text-accent-teal">
-                Circadian Prime
+                Morning Intention
               </span>
             </div>
             <button 
@@ -61,7 +61,7 @@ export default function VisionPrimer() {
 
           <div className="flex flex-col gap-1.5 py-1">
             <span className="text-[9px] uppercase tracking-widest text-ink-secondary font-semibold">
-              Morning Intention
+              Today's Focus
             </span>
             <p className="text-sm font-semibold text-[#F7F6F2] leading-relaxed italic pr-4">
               &ldquo;{visionText || 'Focus purely on what expands your power and clarity today.'}&rdquo;
@@ -70,7 +70,7 @@ export default function VisionPrimer() {
 
           <div className="flex items-center gap-1.5 text-[9px] text-[#2A7F7F]/90 font-semibold select-none">
             <Sparkles className="w-3 h-3" />
-            Visualized intent reduces cognitive drag by 30%.
+            Begin your day with clarity and aligned focus.
           </div>
         </div>
       </motion.div>

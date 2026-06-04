@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/client';
+import { isAnchorActiveForDay } from '@/utils/dayMatcher';
 
 /** Validates that a string is a proper UUID (DB columns are uuid type) */
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -20,7 +21,7 @@ export async function syncPullInitialState(localState: any, setLocalState: (part
     if (!session?.user) return;
     
     const userId = session.user.id;
-    const today = new Date().toISOString().split('T')[0];
+    const today = new Date().toLocaleDateString('en-CA');
 
     // 1. Pull Daily Rituals
     const { data: dailyRitual } = await supabase
@@ -55,14 +56,26 @@ export async function syncPullInitialState(localState: any, setLocalState: (part
       .select('*')
       .eq('user_id', userId);
 
-    // 4. Pull Today's Anchor Logs
+    // 4. Pull Today's Anchor Logs (legacy fallback)
     const { data: anchorLogs } = await supabase
       .from('anchor_logs')
       .select('*')
       .eq('user_id', userId)
       .eq('date', today);
 
+    // 5. Pull Today's Keeps
+    const { data: anchorKeeps } = await supabase
+      .from('anchor_keeps')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('log_date', today);
 
+    // 6. Pull Today's Gathers
+    const { data: anchorGathers } = await supabase
+      .from('anchor_gathers')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('log_date', today);
 
     // Conflict Resolution: Local wins.
     const updates: any = {};
@@ -105,7 +118,12 @@ export async function syncPullInitialState(localState: any, setLocalState: (part
           reflectionText: undefined,
           subItems: a.sub_items || [],
           frequency: a.frequency || ['all'],
-          baseline_trg: a.baseline_target || undefined
+          baseline_trg: a.baseline_target || undefined,
+          codename: a.codename || null,
+          keepDefinition: a.keep_definition || '',
+          isPermanent: a.is_permanent || false,
+          isActive: a.is_active !== false,
+          gathers: []
         }));
       } else {
         let localAnchorsChanged = false;
@@ -114,12 +132,21 @@ export async function syncPullInitialState(localState: any, setLocalState: (part
           if (cloud) {
             const hasSubItemsChanged = JSON.stringify(la.subItems || []) !== JSON.stringify(cloud.sub_items || []);
             const hasFrequencyChanged = JSON.stringify(la.frequency || []) !== JSON.stringify(cloud.frequency || []);
-            if (hasSubItemsChanged || hasFrequencyChanged) {
+            const hasCodenameChanged = la.codename !== cloud.codename;
+            const hasKeepDefinitionChanged = la.keepDefinition !== cloud.keep_definition;
+            const hasIsPermanentChanged = la.isPermanent !== cloud.is_permanent;
+            const hasIsActiveChanged = la.isActive !== cloud.is_active;
+
+            if (hasSubItemsChanged || hasFrequencyChanged || hasCodenameChanged || hasKeepDefinitionChanged || hasIsPermanentChanged || hasIsActiveChanged) {
               localAnchorsChanged = true;
               return {
                 ...la,
                 subItems: cloud.sub_items || [],
-                frequency: cloud.frequency || ['all']
+                frequency: cloud.frequency || ['all'],
+                codename: cloud.codename !== undefined ? cloud.codename : la.codename,
+                keepDefinition: cloud.keep_definition !== undefined ? cloud.keep_definition : la.keepDefinition,
+                isPermanent: cloud.is_permanent !== undefined ? cloud.is_permanent : la.isPermanent,
+                isActive: cloud.is_active !== undefined ? cloud.is_active : la.isActive
               };
             }
           }
@@ -131,53 +158,78 @@ export async function syncPullInitialState(localState: any, setLocalState: (part
       }
     }
 
-    if (anchorLogs && anchorLogs.length > 0) {
-      const currentAnchors = updates.anchors || localState.anchors || [];
-      let anchorsChanged = false;
-      
-      const mappedAnchors = currentAnchors.map((anchor: any) => {
-        const log = anchorLogs.find((l: any) => l.anchor_id === anchor.id);
-        if (log) {
-          let modified = false;
-          let newAnchor = { ...anchor };
-          if (!newAnchor.completed && log.completed) {
-            newAnchor.completed = true;
-            modified = true;
-          }
-          if (!newAnchor.usedBaseline && log.used_baseline) {
-            newAnchor.usedBaseline = true;
-            modified = true;
-          }
-          if (log.reflection_text !== undefined && newAnchor.reflectionText !== log.reflection_text) {
-            newAnchor.reflectionText = log.reflection_text || undefined;
-            modified = true;
-          }
-          
-          if (log.sub_items_state && Array.isArray(log.sub_items_state)) {
-            const mergedSubItems = (newAnchor.subItems || []).map((s: any) => {
-              const stateItem = log.sub_items_state.find((st: any) => st.id === s.id);
-              if (stateItem && s.completed !== stateItem.completed) {
-                modified = true;
-                return { ...s, completed: stateItem.completed };
-              }
-              return s;
-            });
-            if (modified) {
-              newAnchor.subItems = mergedSubItems;
+    // Determine completion status (Keeps) and Gathers for each anchor
+    const currentAnchors = updates.anchors || localState.anchors || [];
+    let anchorsChanged = false;
+    
+    const mappedAnchors = currentAnchors.map((anchor: any) => {
+      let modified = false;
+      let newAnchor = { ...anchor };
+
+      // 1. Resolve Keep status (either from anchor_keeps or legacy anchor_logs)
+      const hasKeepRecord = anchorKeeps?.some((k: any) => k.anchor_id === anchor.id);
+      const hasLegacyRecord = anchorLogs?.find((l: any) => l.anchor_id === anchor.id);
+      const isKept = hasKeepRecord || (hasLegacyRecord ? hasLegacyRecord.completed : false);
+
+      if (newAnchor.completed !== isKept) {
+        newAnchor.completed = isKept;
+        modified = true;
+      }
+
+      if (hasLegacyRecord) {
+        if (!newAnchor.usedBaseline && hasLegacyRecord.used_baseline) {
+          newAnchor.usedBaseline = true;
+          modified = true;
+        }
+        if (hasLegacyRecord.reflection_text !== undefined && newAnchor.reflectionText !== hasLegacyRecord.reflection_text) {
+          newAnchor.reflectionText = hasLegacyRecord.reflection_text || undefined;
+          modified = true;
+        }
+        
+        if (hasLegacyRecord.sub_items_state && Array.isArray(hasLegacyRecord.sub_items_state)) {
+          const mergedSubItems = (newAnchor.subItems || []).map((s: any) => {
+            const stateItem = hasLegacyRecord.sub_items_state.find((st: any) => st.id === s.id);
+            if (stateItem && s.completed !== stateItem.completed) {
+              modified = true;
+              return { ...s, completed: stateItem.completed };
             }
-          }
-          
+            return s;
+          });
           if (modified) {
-            anchorsChanged = true;
-            return newAnchor;
+            newAnchor.subItems = mergedSubItems;
           }
         }
-        return anchor;
-      });
-
-      if (anchorsChanged) {
-        updates.anchors = mappedAnchors;
       }
+
+      // 2. Resolve Gather records (anchor_gathers)
+      const gathersForAnchor = anchorGathers?.filter((g: any) => g.anchor_id === anchor.id) || [];
+      const currentGathers = newAnchor.gathers || [];
+      
+      const hasGathersCountChanged = gathersForAnchor.length !== currentGathers.length;
+      const hasGathersMetaChanged = !hasGathersCountChanged && 
+        JSON.stringify(gathersForAnchor.map(g => g.id)) !== JSON.stringify(currentGathers.map((cg: any) => cg.id));
+
+      if (hasGathersCountChanged || hasGathersMetaChanged) {
+        newAnchor.gathers = gathersForAnchor.map((g: any) => ({
+          id: g.id,
+          anchorId: g.anchor_id,
+          logDate: g.log_date,
+          label: g.label || undefined,
+          tags: g.tags || [],
+          createdAt: g.created_at
+        }));
+        modified = true;
+      }
+
+      if (modified) {
+        anchorsChanged = true;
+        return newAnchor;
+      }
+      return anchor;
+    });
+
+    if (anchorsChanged) {
+      updates.anchors = mappedAnchors;
     }
 
 
@@ -207,7 +259,16 @@ export async function syncPushDailyRitual(state: any) {
     if (sessionError) throw sessionError;
     if (!session?.user) return; // Silent return for offline/unauthenticated
     
-    const today = new Date().toISOString().split('T')[0];
+    const today = new Date().toLocaleDateString('en-CA');
+
+    // Compute pulse_score
+    const activeTodayAnchors = (state.anchors || []).filter((a: any) => isAnchorActiveForDay(a.frequency));
+    const totalPersonalAnchors = activeTodayAnchors.length;
+    const completedPersonalAnchors = activeTodayAnchors.filter((a: any) => a.completed).length;
+
+    const totalCount = 2 + totalPersonalAnchors;
+    const completedCount = (state.feetOnFloorLogged ? 1 : 0) + (state.eveningCheckInDone ? 1 : 0) + completedPersonalAnchors;
+    const calculatedPulseScore = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
 
     const payload = {
       user_id: session.user.id,
@@ -221,6 +282,7 @@ export async function syncPushDailyRitual(state: any) {
       parking_lot_notes: state.parkingLotNotes || null,
       bed_time: state.bedTime || null,
       sleep_duration: state.sleepDuration || null,
+      pulse_score: calculatedPulseScore
     };
 
     const { error } = await supabase
@@ -264,9 +326,12 @@ export async function syncPushAnchors(anchors: any[]) {
       type: a.type,
       prompt: a.prompt || null,
       baseline_title: a.baselineTitle || null,
-      is_active: true,
+      is_active: a.isActive !== false,
       sub_items: a.subItems || [],
-      frequency: a.frequency || ['all']
+      frequency: a.frequency || ['all'],
+      codename: a.codename || null,
+      keep_definition: a.keepDefinition || '',
+      is_permanent: a.isPermanent || false
     }));
 
     // We do a bulk upsert. Deletions from local aren't handled by upsert automatically, 
@@ -306,7 +371,7 @@ export async function syncPushAnchorLog(
       return;
     }
     
-    const today = new Date().toISOString().split('T')[0];
+    const today = new Date().toLocaleDateString('en-CA');
 
     const payload = {
       user_id: session.user.id,
@@ -350,5 +415,105 @@ export async function syncPushVision(visionText: string) {
     console.log("Sync Engine: Push Vision Successful");
   } catch (error) {
     console.error("Sync Engine: Push Vision Error", error);
+  }
+}
+
+/**
+ * Pushes today's Keep status (kept/not kept) to anchor_keeps.
+ * Upserts if completed, deletes from table if false.
+ */
+export async function syncPushKeep(anchorId: string, completed: boolean) {
+  const supabase = createClient();
+  try {
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    if (sessionError) throw sessionError;
+    if (!session?.user) return;
+    
+    if (!isValidUUID(anchorId)) return;
+    
+    const today = new Date().toLocaleDateString('en-CA');
+    
+    if (completed) {
+      const payload = {
+        user_id: session.user.id,
+        anchor_id: anchorId,
+        log_date: today
+      };
+      const { error } = await supabase
+        .from('anchor_keeps')
+        .upsert(payload, { onConflict: 'user_id,anchor_id,log_date' });
+      if (error) throw error;
+      console.log(`Sync Engine: Push Keep (${anchorId}) Successful`);
+    } else {
+      const { error } = await supabase
+        .from('anchor_keeps')
+        .delete()
+        .eq('user_id', session.user.id)
+        .eq('anchor_id', anchorId)
+        .eq('log_date', today);
+      if (error) throw error;
+      console.log(`Sync Engine: Delete Keep (${anchorId}) Successful`);
+    }
+  } catch (error: any) {
+    console.error("Sync Engine: Push Keep Error", error.message || error);
+  }
+}
+
+/**
+ * Pushes an individual Gather record to anchor_gathers.
+ */
+export async function syncPushGather(gather: { id: string; anchorId: string; label?: string; tags?: string[]; logDate?: string }) {
+  const supabase = createClient();
+  try {
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    if (sessionError) throw sessionError;
+    if (!session?.user) return;
+    
+    if (!isValidUUID(gather.anchorId) || !isValidUUID(gather.id)) return;
+    
+    const logDate = gather.logDate || new Date().toLocaleDateString('en-CA');
+    
+    const payload = {
+      id: gather.id,
+      user_id: session.user.id,
+      anchor_id: gather.anchorId,
+      log_date: logDate,
+      label: gather.label || null,
+      tags: gather.tags || []
+    };
+    
+    const { error } = await supabase
+      .from('anchor_gathers')
+      .upsert(payload, { onConflict: 'id' });
+      
+    if (error) throw error;
+    console.log(`Sync Engine: Push Gather (${gather.id}) Successful`);
+  } catch (error: any) {
+    console.error("Sync Engine: Push Gather Error", error.message || error);
+  }
+}
+
+/**
+ * Deletes an individual Gather record from anchor_gathers.
+ */
+export async function syncDeleteGather(gatherId: string) {
+  const supabase = createClient();
+  try {
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    if (sessionError) throw sessionError;
+    if (!session?.user) return;
+    
+    if (!isValidUUID(gatherId)) return;
+    
+    const { error } = await supabase
+      .from('anchor_gathers')
+      .delete()
+      .eq('id', gatherId)
+      .eq('user_id', session.user.id);
+      
+    if (error) throw error;
+    console.log(`Sync Engine: Delete Gather (${gatherId}) Successful`);
+  } catch (error: any) {
+    console.error("Sync Engine: Delete Gather Error", error.message || error);
   }
 }
