@@ -74,6 +74,41 @@ export default function OnboardingPage() {
     }
   };
 
+  const handleSkip = async () => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) {
+        router.push('/login');
+        return;
+      }
+      const uid = session.user.id;
+
+      const { error: stateErr } = await supabase
+        .from('user_state')
+        .upsert({
+          user_id: uid,
+          hardest_pillar: null,
+          pause_tokens_remaining: 2,
+          current_streak: 0,
+          longest_streak: 0,
+          lifetime_anchor_count: 0,
+          onboarding_completed: true
+        }, { onConflict: 'user_id' });
+
+      if (stateErr) throw stateErr;
+
+      const store = useRitualStore.getState();
+      store.setOnboardingCompleted(true);
+      router.push('/');
+    } catch (err) {
+      console.error("Skip onboarding failure:", err);
+      setIsSubmitting(false);
+    }
+  };
+
   const handleComplete = async () => {
     if (isSubmitting) return;
     setIsSubmitting(true);
@@ -95,7 +130,8 @@ export default function OnboardingPage() {
           pause_tokens_remaining: 2,
           current_streak: 0,
           longest_streak: 0,
-          lifetime_anchor_count: 0
+          lifetime_anchor_count: 0,
+          onboarding_completed: true
         }, { onConflict: 'user_id' });
 
       if (stateErr) throw stateErr;
@@ -112,7 +148,7 @@ export default function OnboardingPage() {
       if (includeQ1 && q1Title.trim()) {
         addAnchor(
           q1Title.trim(),
-          null,
+          'stress_mental',
           'action',
           undefined,
           undefined,
@@ -126,7 +162,7 @@ export default function OnboardingPage() {
       if (includeQ2 && q2Title.trim()) {
         addAnchor(
           q2Title.trim(),
-          null,
+          'movement',
           'action',
           undefined,
           undefined,
@@ -140,7 +176,7 @@ export default function OnboardingPage() {
       if (includeQ3 && q3Title.trim()) {
         addAnchor(
           q3Title.trim(),
-          null,
+          'stress_mental',
           'action',
           undefined,
           undefined,
@@ -150,6 +186,9 @@ export default function OnboardingPage() {
           q3Keep.trim()
         );
       }
+
+      // Update local store state
+      store.setOnboardingCompleted(true);
 
       // 5. Enter application
       router.push('/');
@@ -195,7 +234,13 @@ export default function OnboardingPage() {
             Step {step} of 6
           </span>
 
-          <div className="w-8" />
+          <button 
+            onClick={handleSkip}
+            disabled={isSubmitting}
+            className="text-ink-secondary hover:text-ink-primary transition-colors text-xs font-semibold uppercase tracking-wider focus:outline-none disabled:opacity-50"
+          >
+            Skip
+          </button>
         </div>
 
         {/* Dots progress indicator */}
@@ -375,7 +420,7 @@ export default function OnboardingPage() {
 
                     <div>
                       <label className="text-[9px] font-bold tracking-widest text-ink-tertiary uppercase block mb-1">
-                        Define Your Keep
+                        Define Your Keep <span className="lowercase font-normal text-ink-secondary text-[8px] tracking-normal">(the one thing that counts as done)</span>
                       </label>
                       <input 
                         type="text" 
@@ -474,7 +519,7 @@ export default function OnboardingPage() {
 
                     <div>
                       <label className="text-[9px] font-bold tracking-widest text-ink-tertiary uppercase block mb-1">
-                        Define Your Keep
+                        Define Your Keep <span className="lowercase font-normal text-ink-secondary text-[8px] tracking-normal">(the one thing that counts as done)</span>
                       </label>
                       <input 
                         type="text" 
@@ -602,7 +647,7 @@ export default function OnboardingPage() {
 
                         <div>
                           <label className="text-[9px] font-bold tracking-widest text-ink-tertiary uppercase block mb-1">
-                            Define Your Keep
+                            Define Your Keep <span className="lowercase font-normal text-ink-secondary text-[8px] tracking-normal">(the one thing that counts as done)</span>
                           </label>
                           <input 
                             type="text" 

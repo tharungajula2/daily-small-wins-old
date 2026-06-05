@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useRitualStore, AnchorType } from '@/store/useRitualStore';
+import { useRitualStore, AnchorType, PillarId } from '@/store/useRitualStore';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
 import { 
   MISSION_CODENAMES, 
@@ -78,9 +78,11 @@ export default function AnchorManager({ onClose }: { onClose: () => void }) {
     if (!newTitle.trim()) return;
     try { await Haptics.impact({ style: ImpactStyle.Light }); } catch (e) {}
     
+    const pillarId: PillarId = selectedTemplateKey === 'body-mind' ? 'movement' : 'stress_mental';
+
     addAnchor(
       newTitle.trim(),
-      null,
+      pillarId,
       'action',
       undefined,
       undefined,
@@ -107,7 +109,7 @@ export default function AnchorManager({ onClose }: { onClose: () => void }) {
     const anchor = anchors.find(a => a.id === id);
     if (!anchor) return;
     if (anchor.isActive === false && activeAnchorsCount >= 4) {
-      alert("Five is plenty — master these, or retire one to make room.");
+      alert("Up to 4 personal anchors — keep it focused.");
       return;
     }
     try { await Haptics.impact({ style: ImpactStyle.Light }); } catch (e) {}
@@ -143,7 +145,7 @@ export default function AnchorManager({ onClose }: { onClose: () => void }) {
         <div className="flex justify-between items-center mb-6">
           <div>
             <h3 className="text-ink-primary font-semibold text-sm">Manage Anchors</h3>
-            <p className="text-[10px] text-ink-secondary mt-0.5">Maximum 4 personal anchors allowed</p>
+            <p className="text-[10px] text-ink-secondary mt-0.5">Anchors are the few promises that hold your day up. Add up to four.</p>
           </div>
           <button onClick={onClose} className="text-ink-tertiary hover:text-ink-primary p-2 focus:outline-none">
             ✕
@@ -341,7 +343,9 @@ export default function AnchorManager({ onClose }: { onClose: () => void }) {
             ))}
           </AnimatePresence>
           {anchors.length === 0 && (
-            <p className="text-ink-tertiary text-sm text-center py-4">No personal anchors set.</p>
+            <p className="text-ink-secondary text-xs text-center py-6 leading-relaxed max-w-[280px] mx-auto">
+              No anchors yet. Start with one — what's the thing that, when you skip it, your whole day quietly falls apart?
+            </p>
           )}
         </div>
 
@@ -351,7 +355,7 @@ export default function AnchorManager({ onClose }: { onClose: () => void }) {
             <span className="text-xl select-none">⚓</span>
             <h4 className="text-sm font-semibold text-ink-primary">Personal Anchors Cap</h4>
             <p className="text-xs text-ink-secondary leading-relaxed max-w-[280px] mx-auto font-normal">
-              Five is plenty — master these, or retire one to make room.
+              Up to 4 personal anchors — keep it focused.
             </p>
           </div>
         ) : (
@@ -429,7 +433,7 @@ export default function AnchorManager({ onClose }: { onClose: () => void }) {
             {/* Keep Definition Field */}
             <div>
               <label className="block text-[10px] uppercase tracking-widest text-ink-tertiary font-bold mb-1 ml-1">
-                3. Define your Keep
+                3. Define your Keep <span className="lowercase font-normal text-ink-secondary text-[9px] tracking-normal">(the one thing that counts as done)</span>
               </label>
               <input
                 type="text"

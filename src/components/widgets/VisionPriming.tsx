@@ -22,7 +22,7 @@ export default function VisionPriming() {
     <div className="w-full p-5 mt-6 rounded-2xl bg-canvas border border-muted shadow-sm">
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-ink-secondary text-xs uppercase tracking-widest ml-1">
-          Vision Priming
+          Vision Priming — your daily why
         </h3>
         {!isEditing && (
           <button onClick={() => setIsEditing(true)} className="text-xs text-ink-tertiary hover:text-accent-teal transition-colors">
@@ -34,7 +34,7 @@ export default function VisionPriming() {
       {!hasSeenVisionTooltip && (
         <div className="mb-4 p-3 bg-accent-teal/5 border border-accent-teal/10 rounded-lg flex items-start justify-between gap-3">
           <p className="text-xs text-ink-secondary leading-relaxed">
-            Reading your vision every morning rewires your brain to prioritize what matters most to you.
+            Read this every morning. It points your day.
           </p>
           <button 
             onClick={() => dismissTooltip('hasSeenVisionTooltip')}

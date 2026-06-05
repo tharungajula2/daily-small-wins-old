@@ -68,7 +68,7 @@ export default function SundayDebrief() {
       if (!debriefAnchor) {
         addAnchor(
           'Sunday Weekly Debrief',
-          undefined,
+          'stress_mental',
           'reflection',
           undefined,
           'Three prompts: what worked, what broke down, and one change.'

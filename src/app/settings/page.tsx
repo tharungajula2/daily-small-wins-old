@@ -13,6 +13,7 @@ import {
   MISSION_CODENAMES, 
   KEEP_DEFINITION_SUGGESTIONS 
 } from '@/utils/prompts';
+import { syncPushOnboardingTourState } from '@/lib/supabase/syncEngine';
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -29,7 +30,8 @@ export default function SettingsPage() {
     toggleAnchorActive,
     reorderAnchors,
     morningTapText,
-    setMorningTapText
+    setMorningTapText,
+    setOnboardingTourCompleted
   } = useRitualStore();
   const [visionInput, setVisionInput] = useState(visionText);
   const [profileEmail, setProfileEmail] = useState<string | null>(null);
@@ -98,6 +100,13 @@ export default function SettingsPage() {
     } catch (e) {
       console.error("Error loading quiet partner info:", e);
     }
+  };
+
+  const handleReplayTour = async () => {
+    try { Haptics.vibrate(); } catch {}
+    setOnboardingTourCompleted(false);
+    await syncPushOnboardingTourState(false);
+    router.push('/');
   };
 
   const handleSendInvite = async () => {
@@ -236,6 +245,19 @@ export default function SettingsPage() {
               <span className="text-xs text-ink-primary font-normal leading-relaxed">Sleep Window</span>
               <span className="text-xs font-semibold text-ink-secondary bg-canvas px-2.5 py-1 rounded-md">11:00 PM</span>
             </div>
+          </div>
+
+          <div className="p-4 rounded-xl bg-surface border border-muted/80 flex flex-col gap-3 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05),0_1px_3px_rgba(0,0,0,0.02)]">
+            <h3 className="text-xs font-semibold text-ink-secondary uppercase tracking-wider">Guided Tour</h3>
+            <p className="text-xs text-ink-secondary leading-relaxed font-normal">
+              Want a quick refresher on how the dashboard and the seam-and-arc ring work?
+            </p>
+            <button
+              onClick={handleReplayTour}
+              className="w-full py-2 bg-canvas hover:bg-muted border border-muted rounded-xl text-xs uppercase tracking-wider font-semibold text-ink-primary transition-all flex items-center justify-center gap-1 active:scale-98"
+            >
+              Replay Onboarding Tour
+            </button>
           </div>
 
           <div className="p-4 rounded-xl bg-surface border border-muted/80 flex flex-col gap-3 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05),0_1px_3px_rgba(0,0,0,0.02)]">

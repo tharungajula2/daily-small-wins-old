@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
 import { useRitualStore } from '@/store/useRitualStore';
-import { Moon, Sun, Shield, Check, ChevronDown, ChevronUp } from 'lucide-react';
+import { Moon, Sun, Shield, Check, ChevronDown, ChevronUp, Info } from 'lucide-react';
 import { format } from 'date-fns';
 
 export default function TheArcCard() {
@@ -23,6 +23,7 @@ export default function TheArcCard() {
   const [win, setWin] = useState('');
   const [parkingLot, setParkingLot] = useState('');
   const [mounted, setMounted] = useState(false);
+  const [showInfo, setShowInfo] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -62,14 +63,47 @@ export default function TheArcCard() {
             <Shield className="w-4 h-4" />
           </div>
           <div>
-            <h3 className="text-sm font-semibold text-ink-primary leading-relaxed">The Arc</h3>
-            <p className="text-[10px] text-ink-secondary leading-relaxed">Keystone Anchor • Permanent</p>
+            <div className="flex items-center gap-1">
+              <h3 className="text-sm font-semibold text-ink-primary leading-relaxed">The Arc</h3>
+              <button 
+                onClick={() => setShowInfo(!showInfo)}
+                className="text-ink-tertiary hover:text-accent-teal transition-colors focus:outline-none p-0.5"
+                title="About The Arc"
+                type="button"
+              >
+                <Info className="w-3 h-3" />
+              </button>
+            </div>
+            <p className="text-[10px] text-ink-secondary leading-relaxed">Your daily anchor · always here</p>
           </div>
         </div>
         <div className="flex items-center gap-1.5 bg-canvas px-2.5 py-1 rounded-full text-[9px] font-semibold text-accent-teal select-none">
           <Check className="w-3 h-3" /> Kept
         </div>
       </div>
+
+      <AnimatePresence>
+        {showInfo && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="overflow-hidden"
+          >
+            <div className="mt-3 p-3 bg-accent-teal/5 border border-accent-teal/10 rounded-xl flex items-start gap-2.5">
+              <p className="text-[11px] text-ink-secondary leading-relaxed">
+                The Arc is your one promise that's always here — wind down, sleep, wake, and tap in. On your hardest days, doing just this is enough.
+              </p>
+              <button 
+                onClick={() => setShowInfo(false)}
+                className="text-ink-tertiary hover:text-ink-primary p-0.5 text-xs"
+              >
+                ✕
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Grid of Wake/Sleep Settings & Statuses */}
       <div className="grid grid-cols-2 gap-4 pt-4 text-left">

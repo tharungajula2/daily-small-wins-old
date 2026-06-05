@@ -77,8 +77,20 @@ export async function syncPullInitialState(localState: any, setLocalState: (part
       .eq('user_id', userId)
       .eq('log_date', today);
 
+    // 7. Pull User State
+    const { data: userStateData } = await supabase
+      .from('user_state')
+      .select('*')
+      .eq('user_id', userId)
+      .maybeSingle();
+
     // Conflict Resolution: Local wins.
     const updates: any = {};
+
+    if (userStateData) {
+      updates.onboardingCompleted = !!userStateData.onboarding_completed;
+      updates.onboardingTourCompleted = !!userStateData.onboarding_tour_completed;
+    }
 
     if (dailyRitual) {
       if (!localState.feetOnFloorLogged && dailyRitual.feet_on_floor_logged) {
@@ -322,8 +334,8 @@ export async function syncPushAnchors(anchors: any[]) {
       id: a.id,
       user_id: userId,
       title: a.title,
-      pillar_id: a.pillarId || null,
-      type: a.type,
+      pillar_id: a.pillarId || 'stress_mental',
+      type: a.type || 'action',
       prompt: a.prompt || null,
       baseline_title: a.baselineTitle || null,
       is_active: a.isActive !== false,
@@ -417,6 +429,31 @@ export async function syncPushVision(visionText: string) {
     console.error("Sync Engine: Push Vision Error", error);
   }
 }
+
+/**
+ * Pushes onboarding tour completed status to user_state.
+ */
+export async function syncPushOnboardingTourState(completed: boolean) {
+  const supabase = createClient();
+  try {
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    if (sessionError) throw sessionError;
+    if (!session?.user) return;
+
+    const { error } = await supabase
+      .from('user_state')
+      .upsert({
+        user_id: session.user.id,
+        onboarding_tour_completed: completed
+      }, { onConflict: 'user_id' });
+
+    if (error) throw error;
+    console.log("Sync Engine: Push Onboarding Tour State Successful");
+  } catch (error: any) {
+    console.error("Sync Engine: Push Onboarding Tour State Error", error.message || error);
+  }
+}
+
 
 /**
  * Pushes today's Keep status (kept/not kept) to anchor_keeps.

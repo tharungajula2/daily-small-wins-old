@@ -22,6 +22,7 @@ import GentleReEntryScreen from '@/components/core/GentleReEntryScreen';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
 import LandingPage from '@/components/core/LandingPage';
 import TrellisGarden from '@/components/core/TrellisGarden';
+import OnboardingTour from '@/components/core/OnboardingTour';
 
 function Dashboard() {
   const supabase = createClient();
@@ -332,7 +333,7 @@ function Dashboard() {
                   <div className="w-full px-6">
                     <div className="w-full bg-surface rounded-3xl p-5 border border-muted/80 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05),0_1px_3px_rgba(0,0,0,0.02)] grid grid-cols-3 hover:shadow-[0_6px_24px_-4px_rgba(0,0,0,0.08)] transition-all">
                       {/* Left: Promises Kept */}
-                      <div className="flex flex-col items-center justify-center text-center border-r border-muted/30 pr-1">
+                      <div id="tour-promises-kept" className="flex flex-col items-center justify-center text-center border-r border-muted/30 pr-1">
                         <div className="w-9 h-9 rounded-xl bg-accent-teal/10 flex items-center justify-center shadow-sm mb-1.5 select-none">
                           <svg className="w-4 h-4 text-accent-teal" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
@@ -351,7 +352,7 @@ function Dashboard() {
                         const streakVal = userState?.current_streak ?? currentStreak ?? 0;
                         const isPaused = isRestDay;
                         return (
-                          <div className="flex flex-col items-center justify-center text-center border-r border-muted/30 px-1">
+                          <div id="tour-streak-hud" className="flex flex-col items-center justify-center text-center border-r border-muted/30 px-1">
                             <div className={`w-9 h-9 rounded-xl flex items-center justify-center shadow-sm mb-1.5 select-none transition-colors ${
                               isPaused 
                                 ? 'bg-muted/30 text-ink-secondary' 
@@ -385,7 +386,7 @@ function Dashboard() {
                       })()}
 
                       {/* Right: Pause Tokens */}
-                      <div className="flex flex-col items-center justify-center text-center pl-1 select-none">
+                      <div id="tour-pause-hud" className="flex flex-col items-center justify-center text-center pl-1 select-none">
                         <div className="h-9 flex items-center justify-center mb-1.5">
                           <div className="flex gap-1.5">
                             {[1, 2, 3].map((num) => {
@@ -423,11 +424,11 @@ function Dashboard() {
                     </div>
                   </div>
 
-                  <div className="w-full px-6 mt-3">
+                  <div id="tour-vision-card" className="w-full px-6 mt-3">
                     <VisionPrimer />
                   </div>
 
-                  <div className="w-full px-6">
+                  <div id="tour-pulse-score" className="w-full px-6">
                     <PulseScore 
                       completedCount={completedCount} 
                       totalCount={totalCount} 
@@ -505,23 +506,26 @@ function Dashboard() {
                       </motion.div>
                     ) : (
                       <div className="flex flex-col gap-3">
-                        <TheArcCard />
-                        {activeTodayAnchors.map(anchor => (
-                          <AnchorCard 
-                            key={anchor.id} 
-                            anchor={anchor} 
-                            metadata={anchorMetadata[anchor.id]} 
-                          />
-                        ))}
+                        <div id="tour-the-arc">
+                          <TheArcCard />
+                        </div>
+                        <div id="tour-anchors-list" className="flex flex-col gap-3">
+                          {activeTodayAnchors.map(anchor => (
+                            <AnchorCard 
+                              key={anchor.id} 
+                              anchor={anchor} 
+                              metadata={anchorMetadata[anchor.id]} 
+                            />
+                          ))}
+                          <button
+                            onClick={() => setIsManagingAnchors(true)}
+                            className="w-full bg-canvas hover:bg-muted border border-dashed border-muted hover:border-ink-secondary/30 rounded-xl py-3 text-xs font-semibold tracking-widest uppercase text-ink-secondary transition-all flex items-center justify-center gap-2"
+                          >
+                            + Add New Anchor
+                          </button>
+                        </div>
                       </div>
                     )}
-
-                    <button
-                      onClick={() => setIsManagingAnchors(true)}
-                      className="w-full bg-canvas hover:bg-muted border border-dashed border-muted hover:border-ink-secondary/30 rounded-xl py-3 text-xs font-semibold tracking-widest uppercase text-ink-secondary transition-all flex items-center justify-center gap-2"
-                    >
-                      + Add New Anchor
-                    </button>
 
                     <TrellisGarden />
 
@@ -556,15 +560,20 @@ function Dashboard() {
       <AnimatePresence>
         {showGentleReEntry && <GentleReEntryScreen onResume={handleResume} />}
       </AnimatePresence>
+
+      {/* Onboarding Tour Spotlight */}
+      {feetOnFloorLogged && <OnboardingTour />}
     </main>
   );
 }
 
 export default function Page() {
   const supabase = createClient();
+  const router = useRouter();
   const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [hasHydrated, setHasHydrated] = useState(false);
+  const onboardingCompleted = useRitualStore(state => state.onboardingCompleted);
 
   useEffect(() => {
     if (useRitualStore.persist.hasHydrated()) {
@@ -584,7 +593,7 @@ export default function Page() {
         const { data: { session } } = await supabase.auth.getSession();
         if (session) {
           setIsAuthenticated(true);
-          syncPullInitialState(useRitualStore.getState(), useRitualStore.setState);
+          await syncPullInitialState(useRitualStore.getState(), useRitualStore.setState);
         } else {
           setIsAuthenticated(false);
         }
@@ -599,10 +608,10 @@ export default function Page() {
     checkInitialSession();
 
     // 2. Set up auth listener
-    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session) {
         setIsAuthenticated(true);
-        syncPullInitialState(useRitualStore.getState(), useRitualStore.setState);
+        await syncPullInitialState(useRitualStore.getState(), useRitualStore.setState);
       } else {
         setIsAuthenticated(false);
       }
@@ -614,6 +623,12 @@ export default function Page() {
     };
   }, []);
 
+  useEffect(() => {
+    if (hasHydrated && !isAuthLoading && isAuthenticated && !onboardingCompleted) {
+      router.push('/onboarding');
+    }
+  }, [hasHydrated, isAuthLoading, isAuthenticated, onboardingCompleted, router]);
+
   if (!hasHydrated || isAuthLoading) {
     return (
       <div className="min-h-screen bg-canvas dark:bg-[#1E1B17] flex items-center justify-center">
@@ -624,6 +639,15 @@ export default function Page() {
 
   if (!isAuthenticated) {
     return <LandingPage />;
+  }
+
+  if (!onboardingCompleted) {
+    // Show a loading screen while redirecting to onboarding
+    return (
+      <div className="min-h-screen bg-canvas dark:bg-[#1E1B17] flex items-center justify-center">
+        <div className="w-6 h-6 border-2 border-accent-teal border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
   }
 
   return <Dashboard />;

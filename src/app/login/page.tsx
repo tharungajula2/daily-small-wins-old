@@ -10,7 +10,10 @@ export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [isResetMode, setIsResetMode] = useState(false);
+  const [isSignUpMode, setIsSignUpMode] = useState(false);
+  const [showSignUpPrompt, setShowSignUpPrompt] = useState(false);
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -20,6 +23,7 @@ export default function LoginPage() {
     
     setStatus('loading');
     setErrorMessage('');
+    setShowSignUpPrompt(false);
 
     try {
       const { error } = await supabase.auth.signInWithPassword({
@@ -27,7 +31,13 @@ export default function LoginPage() {
         password,
       });
 
-      if (error) throw error;
+      if (error) {
+        // If login fails, we show the custom prompt with create account link
+        setStatus('error');
+        setErrorMessage("We couldn't find an account with those details.");
+        setShowSignUpPrompt(true);
+        return;
+      }
       
       // Navigate to dashboard
       router.push('/');
@@ -37,27 +47,28 @@ export default function LoginPage() {
     }
   };
 
-  const handleSignUp = async (e: React.MouseEvent) => {
+  const handleSignUpSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email.trim() || !password) return;
+    if (!email.trim() || !password || !confirmPassword) return;
+
+    if (password !== confirmPassword) {
+      setStatus('error');
+      setErrorMessage('Passwords do not match.');
+      return;
+    }
     
     setStatus('loading');
     setErrorMessage('');
 
     try {
-      const { error, data } = await supabase.auth.signUp({
+      const { error } = await supabase.auth.signUp({
         email: email.trim(),
         password,
       });
 
       if (error) throw error;
 
-      // In case auto-confirmation is enabled, a session is returned immediately
-      if (data?.session) {
-        router.push('/');
-      } else {
-        setStatus('success');
-      }
+      setStatus('success');
     } catch (error: any) {
       setStatus('error');
       setErrorMessage(error.message || 'Failed to create account.');
@@ -114,19 +125,20 @@ export default function LoginPage() {
               <span className="text-success text-xl">✓</span>
             </div>
             <h3 className="text-ink-primary font-semibold mb-2">
-              {isResetMode ? 'Reset Link Sent' : 'Account Created'}
+              {isResetMode ? 'Reset Link Sent' : 'Check your email'}
             </h3>
             <p className="text-sm text-ink-secondary">
               {isResetMode 
                 ? 'Check your inbox for a password recovery email.' 
-                : 'Please check your email to confirm your registration.'}
+                : 'Check your email to confirm your account'}
             </p>
             <button
               onClick={() => {
                 setStatus('idle');
-                if (isResetMode) {
-                  setIsResetMode(false);
-                }
+                setIsResetMode(false);
+                setIsSignUpMode(false);
+                setConfirmPassword('');
+                setPassword('');
               }}
               className="mt-4 text-xs font-semibold uppercase tracking-wider text-accent-teal hover:underline"
             >
@@ -134,7 +146,16 @@ export default function LoginPage() {
             </button>
           </motion.div>
         ) : (
-          <form onSubmit={isResetMode ? handleResetPassword : handleLogin} className="space-y-4">
+          <form 
+            onSubmit={
+              isResetMode 
+                ? handleResetPassword 
+                : isSignUpMode 
+                  ? handleSignUpSubmit 
+                  : handleLogin
+            } 
+            className="space-y-4"
+          >
             <div className="space-y-3">
               <div>
                 <label htmlFor="email" className="sr-only">Email address</label>
@@ -158,34 +179,81 @@ export default function LoginPage() {
                     animate={{ opacity: 1, height: 'auto' }}
                     exit={{ opacity: 0, height: 0 }}
                     transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                    className="overflow-hidden"
+                    className="overflow-hidden space-y-3"
                   >
-                    <label htmlFor="password" className="sr-only">Password</label>
-                    <input
-                      id="password"
-                      type="password"
-                      required={!isResetMode}
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="Enter your password"
-                      className="w-full bg-surface border border-muted rounded-xl p-4 text-sm text-ink-primary placeholder:text-ink-secondary placeholder-ink-secondary focus:outline-none focus:ring-1 focus:ring-accent-teal focus:border-accent-teal transition-colors shadow-sm"
-                      disabled={status === 'loading'}
-                    />
+                    <div>
+                      <label htmlFor="password" className="sr-only">Password</label>
+                      <input
+                        id="password"
+                        type="password"
+                        required={!isResetMode}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="Enter your password"
+                        className="w-full bg-surface border border-muted rounded-xl p-4 text-sm text-ink-primary placeholder:text-ink-secondary placeholder-ink-secondary focus:outline-none focus:ring-1 focus:ring-accent-teal focus:border-accent-teal transition-colors shadow-sm"
+                        disabled={status === 'loading'}
+                      />
+                    </div>
+
+                    {isSignUpMode && (
+                      <motion.div
+                        key="confirm-password-field"
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                      >
+                        <label htmlFor="confirmPassword" className="sr-only">Confirm Password</label>
+                        <input
+                          id="confirmPassword"
+                          type="password"
+                          required={isSignUpMode}
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          placeholder="Confirm your password"
+                          className="w-full bg-surface border border-muted rounded-xl p-4 text-sm text-ink-primary placeholder:text-ink-secondary placeholder-ink-secondary focus:outline-none focus:ring-1 focus:ring-accent-teal focus:border-accent-teal transition-colors shadow-sm"
+                          disabled={status === 'loading'}
+                        />
+                      </motion.div>
+                    )}
                   </motion.div>
                 )}
               </AnimatePresence>
             </div>
             
-            {status === 'error' && (
+            {showSignUpPrompt ? (
+              <p className="text-xs text-error mt-2">
+                We couldn't find an account with those details. New here?{' '}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsSignUpMode(true);
+                    setShowSignUpPrompt(false);
+                    setErrorMessage('');
+                  }}
+                  className="text-accent-teal hover:underline font-semibold"
+                >
+                  Create an account →
+                </button>
+              </p>
+            ) : status === 'error' && (
               <p className="text-xs text-error mt-2">{errorMessage}</p>
             )}
 
             <div className="flex flex-col gap-3 pt-2">
               <button
                 type="submit"
-                disabled={status === 'loading' || !email.trim() || (!isResetMode && !password)}
+                disabled={
+                  status === 'loading' || 
+                  !email.trim() || 
+                  (!isResetMode && !password) || 
+                  (isSignUpMode && !confirmPassword)
+                }
                 className={`w-full py-4 rounded-xl font-semibold transition-all ${
-                  email.trim() && (isResetMode || password) && status !== 'loading' 
+                  email.trim() && 
+                  (isResetMode || password) && 
+                  (!isSignUpMode || confirmPassword) && 
+                  status !== 'loading' 
                     ? 'bg-ink-primary text-surface hover:bg-ink-primary/95' 
                     : 'bg-muted text-ink-tertiary cursor-not-allowed'
                 }`}
@@ -194,7 +262,9 @@ export default function LoginPage() {
                   ? 'Loading...' 
                   : isResetMode 
                     ? 'Send Reset Link' 
-                    : 'Log In'}
+                    : isSignUpMode 
+                      ? 'Create Account' 
+                      : 'Log In'}
               </button>
 
               <AnimatePresence initial={false}>
@@ -209,27 +279,32 @@ export default function LoginPage() {
                   >
                     <button
                       type="button"
-                      onClick={handleSignUp}
-                      disabled={status === 'loading' || !email.trim() || !password}
-                      className={`w-full py-4 rounded-xl font-semibold border border-muted transition-all ${
-                        email.trim() && password && status !== 'loading' 
-                          ? 'bg-surface text-ink-primary hover:bg-canvas' 
-                          : 'bg-transparent text-ink-tertiary cursor-not-allowed'
-                      }`}
+                      onClick={() => {
+                        setIsSignUpMode(!isSignUpMode);
+                        setErrorMessage('');
+                        setShowSignUpPrompt(false);
+                        setPassword('');
+                        setConfirmPassword('');
+                      }}
+                      disabled={status === 'loading'}
+                      className="w-full py-4 rounded-xl font-semibold border border-muted transition-all bg-surface text-ink-primary hover:bg-canvas"
                     >
-                      Create Account
+                      {isSignUpMode ? 'Already have an account? Log In' : 'Create Account'}
                     </button>
 
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsResetMode(true);
-                        setErrorMessage('');
-                      }}
-                      className="text-xs text-ink-secondary/80 hover:text-accent-teal hover:underline transition-colors mt-1 self-center"
-                    >
-                      Forgot your password?
-                    </button>
+                    {!isSignUpMode && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsResetMode(true);
+                          setErrorMessage('');
+                          setShowSignUpPrompt(false);
+                        }}
+                        className="text-xs text-ink-secondary/80 hover:text-accent-teal hover:underline transition-colors mt-1 self-center"
+                      >
+                        Forgot your password?
+                      </button>
+                    )}
                   </motion.div>
                 ) : (
                   <motion.button

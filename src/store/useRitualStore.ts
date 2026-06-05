@@ -116,6 +116,10 @@ interface RitualState {
   setPremiumStatus: (status: boolean) => void;
   isRestDay: boolean;
   toggleRestDay: () => void;
+  onboardingCompleted: boolean;
+  onboardingTourCompleted: boolean;
+  setOnboardingCompleted: (completed: boolean) => void;
+  setOnboardingTourCompleted: (completed: boolean) => void;
 }
 
 export const useRitualStore = create<RitualState>()(
@@ -125,6 +129,8 @@ export const useRitualStore = create<RitualState>()(
       lastFreshStartPrompt: null,
       isPremium: false,
       isRestDay: false,
+      onboardingCompleted: false,
+      onboardingTourCompleted: false,
       feetOnFloorLogged: false,
       wakeTime: null,
       currentStreak: 0,
@@ -258,7 +264,7 @@ export const useRitualStore = create<RitualState>()(
             { 
               id: crypto.randomUUID(), 
               title, 
-              pillarId: pillarId || null, 
+              pillarId: pillarId || 'stress_mental', 
               type, 
               completed: false, 
               baselineTitle: baseline || undefined,
@@ -419,6 +425,12 @@ export const useRitualStore = create<RitualState>()(
       },
       setPremiumStatus: (status: boolean) => {
         set({ isPremium: status });
+      },
+      setOnboardingCompleted: (completed: boolean) => {
+        set({ onboardingCompleted: completed });
+      },
+      setOnboardingTourCompleted: (completed: boolean) => {
+        set({ onboardingTourCompleted: completed });
       },
     }),
     {
