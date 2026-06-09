@@ -25,7 +25,7 @@ export default function EveningRoutineCard() {
     <div className="w-full bg-surface rounded-3xl p-6 border border-muted/80 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05),0_1px_3px_rgba(0,0,0,0.02)] transition-all">
       <div className="flex items-center justify-between pb-3 border-b border-muted/40">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-xl bg-accent-teal/5 flex items-center justify-center text-indigo-500">
+          <div className="w-8 h-8 rounded-xl bg-accent-teal/5 flex items-center justify-center text-accent-teal">
             <Moon className="w-4 h-4" />
           </div>
           <div>
@@ -54,9 +54,9 @@ export default function EveningRoutineCard() {
         ) : (
           <button
             onClick={handleCloseDay}
-            className="w-full py-4 rounded-xl bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 font-semibold text-xs uppercase tracking-wider shadow-sm transition-all active:scale-98 flex flex-col items-center gap-1 border border-indigo-500/20"
+            className="w-full py-4 rounded-xl bg-[#1C1C1E] hover:bg-[#2C2C2E] text-[#F7F6F2] font-semibold text-xs uppercase tracking-wider shadow-sm transition-all active:scale-98 flex flex-col items-center gap-1 border border-[#2C2C2E]"
           >
-            <span className="text-[10px] opacity-80 uppercase tracking-widest">Stop the thinking. The day is done.</span>
+            <span className="text-[10px] text-ink-secondary/70 uppercase tracking-widest">Stop the thinking. The day is done.</span>
             Let's sleep
           </button>
         )}

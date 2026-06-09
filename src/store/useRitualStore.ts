@@ -99,6 +99,7 @@ interface RitualState {
   addGather: (anchorId: string, label?: string, tags?: string[]) => void;
   deleteGather: (anchorId: string, gatherId: string) => void;
   completeEveningCheckIn: (win: string, parkingLot: string) => Promise<void>;
+  reverseEveningCheckIn: () => Promise<void>;
   resetDaily: () => void;
   toggleVision: () => void;
   setVisionText: (text: string) => void;
@@ -370,6 +371,11 @@ export const useRitualStore = create<RitualState>()(
       completeEveningCheckIn: async (win: string, parkingLot: string) => {
         set({ eveningCheckInDone: true, winOfTheDay: win, parkingLotNotes: parkingLot });
         
+        syncPushDailyRitual(get());
+      },
+      
+      reverseEveningCheckIn: async () => {
+        set({ eveningCheckInDone: false, winOfTheDay: '', parkingLotNotes: '' });
         syncPushDailyRitual(get());
       },
         

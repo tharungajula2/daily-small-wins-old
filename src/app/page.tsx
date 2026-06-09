@@ -430,6 +430,13 @@ function Dashboard() {
                     </div>
                   </div>
 
+                  <div id="tour-pulse-score" className="w-full px-6 mt-4">
+                    <PulseScore 
+                      completedCount={completedCount} 
+                      totalCount={totalCount} 
+                    />
+                  </div>
+
                   <div className="w-full px-6 mt-3 flex flex-col gap-3">
                     <div id="tour-the-arc">
                       <MorningRoutineCard />
@@ -442,11 +449,6 @@ function Dashboard() {
                     </div>
                   </div>
 
-                  <div id="tour-pulse-score" className="w-full px-6">
-                    <PulseScore 
-                      completedCount={completedCount} 
-                      totalCount={totalCount} 
-                    />
                   </div>
 
 

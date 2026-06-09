@@ -31,7 +31,9 @@ export default function SettingsPage() {
     reorderAnchors,
     morningTapText,
     setMorningTapText,
-    setOnboardingTourCompleted
+    setOnboardingTourCompleted,
+    eveningCheckInDone,
+    reverseEveningCheckIn
   } = useRitualStore();
   const [visionInput, setVisionInput] = useState(visionText);
   const [profileEmail, setProfileEmail] = useState<string | null>(null);
@@ -528,6 +530,28 @@ export default function SettingsPage() {
                   </div>
                 );
               })}
+            </div>
+          </div>
+
+          <div className="p-4 rounded-xl bg-surface border border-muted/80 flex flex-col gap-3 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05),0_1px_3px_rgba(0,0,0,0.02)]">
+            <h3 className="text-xs font-semibold text-ink-secondary uppercase tracking-wider">Data Management</h3>
+            
+            <div className="flex flex-col gap-3">
+              <p className="text-xs text-ink-secondary leading-relaxed font-normal">
+                If you accidentally tapped the Sleep button, you can reverse it here. This only affects today's log.
+              </p>
+              
+              <button
+                onClick={async () => {
+                  try { await Haptics.impact({ style: ImpactStyle.Medium }); } catch {}
+                  await reverseEveningCheckIn();
+                  alert("Today's sleep log has been reversed.");
+                }}
+                disabled={!eveningCheckInDone}
+                className="w-full py-2.5 rounded-xl text-xs uppercase tracking-wider font-semibold border transition-all active:scale-98 disabled:opacity-50 disabled:cursor-not-allowed border-ink-tertiary/20 text-ink-primary hover:bg-canvas"
+              >
+                Reverse Today's Sleep Log
+              </button>
             </div>
           </div>
 
