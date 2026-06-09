@@ -52,13 +52,19 @@ export default function EveningRoutineCard() {
             </p>
           </div>
         ) : (
-          <button
-            onClick={handleCloseDay}
-            className="w-full py-4 rounded-xl bg-[#1C1C1E] hover:bg-[#2C2C2E] text-[#F7F6F2] font-semibold text-xs uppercase tracking-wider shadow-sm transition-all active:scale-98 flex flex-col items-center gap-1 border border-[#2C2C2E]"
-          >
-            <span className="text-[10px] text-ink-secondary/70 uppercase tracking-widest">Stop the thinking. The day is done.</span>
-            Let's sleep
-          </button>
+          <div className="flex flex-col items-center gap-5 py-2">
+            <span className="text-[10px] text-ink-secondary/70 uppercase tracking-widest font-semibold text-center">
+              Stop the thinking. The day is done.
+            </span>
+            <motion.button
+              whileTap={{ scale: 0.95 }}
+              onClick={handleCloseDay}
+              className="w-28 h-28 rounded-full bg-[#1C1C1E] border-[6px] border-canvas shadow-[0_4px_15px_-4px_rgba(0,0,0,0.2)] flex flex-col items-center justify-center transition-all hover:bg-[#2C2C2E] hover:scale-105 active:scale-95"
+            >
+              <Moon className="w-5 h-5 text-accent-teal mb-1.5 opacity-80" />
+              <span className="text-[10px] uppercase tracking-widest text-[#F7F6F2] font-bold">Sleep</span>
+            </motion.button>
+          </div>
         )}
       </div>
     </div>
