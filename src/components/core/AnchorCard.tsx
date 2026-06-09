@@ -239,6 +239,22 @@ export default function AnchorCard({
             {anchor.reflectionText || 'No reflection logged.'}
           </p>
         </div>
+
+        {/* Home Screen Transaction Logs (Gathers) */}
+        {todayGathers.length > 0 && (
+          <div className="mt-2 pt-3 border-t border-accent-teal/10 flex flex-col gap-1.5">
+            {todayGathers.map(g => (
+              <div key={g.id} className="flex items-center gap-1.5 text-[10px] text-ink-secondary/80 italic break-words leading-relaxed">
+                <span className="text-[9px] opacity-60">↳</span>
+                <span className="font-medium">{g.label || 'Logged'}</span>
+                {g.tags && g.tags.length > 0 && (
+                  <span className="opacity-70">[{g.tags.map(t => `#${t}`).join(', ')}]</span>
+                )}
+                {g.createdAt && <span className="opacity-60 ml-1">({new Date(g.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})</span>}
+              </div>
+            ))}
+          </div>
+        )}
       </motion.div>
     );
   }
@@ -369,6 +385,22 @@ export default function AnchorCard({
             >
               ↳ Drop to Baseline: {anchor.baselineTitle}
             </button>
+          </div>
+        )}
+
+        {/* Home Screen Transaction Logs (Gathers) */}
+        {todayGathers.length > 0 && (
+          <div className="mt-3 pt-3 border-t border-muted/30 flex flex-col gap-1.5">
+            {todayGathers.map(g => (
+              <div key={g.id} className="flex items-center gap-1.5 text-[10px] text-ink-secondary/80 italic break-words leading-relaxed">
+                <span className="text-[9px] opacity-60">↳</span>
+                <span className="font-medium">{g.label || 'Logged'}</span>
+                {g.tags && g.tags.length > 0 && (
+                  <span className="opacity-70">[{g.tags.map(t => `#${t}`).join(', ')}]</span>
+                )}
+                {g.createdAt && <span className="opacity-60 ml-1">({new Date(g.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})</span>}
+              </div>
+            ))}
           </div>
         )}
       </motion.div>

@@ -5,7 +5,8 @@ import Image from 'next/image';
 import FeetOnFloor from '@/components/rituals/FeetOnFloor';
 import PulseScore from '@/components/core/PulseScore';
 import AnchorCard from '@/components/core/AnchorCard';
-import TheArcCard from '@/components/rituals/TheArcCard';
+import MorningRoutineCard from '@/components/rituals/MorningRoutineCard';
+import EveningRoutineCard from '@/components/rituals/EveningRoutineCard';
 import { useRitualStore, getLifetimeKeeps } from '@/store/useRitualStore';
 import { syncPullInitialState } from '@/lib/supabase/syncEngine';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -21,7 +22,7 @@ import { evaluateYesterdayStreak } from '@/utils/streakEngine';
 import GentleReEntryScreen from '@/components/core/GentleReEntryScreen';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
 import LandingPage from '@/components/core/LandingPage';
-import TrellisGarden from '@/components/core/TrellisGarden';
+
 import OnboardingTour from '@/components/core/OnboardingTour';
 
 function Dashboard() {
@@ -380,7 +381,7 @@ function Dashboard() {
                               )}
                             </div>
                             <span className={`text-xs font-semibold select-none leading-none ${isPaused ? 'text-ink-secondary' : 'text-ink-primary'}`}>
-                              {isPaused ? 'Resting' : streakVal === 0 ? 'Fresh Arc' : `${streakVal} Day${streakVal === 1 ? '' : 's'}`}
+                              {isPaused ? 'Resting' : streakVal === 0 ? 'Current Streak' : `${streakVal} Day${streakVal === 1 ? '' : 's'}`}
                             </span>
                             <span className="text-[8px] tracking-wider text-ink-secondary uppercase font-semibold select-none mt-1.5 leading-none">
                               Current Streak
@@ -428,8 +429,13 @@ function Dashboard() {
                     </div>
                   </div>
 
-                  <div id="tour-vision-card" className="w-full px-6 mt-3">
-                    <VisionPrimer />
+                  <div className="w-full px-6 mt-3 flex flex-col gap-3">
+                    <div id="tour-the-arc">
+                      <MorningRoutineCard />
+                    </div>
+                    <div id="tour-vision-card">
+                      <VisionPrimer />
+                    </div>
                   </div>
 
                   <div id="tour-pulse-score" className="w-full px-6">
@@ -510,9 +516,7 @@ function Dashboard() {
                       </motion.div>
                     ) : (
                       <div className="flex flex-col gap-3">
-                        <div id="tour-the-arc">
-                          <TheArcCard />
-                        </div>
+
                         <div id="tour-anchors-list" className="flex flex-col gap-3">
                           {activeTodayAnchors.map(anchor => (
                             <AnchorCard 
@@ -531,9 +535,13 @@ function Dashboard() {
                       </div>
                     )}
 
-                    <TrellisGarden />
+
 
                     <QuietPartner />
+                    
+                    <div className="mt-4">
+                      <EveningRoutineCard />
+                    </div>
                   </div>
               </div>
           </div>

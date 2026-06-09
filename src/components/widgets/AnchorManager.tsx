@@ -23,6 +23,7 @@ export default function AnchorManager({ onClose }: { onClose: () => void }) {
   const [newKeepDefinition, setNewKeepDefinition] = useState('');
   const [newCodename, setNewCodename] = useState('');
   const [frequency, setFrequency] = useState<string[]>(['all']);
+  const [bypassCap, setBypassCap] = useState(false);
 
   // Editing States
   const [editingAnchorId, setEditingAnchorId] = useState<string | null>(null);
@@ -108,8 +109,8 @@ export default function AnchorManager({ onClose }: { onClose: () => void }) {
   const handleToggleActive = async (id: string) => {
     const anchor = anchors.find(a => a.id === id);
     if (!anchor) return;
-    if (anchor.isActive === false && activeAnchorsCount >= 4) {
-      alert("Up to 4 personal anchors — keep it focused.");
+    if (anchor.isActive === false && activeAnchorsCount >= 5) {
+      alert("Up to 5 personal promises — keep it focused.");
       return;
     }
     try { await Haptics.impact({ style: ImpactStyle.Light }); } catch (e) {}
@@ -145,7 +146,7 @@ export default function AnchorManager({ onClose }: { onClose: () => void }) {
         <div className="flex justify-between items-center mb-6">
           <div>
             <h3 className="text-ink-primary font-semibold text-sm">Manage Anchors</h3>
-            <p className="text-[10px] text-ink-secondary mt-0.5">Anchors are the few promises that hold your day up. Add up to four.</p>
+            <p className="text-[10px] text-ink-secondary mt-0.5">Anchors are the few promises that hold your day up. Add up to five.</p>
           </div>
           <button onClick={onClose} className="text-ink-tertiary hover:text-ink-primary p-2 focus:outline-none">
             ✕
@@ -350,13 +351,21 @@ export default function AnchorManager({ onClose }: { onClose: () => void }) {
         </div>
 
         {/* Add New Anchor */}
-        {activeAnchorsCount >= 4 ? (
-          <div className="border-t border-muted pt-6 text-center flex flex-col items-center gap-2">
+        {activeAnchorsCount >= 5 && !bypassCap ? (
+          <div className="border-t border-muted pt-6 text-center flex flex-col items-center gap-3">
             <span className="text-xl select-none">⚓</span>
-            <h4 className="text-sm font-semibold text-ink-primary">Personal Anchors Cap</h4>
-            <p className="text-xs text-ink-secondary leading-relaxed max-w-[280px] mx-auto font-normal">
-              Up to 4 personal anchors — keep it focused.
-            </p>
+            <div>
+              <h4 className="text-sm font-semibold text-ink-primary">Personal Anchors Cap</h4>
+              <p className="text-xs text-ink-secondary leading-relaxed max-w-[280px] mx-auto font-normal mt-1">
+                Up to 5 personal anchors — keep it focused.
+              </p>
+            </div>
+            <button
+              onClick={() => setBypassCap(true)}
+              className="mt-2 text-[10px] uppercase tracking-widest font-semibold text-ink-tertiary hover:text-ink-secondary underline underline-offset-2"
+            >
+              I understand the risk of clutter, add anyway
+            </button>
           </div>
         ) : (
           <div className="border-t border-muted pt-6 flex flex-col gap-4 text-left">
@@ -367,7 +376,7 @@ export default function AnchorManager({ onClose }: { onClose: () => void }) {
               <span className="block text-[10px] uppercase tracking-widest text-ink-tertiary font-bold mb-2">
                 1. Pick a template
               </span>
-              <div className="flex gap-2 overflow-x-auto pb-2 -mx-2 px-2 scrollbar-none select-none">
+              <div className="flex gap-2 overflow-x-auto pb-2 -mx-2 px-2 select-none" style={{ WebkitOverflowScrolling: 'touch' }}>
                 <button
                   type="button"
                   onClick={() => selectTemplate('scratch')}

@@ -327,10 +327,7 @@ export default function LoginPage() {
             </div>
           </form>
         )}
-        {/* Google Play Medical Compliance */}
-        <p className="mt-12 text-[10px] text-ink-secondary/70 text-center px-4 leading-relaxed">
-          Trelis is not a medical device and does not diagnose, treat, cure, or prevent any medical condition.
-        </p>
+
       </motion.div>
     </main>
   );

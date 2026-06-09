@@ -599,10 +599,7 @@ export default function SettingsPage() {
           {isClearing ? 'Purging Cache...' : 'Sign Out'}
         </button>
 
-        {/* Google Play Medical Compliance */}
-        <p className="mt-1 text-[10px] text-ink-secondary/70 text-center px-4 leading-relaxed select-none font-normal">
-          Trelis is not a medical device and does not diagnose, treat, cure, or prevent any medical condition.
-        </p>
+
       </div>
     </main>
   );
