@@ -37,14 +37,29 @@ const TOUR_STEPS: TourStep[] = [
     targetId: 'tour-pulse-score',
   },
   {
-    title: 'The Arc Ritual',
+    title: 'The Bookends',
     description: 'The keystone of your day. By connecting your evening wind-down directly to your morning wake-up (Feet on Floor), you align your circadian rhythm naturally.',
     targetId: 'tour-the-arc',
+  },
+  {
+    title: 'Vision Priming',
+    description: 'A dedicated space to keep your core "Why" front and center. Because structure without purpose is just a cage.',
+    targetId: 'tour-vision-card',
+  },
+  {
+    title: 'The D-Day Timer',
+    description: 'Focus on a single, long-term horizon. Set your target date to stay grounded in the reality of your timeline.',
+    targetId: 'tour-dday-timer',
   },
   {
     title: 'Personal Anchors',
     description: 'Your custom daily commitments live here. Soft-capped at 5 to prevent cognitive overload. Customize, prioritize, or retire them anytime in Settings.',
     targetId: 'tour-anchors-list',
+  },
+  {
+    title: 'The Lifetime Vault',
+    description: 'The Cookie Jar. Every single promise kept and transaction logged is stored here permanently. Tap the cookie icon to draw power from your past wins anytime.',
+    targetId: 'tour-lifetime-vault',
   },
 ];
 

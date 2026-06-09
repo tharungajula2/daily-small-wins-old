@@ -196,9 +196,11 @@ export default function VaultPageClient() {
               <Cookie className="w-4 h-4 text-amber-500" />
               The Vault
             </h1>
-            <p className="text-[10px] text-ink-secondary tracking-widest uppercase font-semibold">
-              {totalCount > 0 ? `${totalCount} Lifetime Logs` : 'Lifetime Wins & Logs'}
-            </p>
+            <div className="mt-1.5 flex items-center gap-1.5 px-3 py-1 bg-amber-500/10 border border-amber-500/20 rounded-full">
+              <span className="text-[9px] text-amber-600 dark:text-amber-500 tracking-widest uppercase font-bold">
+                {totalCount > 0 ? `${totalCount} Lifetime Logs` : 'Lifetime Wins & Logs'}
+              </span>
+            </div>
           </div>
           <div className="w-10" />
         </div>

@@ -301,6 +301,7 @@ function Dashboard() {
         </div>
         <div className="w-24 flex justify-end gap-2">
           <motion.button 
+            id="tour-lifetime-vault"
             whileTap={{ scale: 0.95 }}
             onClick={() => router.push('/vault')}
             className="w-8 h-8 flex items-center justify-center rounded-xl bg-canvas border border-muted/50 text-amber-500 hover:text-amber-600 hover:border-amber-500/30 hover:bg-surface hover:shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] transition-all duration-300 select-none cursor-pointer focus:outline-none"
