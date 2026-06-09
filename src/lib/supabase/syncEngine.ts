@@ -7,20 +7,22 @@ function isValidUUID(id: string): boolean {
   return UUID_RE.test(id);
 }
 
+async function getSessionWithTimeout(supabase: any, timeoutMs = 2000): Promise<any> {
+  return Promise.race([
+    supabase.auth.getSession(),
+    new Promise<any>((_, reject) => setTimeout(() => reject(new Error('Session fetch timeout')), timeoutMs))
+  ]);
+}
+
 /**
  * Pulls the initial state from Supabase when the user logs in or reloads.
  * Conflict Resolution: Local data (from Zustand persist) always wins if it already exists.
  * Missing data is populated from the cloud (e.g., fresh device).
  */
-export async function syncPullInitialState(localState: any, setLocalState: (partial: any) => void) {
+export async function syncPullInitialState(userId: string, localState: any, setLocalState: (partial: any) => void) {
   const supabase = createClient();
   
   try {
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-    if (sessionError) throw sessionError;
-    if (!session?.user) return;
-    
-    const userId = session.user.id;
     const today = new Date().toLocaleDateString('en-CA');
 
     // 1. Pull Daily Rituals
@@ -267,7 +269,7 @@ export async function syncPushDailyRitual(state: any) {
   const supabase = createClient();
   
   try {
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    const { data: { session }, error: sessionError } = await getSessionWithTimeout(supabase);
     if (sessionError) throw sessionError;
     if (!session?.user) return; // Silent return for offline/unauthenticated
     
@@ -317,7 +319,7 @@ export async function syncPushAnchors(anchors: any[]) {
   const supabase = createClient();
   
   try {
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    const { data: { session }, error: sessionError } = await getSessionWithTimeout(supabase);
     if (sessionError) throw sessionError;
     if (!session?.user) return;
     
@@ -373,7 +375,7 @@ export async function syncPushAnchorLog(
   const supabase = createClient();
   
   try {
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    const { data: { session }, error: sessionError } = await getSessionWithTimeout(supabase);
     if (sessionError) throw sessionError;
     if (!session?.user) return;
 
@@ -413,7 +415,7 @@ export async function syncPushAnchorLog(
 export async function syncPushVision(visionText: string) {
   const supabase = createClient();
   try {
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    const { data: { session }, error: sessionError } = await getSessionWithTimeout(supabase);
     if (sessionError) throw sessionError;
     if (!session?.user) return;
     
@@ -436,7 +438,7 @@ export async function syncPushVision(visionText: string) {
 export async function syncPushOnboardingTourState(completed: boolean) {
   const supabase = createClient();
   try {
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    const { data: { session }, error: sessionError } = await getSessionWithTimeout(supabase);
     if (sessionError) throw sessionError;
     if (!session?.user) return;
 
@@ -462,7 +464,7 @@ export async function syncPushOnboardingTourState(completed: boolean) {
 export async function syncPushKeep(anchorId: string, completed: boolean) {
   const supabase = createClient();
   try {
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    const { data: { session }, error: sessionError } = await getSessionWithTimeout(supabase);
     if (sessionError) throw sessionError;
     if (!session?.user) return;
     
@@ -502,7 +504,7 @@ export async function syncPushKeep(anchorId: string, completed: boolean) {
 export async function syncPushGather(gather: { id: string; anchorId: string; label?: string; tags?: string[]; logDate?: string }) {
   const supabase = createClient();
   try {
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    const { data: { session }, error: sessionError } = await getSessionWithTimeout(supabase);
     if (sessionError) throw sessionError;
     if (!session?.user) return;
     
@@ -536,7 +538,7 @@ export async function syncPushGather(gather: { id: string; anchorId: string; lab
 export async function syncDeleteGather(gatherId: string) {
   const supabase = createClient();
   try {
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    const { data: { session }, error: sessionError } = await getSessionWithTimeout(supabase);
     if (sessionError) throw sessionError;
     if (!session?.user) return;
     

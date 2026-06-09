@@ -79,7 +79,11 @@ export default function OnboardingPage() {
     setIsSubmitting(true);
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const getSessionPromise = Promise.race([
+        supabase.auth.getSession(),
+        new Promise<any>((_, reject) => setTimeout(() => reject(new Error('Session fetch timeout')), 2500))
+      ]);
+      const { data: { session } } = await getSessionPromise;
       if (!session?.user) {
         router.push('/login');
         return;
@@ -114,7 +118,11 @@ export default function OnboardingPage() {
     setIsSubmitting(true);
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const getSessionPromise = Promise.race([
+        supabase.auth.getSession(),
+        new Promise<any>((_, reject) => setTimeout(() => reject(new Error('Session fetch timeout')), 2500))
+      ]);
+      const { data: { session } } = await getSessionPromise;
       if (!session?.user) {
         router.push('/login');
         return;

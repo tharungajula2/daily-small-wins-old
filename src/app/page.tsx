@@ -121,7 +121,11 @@ function Dashboard() {
 
     async function loadExtraData() {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        const getSessionPromise = Promise.race([
+          supabase.auth.getSession(),
+          new Promise<any>((_, reject) => setTimeout(() => reject(new Error('Session fetch timeout')), 2500))
+        ]);
+        const { data: { session } } = await getSessionPromise;
         if (!session?.user) return;
 
         const uid = session.user.id;
@@ -587,39 +591,39 @@ export default function Page() {
   }, []);
 
   useEffect(() => {
-    // 1. Initial check
-    async function checkInitialSession() {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session) {
-          setIsAuthenticated(true);
-          await syncPullInitialState(useRitualStore.getState(), useRitualStore.setState);
-        } else {
-          setIsAuthenticated(false);
-        }
-      } catch (err) {
-        console.error('Error fetching initial session:', err);
-        setIsAuthenticated(false);
-      } finally {
-        setIsAuthLoading(false);
-      }
-    }
+    let active = true;
 
-    checkInitialSession();
-
-    // 2. Set up auth listener
-    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+    // Single source of truth auth listener
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!active) return;
+      console.log('Page: onAuthStateChange triggered. Event:', event, 'session:', session ? 'exists' : 'null');
+      
       if (session) {
         setIsAuthenticated(true);
-        await syncPullInitialState(useRitualStore.getState(), useRitualStore.setState);
+        // Sync in background, never block UI load
+        syncPullInitialState(session.user.id, useRitualStore.getState(), useRitualStore.setState)
+          .catch(err => console.error('Background sync pull error:', err));
       } else {
         setIsAuthenticated(false);
       }
+      
       setIsAuthLoading(false);
     });
 
+    // Fallback: if after 2.5 seconds we are still loading auth, force loading to false to ensure user is never locked out
+    const timeout = setTimeout(() => {
+      if (active) {
+        console.warn('Page: Auth initialization timed out. Forcing isAuthLoading to false.');
+        setIsAuthLoading(false);
+      }
+    }, 2500);
+
     return () => {
-      authListener.subscription.unsubscribe();
+      active = false;
+      clearTimeout(timeout);
+      if (authListener?.subscription) {
+        authListener.subscription.unsubscribe();
+      }
     };
   }, []);
 

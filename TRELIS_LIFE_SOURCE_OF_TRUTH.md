@@ -411,6 +411,9 @@ npx cap open android
 3. **PWA Landing Page & Circadian Mapping**: Rewrote `LandingPage.tsx` using exact product copy and integrated the `useCircadian` provider to ensure colors adapt beautifully to the time of day.
 4. **Production SEO & Open Graph (OG) Integration**: Upgraded `src/app/layout.tsx` metadata with complete OG tags, separate `Viewport` structure for light/dark theme color media queries, and configured `/manifest.json` for proper iOS and Android home screen installability.
 5. **Production Security Headers & Env Audit**: Injected production-grade HTTP security headers (`X-DNS-Prefetch-Control`, `Strict-Transport-Security`, `X-Frame-Options`, `X-Content-Type-Options`, and `Referrer-Policy`) inside `next.config.ts` and a root `vercel.json` file. Verified that only standard, safe public variables (`NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`) are exposed to client browsers.
+6. **Onboarding Guided Tour & Reset Flow**: Implemented a 7-step spotlight onboarding tour on the Dashboard (`/`). It tracks `onboarding_tour_completed` in `public.user_state` and Zustand store. "Skip" closes it temporarily (re-offers on next load), while "Hide it" or completion sets it permanently to `true`. Replaying the tour is accessible in Settings, which resets state and triggers the tour overlay.
+7. **Authentication SignUp Verification**: Added a dedicated "Create Account" toggle on `/login` that requires password confirmation matching and prompts for email verification before redirecting.
+8. **Anchor Seeding Database Constraint Fix**: Resolved a database error (`null value in column "pillar_id" violates NOT NULL constraint`) by ensuring custom anchors created during onboarding, via Anchor Manager, or Sunday Debriefs dynamically resolve and pass valid `PillarId` string literals (`'stress_mental'`, `'movement'`) instead of `null` or `undefined`.
 
 ---
 

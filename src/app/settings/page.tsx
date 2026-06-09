@@ -113,7 +113,11 @@ export default function SettingsPage() {
     if (!partnerEmailInput.trim() || !profileEmail) return;
     setIsSendingInvite(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const getSessionPromise = Promise.race([
+        supabase.auth.getSession(),
+        new Promise<any>((_, reject) => setTimeout(() => reject(new Error('Session fetch timeout')), 2500))
+      ]);
+      const { data: { session } } = await getSessionPromise;
       if (!session?.user) return;
       
       const { error } = await supabase
@@ -140,7 +144,11 @@ export default function SettingsPage() {
   const handleRemovePartner = async () => {
     setIsRemovingPartner(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const getSessionPromise = Promise.race([
+        supabase.auth.getSession(),
+        new Promise<any>((_, reject) => setTimeout(() => reject(new Error('Session fetch timeout')), 2500))
+      ]);
+      const { data: { session } } = await getSessionPromise;
       if (!session?.user) return;
       
       await supabase
@@ -175,7 +183,11 @@ export default function SettingsPage() {
   useEffect(() => {
     async function loadProfile() {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        const getSessionPromise = Promise.race([
+          supabase.auth.getSession(),
+          new Promise<any>((_, reject) => setTimeout(() => reject(new Error('Session fetch timeout')), 2500))
+        ]);
+        const { data: { session } } = await getSessionPromise;
         if (session?.user) {
           setProfileEmail(session.user.email || 'user@trelis.life');
           await loadPartnerInfo(session.user.id, session.user.email || '');

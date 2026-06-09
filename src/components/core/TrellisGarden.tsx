@@ -39,8 +39,15 @@ export default function TrellisGarden() {
 
     async function loadGardenData() {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session?.user) return;
+        const getSessionPromise = Promise.race([
+          supabase.auth.getSession(),
+          new Promise<any>((_, reject) => setTimeout(() => reject(new Error('Session fetch timeout')), 2500))
+        ]);
+        const { data: { session } } = await getSessionPromise;
+        if (!session?.user) {
+          if (active) setLoading(false);
+          return;
+        }
         const uid = session.user.id;
         const todayStr = new Date().toLocaleDateString('en-CA');
 
@@ -58,7 +65,7 @@ export default function TrellisGarden() {
           useRitualStore.getState().setHistoricalCounts(historicalKeeps, historicalGathers);
         }
 
-        // 2. Get past 7 days dates for current weekOffset
+        // 2. Get past 7 days days for current weekOffset
         const dates: string[] = [];
         const dayLabels: string[] = [];
         const today = new Date();
@@ -170,6 +177,9 @@ export default function TrellisGarden() {
         }
       } catch (err) {
         console.error('Error compiling garden dashboard data:', err);
+        if (active) {
+          setLoading(false);
+        }
       }
     }
 
