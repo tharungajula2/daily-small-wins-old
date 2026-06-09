@@ -13,6 +13,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Settings } from 'lucide-react';
 import AnchorManager from '@/components/widgets/AnchorManager';
 import VisionPriming from '@/components/widgets/VisionPriming';
+import DDayTimer from '@/components/widgets/DDayTimer';
 import QuietPartner from '@/components/core/QuietPartner';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
@@ -435,6 +436,9 @@ function Dashboard() {
                     </div>
                     <div id="tour-vision-card">
                       <VisionPrimer />
+                    </div>
+                    <div id="tour-dday-timer">
+                      <DDayTimer />
                     </div>
                   </div>
 

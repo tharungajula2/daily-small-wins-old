@@ -120,6 +120,11 @@ interface RitualState {
   onboardingTourCompleted: boolean;
   setOnboardingCompleted: (completed: boolean) => void;
   setOnboardingTourCompleted: (completed: boolean) => void;
+
+  dDayTargetDate: string | null;
+  dDayTitle: string | null;
+  setDDayTargetDate: (date: string | null) => void;
+  setDDayTitle: (title: string | null) => void;
 }
 
 export const useRitualStore = create<RitualState>()(
@@ -146,6 +151,9 @@ export const useRitualStore = create<RitualState>()(
       isVisionEnabled: true,
       visionText: "I am building the structure for a better life.",
       morningTapText: "I'm here. Let's begin.",
+
+      dDayTargetDate: "2026-01-01",
+      dDayTitle: "Jan 1, 2026",
 
       hasSeenVisionTooltip: false,
 
@@ -431,6 +439,12 @@ export const useRitualStore = create<RitualState>()(
       },
       setOnboardingTourCompleted: (completed: boolean) => {
         set({ onboardingTourCompleted: completed });
+      },
+      setDDayTargetDate: (date: string | null) => {
+        set({ dDayTargetDate: date });
+      },
+      setDDayTitle: (title: string | null) => {
+        set({ dDayTitle: title });
       },
     }),
     {
