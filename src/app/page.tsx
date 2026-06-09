@@ -449,8 +449,6 @@ function Dashboard() {
                     </div>
                   </div>
 
-                  </div>
-
 
                  {isVisionEnabled && (
                    <div className="w-full px-6">
