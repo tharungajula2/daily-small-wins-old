@@ -10,7 +10,7 @@ import EveningRoutineCard from '@/components/rituals/EveningRoutineCard';
 import { useRitualStore, getLifetimeKeeps } from '@/store/useRitualStore';
 import { syncPullInitialState } from '@/lib/supabase/syncEngine';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Settings } from 'lucide-react';
+import { Settings, Cookie } from 'lucide-react';
 import AnchorManager from '@/components/widgets/AnchorManager';
 import VisionPriming from '@/components/widgets/VisionPriming';
 import DDayTimer from '@/components/widgets/DDayTimer';
@@ -299,8 +299,17 @@ function Dashboard() {
             Trelis
           </h1>
         </div>
-        <div className="w-20 flex justify-end">
+        <div className="w-24 flex justify-end gap-2">
           <motion.button 
+            whileTap={{ scale: 0.95 }}
+            onClick={() => router.push('/vault')}
+            className="w-8 h-8 flex items-center justify-center rounded-xl bg-canvas border border-muted/50 text-amber-500 hover:text-amber-600 hover:border-amber-500/30 hover:bg-surface hover:shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] transition-all duration-300 select-none cursor-pointer focus:outline-none"
+            title="Lifetime Wins Vault"
+          >
+            <Cookie className="w-3.5 h-3.5" />
+          </motion.button>
+          <motion.button 
+
             whileTap={{ scale: 0.95 }}
             onClick={() => router.push('/settings')}
             className="w-8 h-8 flex items-center justify-center rounded-xl bg-canvas border border-muted/50 text-ink-secondary hover:text-accent-teal hover:border-accent-teal/30 hover:bg-surface hover:shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] transition-all duration-300 select-none cursor-pointer focus:outline-none"
