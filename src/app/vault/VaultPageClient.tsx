@@ -3,26 +3,39 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Cookie, Sparkles, Calendar as CalendarIcon, CheckCircle2, MessageSquareText } from 'lucide-react';
+import { ArrowLeft, Cookie, Sparkles, Calendar as CalendarIcon, CheckCircle2, MessageSquareText, Shield } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { format, parseISO } from 'date-fns';
 
 type VaultItem = {
   id: string;
+  anchorId: string;
   type: 'gather' | 'keep' | 'win' | 'reflection';
   title: string;
   description?: string;
-  timestamp: string; // ISO string for sorting
+  timestamp: string;
+};
+
+type GroupedAnchor = {
+  anchorId: string;
+  title: string;
+  isKept: boolean;
+  keepTimestamp?: string;
+  gathers: { id: string; description: string; timestamp: string; type: 'gather' | 'reflection' }[];
+};
+
+type VaultDay = {
+  date: string;
+  anchors: Record<string, GroupedAnchor>;
+  wins: VaultItem[];
 };
 
 export default function VaultPageClient() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
-  const [groupedItems, setGroupedItems] = useState<Record<string, VaultItem[]>>({});
+  const [groupedDays, setGroupedDays] = useState<Record<string, VaultDay>>({});
   const [dates, setDates] = useState<string[]>([]);
-  
-  // For filter / cookie jar interaction
-  const [selectedMonth, setSelectedMonth] = useState<string | null>(null);
+  const [totalCount, setTotalCount] = useState(0);
 
   useEffect(() => {
     async function fetchVault() {
@@ -36,7 +49,6 @@ export default function VaultPageClient() {
       }
 
       try {
-        // Parallel fetch for maximum speed
         const [
           { data: gathers },
           { data: keeps },
@@ -54,10 +66,10 @@ export default function VaultPageClient() {
         const anchorMap = new Map((anchors || []).map(a => [a.id, a.title]));
         const allItems: VaultItem[] = [];
 
-        // Process Gathers (Transactions)
         (gathers || []).forEach(g => {
           allItems.push({
             id: g.id,
+            anchorId: g.anchor_id,
             type: 'gather',
             title: anchorMap.get(g.anchor_id) || 'Unknown Anchor',
             description: g.label,
@@ -65,32 +77,42 @@ export default function VaultPageClient() {
           });
         });
 
-        // Process Keeps (Check-ins)
         (keeps || []).forEach(k => {
           allItems.push({
             id: k.id,
+            anchorId: k.anchor_id,
             type: 'keep',
             title: anchorMap.get(k.anchor_id) || 'Unknown Anchor',
-            description: 'Anchor Kept',
             timestamp: k.created_at || `${k.log_date}T12:00:00Z`
           });
         });
 
-        // Process Legacy Logs (Reflections & old Keeps)
         (legacyLogs || []).forEach(l => {
+          // Add keep
           allItems.push({
-            id: l.id,
-            type: l.reflection_text ? 'reflection' : 'keep',
+            id: l.id + '-keep',
+            anchorId: l.anchor_id,
+            type: 'keep',
             title: anchorMap.get(l.anchor_id) || 'Unknown Anchor',
-            description: l.reflection_text || 'Anchor Kept',
             timestamp: l.created_at || `${l.date}T12:00:00Z`
           });
+          // If it has reflection, add as gather-like reflection
+          if (l.reflection_text) {
+            allItems.push({
+              id: l.id + '-ref',
+              anchorId: l.anchor_id,
+              type: 'reflection',
+              title: anchorMap.get(l.anchor_id) || 'Unknown Anchor',
+              description: l.reflection_text,
+              timestamp: l.created_at || `${l.date}T12:00:00Z`
+            });
+          }
         });
 
-        // Process Daily Rituals (Legacy Win of the Day)
         (rituals || []).forEach(r => {
           allItems.push({
             id: `win-${r.date}`,
+            anchorId: 'win',
             type: 'win',
             title: 'Win of the Day',
             description: r.win_of_the_day,
@@ -98,31 +120,55 @@ export default function VaultPageClient() {
           });
         });
 
-        // Sort all items descending by time
-        allItems.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+        setTotalCount(allItems.length);
 
-        // Group by Date string (YYYY-MM-DD)
-        const grouped: Record<string, VaultItem[]> = {};
+        const grouped: Record<string, VaultDay> = {};
+
         allItems.forEach(item => {
           const dateStr = item.timestamp.split('T')[0];
-          if (!grouped[dateStr]) grouped[dateStr] = [];
-          
-          // Deduplicate keeps that might exist in both legacy logs and keeps
-          if (item.type === 'keep' || item.type === 'reflection') {
-             const exists = grouped[dateStr].find(i => i.title === item.title && (i.type === 'keep' || i.type === 'reflection'));
-             if (exists) {
-                // If the new one is a reflection and the old is a keep, replace it
-                if (item.type === 'reflection' && exists.type === 'keep') {
-                   grouped[dateStr] = grouped[dateStr].filter(i => i.id !== exists.id);
-                } else {
-                   return; // Skip duplicate keep
-                }
-             }
+          if (!grouped[dateStr]) {
+            grouped[dateStr] = { date: dateStr, anchors: {}, wins: [] };
           }
-          grouped[dateStr].push(item);
+          
+          if (item.type === 'win') {
+            grouped[dateStr].wins.push(item);
+            return;
+          }
+
+          const aId = item.anchorId;
+          if (!grouped[dateStr].anchors[aId]) {
+            grouped[dateStr].anchors[aId] = {
+              anchorId: aId,
+              title: item.title,
+              isKept: false,
+              gathers: []
+            };
+          }
+
+          if (item.type === 'keep') {
+            grouped[dateStr].anchors[aId].isKept = true;
+            // Only set keepTimestamp if we don't have one, or if this one is older (earliest keep wins)
+            if (!grouped[dateStr].anchors[aId].keepTimestamp || new Date(item.timestamp) < new Date(grouped[dateStr].anchors[aId].keepTimestamp!)) {
+              grouped[dateStr].anchors[aId].keepTimestamp = item.timestamp;
+            }
+          } else if (item.type === 'gather' || item.type === 'reflection') {
+            grouped[dateStr].anchors[aId].gathers.push({
+              id: item.id,
+              description: item.description!,
+              timestamp: item.timestamp,
+              type: item.type
+            });
+          }
         });
 
-        setGroupedItems(grouped);
+        // Sort gathers within anchors
+        Object.values(grouped).forEach(day => {
+          Object.values(day.anchors).forEach(anchor => {
+            anchor.gathers.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+          });
+        });
+
+        setGroupedDays(grouped);
         setDates(Object.keys(grouped).sort((a, b) => b.localeCompare(a)));
       } catch (error) {
         console.error("Error fetching vault:", error);
@@ -133,16 +179,6 @@ export default function VaultPageClient() {
 
     fetchVault();
   }, [router]);
-
-  const getIconForType = (type: string) => {
-    switch (type) {
-      case 'gather': return <Sparkles className="w-4 h-4 text-accent-teal" />;
-      case 'win': return <Cookie className="w-4 h-4 text-amber-500" />;
-      case 'reflection': return <MessageSquareText className="w-4 h-4 text-indigo-400" />;
-      case 'keep': return <CheckCircle2 className="w-4 h-4 text-emerald-500" />;
-      default: return <Sparkles className="w-4 h-4" />;
-    }
-  };
 
   return (
     <div className="min-h-screen bg-canvas text-ink-primary font-sans selection:bg-accent-teal/20 pb-24">
@@ -161,10 +197,10 @@ export default function VaultPageClient() {
               The Vault
             </h1>
             <p className="text-[10px] text-ink-secondary tracking-widest uppercase font-semibold">
-              Lifetime Wins & Logs
+              {totalCount > 0 ? `${totalCount} Lifetime Logs` : 'Lifetime Wins & Logs'}
             </p>
           </div>
-          <div className="w-10" /> {/* Spacer for centering */}
+          <div className="w-10" />
         </div>
       </div>
 
@@ -191,7 +227,8 @@ export default function VaultPageClient() {
           {dates.map((dateStr) => {
             const dateObj = parseISO(dateStr);
             const displayDate = format(dateObj, 'EEEE, MMMM d, yyyy');
-            const items = groupedItems[dateStr];
+            const dayData = groupedDays[dateStr];
+            const anchorBlocks = Object.values(dayData.anchors).sort((a, b) => a.title.localeCompare(b.title));
 
             return (
               <motion.div 
@@ -199,46 +236,94 @@ export default function VaultPageClient() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-50px" }}
                 key={dateStr}
-                className="mb-8"
+                className="mb-10"
               >
-                <div className="flex items-center gap-3 mb-4">
+                <div className="flex items-center gap-3 mb-5">
                   <div className="h-px bg-muted/50 flex-1" />
-                  <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-surface border border-muted text-[10px] font-semibold text-ink-secondary uppercase tracking-widest">
+                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface border border-muted text-[10px] font-semibold text-ink-secondary uppercase tracking-widest shadow-sm">
                     <CalendarIcon className="w-3 h-3" />
                     {displayDate}
                   </div>
                   <div className="h-px bg-muted/50 flex-1" />
                 </div>
 
-                <div className="flex flex-col gap-3">
-                  {items.map((item) => (
-                    <div 
-                      key={item.id}
-                      className="bg-surface border border-muted/60 p-4 rounded-2xl shadow-sm flex gap-4 items-start"
-                    >
-                      <div className="mt-0.5 p-2 rounded-xl bg-canvas border border-muted/30">
-                        {getIconForType(item.type)}
+                <div className="flex flex-col gap-4">
+                  {/* Render Legacy Wins of the Day */}
+                  {dayData.wins.map(win => (
+                    <div key={win.id} className="bg-surface border border-muted/60 p-4 rounded-2xl shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] flex gap-4 items-start">
+                      <div className="mt-0.5 p-2 rounded-xl bg-amber-500/10 border border-amber-500/20">
+                        <Cookie className="w-4 h-4 text-amber-500" />
                       </div>
                       <div className="flex flex-col flex-1 min-w-0 gap-1.5">
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="text-[10px] font-bold uppercase tracking-widest text-ink-secondary">
-                            {item.title}
-                          </span>
-                          <span className="text-[9px] text-ink-tertiary font-semibold uppercase tracking-widest whitespace-nowrap">
-                            {format(parseISO(item.timestamp), 'HH:mm')}
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-ink-secondary">
+                          {win.title}
+                        </span>
+                        <p className="text-sm font-medium leading-relaxed italic text-amber-600 dark:text-amber-500">
+                          "{win.description}"
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+
+                  {/* Render Anchors and their Gathers */}
+                  {anchorBlocks.map(anchor => (
+                    <div key={anchor.anchorId} className="bg-surface border border-muted/60 p-4 rounded-2xl shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] flex flex-col gap-3">
+                      {/* Anchor Header */}
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex items-center gap-3">
+                          <div className={`p-1.5 rounded-full ${anchor.isKept ? 'bg-accent-teal/10 text-accent-teal' : 'bg-muted/30 text-ink-tertiary'}`}>
+                            {anchor.isKept ? <CheckCircle2 className="w-4 h-4" /> : <Shield className="w-4 h-4" />}
+                          </div>
+                          <span className={`text-xs font-bold uppercase tracking-widest ${anchor.isKept ? 'text-ink-primary' : 'text-ink-secondary'}`}>
+                            {anchor.title}
                           </span>
                         </div>
-                        {item.description && item.description !== 'Anchor Kept' && (
-                          <p className={`text-sm font-medium leading-relaxed ${item.type === 'win' ? 'italic text-amber-600 dark:text-amber-500' : 'text-ink-primary'}`}>
-                            {item.description}
-                          </p>
-                        )}
-                        {item.description === 'Anchor Kept' && (
-                          <p className="text-xs font-semibold text-ink-secondary/70">
-                            Completed successfully.
-                          </p>
+                        {anchor.isKept && anchor.keepTimestamp && (
+                          <span className="text-[9px] text-ink-tertiary font-semibold uppercase tracking-widest">
+                            {format(parseISO(anchor.keepTimestamp), 'HH:mm')}
+                          </span>
                         )}
                       </div>
+
+                      {/* No logs, just kept */}
+                      {anchor.gathers.length === 0 && anchor.isKept && (
+                        <div className="pl-10">
+                           <p className="text-xs font-semibold text-accent-teal/70 italic">
+                             Completed successfully.
+                           </p>
+                        </div>
+                      )}
+
+                      {/* Gathers List */}
+                      {anchor.gathers.length > 0 && (
+                        <div className="flex flex-col gap-2 pl-10 mt-1">
+                          {anchor.gathers.map((gather, index) => (
+                            <div key={gather.id} className="relative">
+                              {/* Connector line for multiple logs */}
+                              {index !== anchor.gathers.length - 1 && (
+                                <div className="absolute left-[7px] top-6 bottom-[-8px] w-px bg-muted/40" />
+                              )}
+                              <div className="flex items-start gap-3">
+                                <div className="mt-1">
+                                  {gather.type === 'reflection' ? (
+                                    <MessageSquareText className="w-3.5 h-3.5 text-indigo-400" />
+                                  ) : (
+                                    <Sparkles className="w-3.5 h-3.5 text-accent-teal/60" />
+                                  )}
+                                </div>
+                                <div className="flex flex-col flex-1">
+                                  <p className="text-sm font-medium text-ink-primary leading-relaxed">
+                                    {gather.description}
+                                  </p>
+                                  <span className="text-[9px] text-ink-tertiary font-semibold tracking-wider uppercase mt-0.5">
+                                    {format(parseISO(gather.timestamp), 'HH:mm')}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -250,3 +335,4 @@ export default function VaultPageClient() {
     </div>
   );
 }
+
