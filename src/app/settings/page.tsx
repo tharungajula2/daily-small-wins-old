@@ -103,6 +103,32 @@ export default function SettingsPage() {
     router.push('/');
   };
 
+  const handleEraseData = async () => {
+    const confirmed = window.confirm("WARNING: This will permanently delete ALL your wins, gems, and history. You cannot undo this. Are you sure?");
+    if (!confirmed) return;
+    
+    setIsClearing(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) return;
+      const uid = session.user.id;
+
+      // Delete from all tables directly since user owns their data
+      await supabase.from('anchor_gathers').delete().eq('user_id', uid);
+      await supabase.from('anchor_logs').delete().eq('user_id', uid);
+      await supabase.from('daily_rituals').delete().eq('user_id', uid);
+      await supabase.from('user_anchors').delete().eq('user_id', uid);
+      await supabase.from('user_state').delete().eq('user_id', uid);
+
+      // Clear local store completely
+      localStorage.clear();
+      window.location.href = '/';
+    } catch (e) {
+      console.error("Error wiping data:", e);
+      setIsClearing(false);
+    }
+  };
+
   const handleSendInvite = async () => {
     if (!partnerEmailInput.trim() || !profileEmail) return;
     setIsSendingInvite(true);
@@ -560,10 +586,18 @@ export default function SettingsPage() {
           disabled={isClearing}
           className="w-full py-2.5 text-center text-xs font-semibold text-ink-tertiary hover:text-ink-primary transition-all active:scale-[0.98] focus:outline-none bg-transparent border-0"
         >
-          {isClearing ? 'Purging Cache...' : 'Sign Out'}
+          {isClearing ? 'Processing...' : 'Sign Out'}
         </button>
 
-
+        <div className="pt-4 border-t border-red-500/10 mt-2">
+          <button
+            onClick={handleEraseData}
+            disabled={isClearing}
+            className="w-full py-2.5 text-center text-[10px] uppercase tracking-widest font-bold text-red-400 hover:text-red-500 hover:bg-red-500/5 rounded-xl transition-all active:scale-[0.98] focus:outline-none border border-red-500/20"
+          >
+            ERASE ALL MY DATA (START FRESH)
+          </button>
+        </div>
       </div>
     </main>
   );

@@ -82,10 +82,9 @@ export default function PulseScore({ completedCount, totalCount }: PulseScorePro
 
   // Simple state description based on completions
   const getStatusInfo = () => {
-    if (totalCount === 0) return { title: 'Rest Day', color: '#85929E', desc: 'No anchors scheduled.' };
-    if (completedCount === totalCount) return { title: 'Complete ✦', color: '#2A7F7F', desc: 'All promises kept.' };
-    if (completedCount > 0) return { title: 'Steady', color: '#2A7F7F', desc: `${completedCount} of ${totalCount} kept` };
-    return { title: 'Rest', color: '#85929E', desc: 'The door is open.' };
+    if (completedCount === totalCount) return { title: 'Arc Complete', color: '#2A7F7F', desc: 'The daily foundation is set.' };
+    if (completedCount > 0) return { title: 'Steady', color: '#2A7F7F', desc: `${completedCount} of ${totalCount} phases done` };
+    return { title: 'Rest', color: '#85929E', desc: 'Awaiting the morning.' };
   };
 
   const statusInfo = getStatusInfo();
@@ -139,8 +138,8 @@ export default function PulseScore({ completedCount, totalCount }: PulseScorePro
             <span className="text-2xl font-mono font-semibold leading-none tracking-tight text-ink-primary">
               {completedCount}/{totalCount}
             </span>
-            <span className="text-ink-secondary text-xs uppercase tracking-wider mt-1.5 font-semibold leading-none">
-              Promises Kept
+            <span className="text-ink-secondary text-[10px] uppercase tracking-[0.2em] mt-1.5 font-bold leading-none">
+              Daily Arc
             </span>
             {completedCount === totalCount && totalCount > 0 && (
               <span className="text-xs mt-1 text-accent-teal font-semibold leading-none animate-pulse">

@@ -211,10 +211,11 @@ function Dashboard() {
   const activeTodayAnchors = anchors.filter(a => a.isActive !== false);
 
   const totalPersonalAnchors = activeTodayAnchors.length;
-  const completedPersonalAnchors = activeTodayAnchors.filter(a => a.completed).length;
+  // Anchors are just Playlists now, so they don't get "completed".
+  // The daily ring only tracks The Arc (Morning & Evening check-ins).
 
-  const totalCount = 2 + totalPersonalAnchors;
-  const completedCount = (feetOnFloorLogged ? 1 : 0) + (eveningCheckInDone ? 1 : 0) + completedPersonalAnchors;
+  const totalCount = 2; // Morning + Evening
+  const completedCount = (feetOnFloorLogged ? 1 : 0) + (eveningCheckInDone ? 1 : 0);
 
   const allCompleted = completedCount === totalCount;
 

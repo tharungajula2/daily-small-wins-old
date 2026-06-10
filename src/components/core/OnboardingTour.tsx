@@ -17,8 +17,8 @@ const TOUR_STEPS: TourStep[] = [
     description: 'Not a health app. A Life Operating System. A quiet space designed to bring premium structure, clarity, and calm to your daily commitments.',
   },
   {
-    title: 'Promises Kept',
-    description: 'This counter tracks your lifetime commitments kept. It only goes up—progress here is permanent, celebrating consistency over speed.',
+    title: 'Total Wins',
+    description: 'This tracks your lifetime small wins. It only goes up—progress here is permanent, celebrating momentum without failure.',
     targetId: 'tour-promises-kept',
   },
   {
@@ -32,8 +32,8 @@ const TOUR_STEPS: TourStep[] = [
     targetId: 'tour-pause-hud',
   },
   {
-    title: 'The Seam-and-Arc Ring',
-    description: 'This is your daily pulse. The ring fills as you complete anchors. Note the open seam at the bottom: a reminder that the loop of life is never fully closed, just daily maintained.',
+    title: 'The Daily Arc Ring',
+    description: 'This is your daily pulse. It tracks the bookends of your day: Morning Check-In and Evening Wind-Down.',
     targetId: 'tour-pulse-score',
   },
   {
@@ -52,13 +52,13 @@ const TOUR_STEPS: TourStep[] = [
     targetId: 'tour-dday-timer',
   },
   {
-    title: 'Personal Anchors',
-    description: 'Your custom daily commitments live here. Soft-capped at 5 to prevent cognitive overload. Customize, prioritize, or retire them anytime in Settings.',
+    title: 'Playlists (Anchors)',
+    description: 'These are your daily categories. Rather than stressful checklists, these are buckets. Tap "+ ✨ GEM" to log a small win into a category anytime.',
     targetId: 'tour-anchors-list',
   },
   {
     title: 'The Lifetime Vault',
-    description: 'The Cookie Jar. Every single promise kept and transaction logged is stored here permanently. Tap the cookie icon to draw power from your past wins anytime.',
+    description: 'Your chronological ledger. Every single Gem you capture and Reflection you write is stored here permanently. Tap the vault icon to view your history.',
     targetId: 'tour-lifetime-vault',
   },
 ];
