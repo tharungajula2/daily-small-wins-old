@@ -94,12 +94,12 @@ export async function syncPullInitialState(userId: string, localState: any, setL
       updates.onboardingTourCompleted = !!userStateData.onboarding_tour_completed;
 
       if (userStateData.d_day_target_date) {
-        if (!localState.dDayTargetDate || localState.dDayTargetDate === "2026-01-01") {
+        if (!localState.dDayTargetDate || localState.dDayTargetDate === "2026-01-01" || localState.dDayTargetDate === "2027-01-01") {
           updates.dDayTargetDate = userStateData.d_day_target_date;
         }
       }
       if (userStateData.d_day_title) {
-        if (!localState.dDayTitle || localState.dDayTitle === "Jan 1, 2026") {
+        if (!localState.dDayTitle || localState.dDayTitle === "Jan 1, 2026" || localState.dDayTitle === "Jan 1, 2027") {
           updates.dDayTitle = userStateData.d_day_title;
         }
       }
@@ -139,13 +139,6 @@ export async function syncPullInitialState(userId: string, localState: any, setL
           type: a.type,
           prompt: a.prompt || undefined,
           completed: false,
-          usedBaseline: false,
-          reflectionText: undefined,
-          subItems: a.sub_items || [],
-          frequency: a.frequency || ['all'],
-          baseline_trg: a.baseline_target || undefined,
-          codename: a.codename || null,
-          keepDefinition: a.keep_definition || '',
           isPermanent: a.is_permanent || false,
           isActive: a.is_active !== false,
           gathers: []
@@ -350,12 +343,7 @@ export async function syncPushAnchors(anchors: any[]) {
       pillar_id: a.pillarId || 'stress_mental',
       type: a.type || 'action',
       prompt: a.prompt || null,
-      baseline_title: a.baselineTitle || null,
       is_active: a.isActive !== false,
-      sub_items: a.subItems || [],
-      frequency: a.frequency || ['all'],
-      codename: a.codename || null,
-      keep_definition: a.keepDefinition || '',
       is_permanent: a.isPermanent || false
     }));
 
@@ -378,10 +366,7 @@ export async function syncPushAnchors(anchors: any[]) {
  */
 export async function syncPushAnchorLog(
   anchorId: string, 
-  completed: boolean, 
-  usedBaseline: boolean,
-  reflectionText?: string,
-  subItemsState?: { id: string; completed: boolean }[]
+  completed: boolean
 ) {
   const supabase = createClient();
   
@@ -402,10 +387,7 @@ export async function syncPushAnchorLog(
       user_id: session.user.id,
       anchor_id: anchorId,
       date: today,
-      completed,
-      used_baseline: usedBaseline,
-      reflection_text: reflectionText || null,
-      sub_items_state: subItemsState || null
+      completed
     };
 
     const { error } = await supabase

@@ -19,8 +19,6 @@ type VaultItem = {
 type GroupedAnchor = {
   anchorId: string;
   title: string;
-  isKept: boolean;
-  keepTimestamp?: string;
   gathers: { id: string; description: string; timestamp: string; type: 'gather' | 'reflection' }[];
 };
 
@@ -52,14 +50,12 @@ export default function VaultPageClient() {
       try {
         const [
           { data: gathers },
-          { data: keeps },
           { data: legacyLogs },
           { data: rituals },
           { data: anchors }
         ] = await Promise.all([
           supabase.from('anchor_gathers').select('*').eq('user_id', userId),
-          supabase.from('anchor_keeps').select('*').eq('user_id', userId),
-          supabase.from('anchor_logs').select('*').eq('user_id', userId).eq('completed', true),
+          supabase.from('anchor_logs').select('*').eq('user_id', userId).eq('completed', true).not('reflection_text', 'is', null).neq('reflection_text', ''),
           supabase.from('daily_rituals').select('date, win_of_the_day, created_at').eq('user_id', userId).not('win_of_the_day', 'is', null).neq('win_of_the_day', ''),
           supabase.from('user_anchors').select('id, title').eq('user_id', userId)
         ]);
@@ -78,36 +74,15 @@ export default function VaultPageClient() {
           });
         });
 
-        (keeps || []).forEach(k => {
-          allItems.push({
-            id: k.id,
-            anchorId: k.anchor_id,
-            type: 'keep',
-            title: anchorMap.get(k.anchor_id) || 'Unknown Anchor',
-            timestamp: k.created_at || `${k.log_date}T12:00:00Z`
-          });
-        });
-
         (legacyLogs || []).forEach(l => {
-          // Add keep
           allItems.push({
-            id: l.id + '-keep',
+            id: l.id + '-ref',
             anchorId: l.anchor_id,
-            type: 'keep',
+            type: 'reflection',
             title: anchorMap.get(l.anchor_id) || 'Unknown Anchor',
+            description: l.reflection_text,
             timestamp: l.created_at || `${l.date}T12:00:00Z`
           });
-          // If it has reflection, add as gather-like reflection
-          if (l.reflection_text) {
-            allItems.push({
-              id: l.id + '-ref',
-              anchorId: l.anchor_id,
-              type: 'reflection',
-              title: anchorMap.get(l.anchor_id) || 'Unknown Anchor',
-              description: l.reflection_text,
-              timestamp: l.created_at || `${l.date}T12:00:00Z`
-            });
-          }
         });
 
         (rituals || []).forEach(r => {
@@ -141,18 +116,10 @@ export default function VaultPageClient() {
             grouped[dateStr].anchors[aId] = {
               anchorId: aId,
               title: item.title,
-              isKept: false,
               gathers: []
             };
           }
-
-          if (item.type === 'keep') {
-            grouped[dateStr].anchors[aId].isKept = true;
-            // Only set keepTimestamp if we don't have one, or if this one is older (earliest keep wins)
-            if (!grouped[dateStr].anchors[aId].keepTimestamp || new Date(item.timestamp) < new Date(grouped[dateStr].anchors[aId].keepTimestamp!)) {
-              grouped[dateStr].anchors[aId].keepTimestamp = item.timestamp;
-            }
-          } else if (item.type === 'gather' || item.type === 'reflection') {
+          if (item.type === 'gather' || item.type === 'reflection') {
             grouped[dateStr].anchors[aId].gathers.push({
               id: item.id,
               description: item.description!,
@@ -231,7 +198,7 @@ export default function VaultPageClient() {
             const dateObj = parseISO(dateStr);
             const displayDate = format(dateObj, 'EEEE, MMMM d, yyyy');
             const dayData = groupedDays[dateStr];
-            const anchorBlocks = Object.values(dayData.anchors).sort((a, b) => a.title.localeCompare(b.title));
+            const anchorBlocks = Object.values(dayData.anchors).filter(a => a.gathers.length > 0).sort((a, b) => a.title.localeCompare(b.title));
 
             return (
               <motion.div 
@@ -274,31 +241,16 @@ export default function VaultPageClient() {
                       {/* Anchor Header */}
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex items-center gap-3">
-                          <div className={`p-1.5 rounded-full ${anchor.isKept ? 'bg-accent-teal/10 text-accent-teal' : 'bg-muted/30 text-ink-tertiary'}`}>
-                            {anchor.isKept ? <CheckCircle2 className="w-4 h-4" /> : <Shield className="w-4 h-4" />}
+                          <div className="p-1.5 rounded-full bg-accent-teal/10 text-accent-teal">
+                            <Shield className="w-4 h-4" />
                           </div>
-                          <span className={`text-xs font-bold uppercase tracking-widest ${anchor.isKept ? 'text-ink-primary' : 'text-ink-secondary'}`}>
+                          <span className="text-xs font-bold uppercase tracking-widest text-ink-primary">
                             {anchor.title}
                           </span>
                         </div>
-                        {anchor.isKept && anchor.keepTimestamp && (
-                          <span className="text-[9px] text-ink-tertiary font-semibold uppercase tracking-widest">
-                            {format(parseISO(anchor.keepTimestamp), 'HH:mm')}
-                          </span>
-                        )}
                       </div>
 
-                      {/* No logs, just kept */}
-                      {anchor.gathers.length === 0 && anchor.isKept && (
-                        <div className="pl-10">
-                           <p className="text-xs font-semibold text-accent-teal/70 italic">
-                             Completed successfully.
-                           </p>
-                        </div>
-                      )}
-
                       {/* Gathers List */}
-                      {anchor.gathers.length > 0 && (
                         <div className="flex flex-col gap-2 pl-10 mt-1">
                           {anchor.gathers.map((gather, index) => (
                             <div key={gather.id} className="relative">
@@ -326,7 +278,6 @@ export default function VaultPageClient() {
                             </div>
                           ))}
                         </div>
-                      )}
                     </div>
                   ))}
                 </div>

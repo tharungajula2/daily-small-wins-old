@@ -7,7 +7,7 @@ import PulseScore from '@/components/core/PulseScore';
 import AnchorCard from '@/components/core/AnchorCard';
 import MorningRoutineCard from '@/components/rituals/MorningRoutineCard';
 import EveningRoutineCard from '@/components/rituals/EveningRoutineCard';
-import { useRitualStore, getLifetimeKeeps } from '@/store/useRitualStore';
+import { useRitualStore, getLifetimeKeeps, getLifetimeGathers } from '@/store/useRitualStore';
 import { syncPullInitialState } from '@/lib/supabase/syncEngine';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Settings, Cookie } from 'lucide-react';
@@ -17,7 +17,7 @@ import DDayTimer from '@/components/widgets/DDayTimer';
 import QuietPartner from '@/components/core/QuietPartner';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
-import { isAnchorActiveForDay } from '@/utils/dayMatcher';
+
 import { evaluateYesterdayStreak } from '@/utils/streakEngine';
 import GentleReEntryScreen from '@/components/core/GentleReEntryScreen';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
@@ -31,13 +31,13 @@ function Dashboard() {
   const { 
     feetOnFloorLogged, morningCheckInDone, sleepScore, moodScore, anchors, eveningCheckInDone,
     isVisionEnabled, currentStreak, lastActiveDate, setLastActiveDate,
-    lastFreshStartPrompt, setLastFreshStartPrompt, isRestDay, toggleRestDay
+    isRestDay, toggleRestDay
   } = useRitualStore();
   
   const lifetimeKeeps = useRitualStore(state => getLifetimeKeeps(state));
   
   const [showGentleReEntry, setShowGentleReEntry] = useState(false);
-  const [showFreshStart, setShowFreshStart] = useState(false);
+
   const [showEvening, setShowEvening] = useState(false);
   const [isManagingAnchors, setIsManagingAnchors] = useState(false);
   const [userState, setUserState] = useState<{
@@ -101,20 +101,7 @@ function Dashboard() {
     setShowGentleReEntry(false);
   };
 
-  useEffect(() => {
-    try {
-      const today = new Date();
-      const isMonday = today.getDay() === 1;
-      const isFirstOfMonth = today.getDate() === 1;
-      const todayStr = today.toLocaleDateString('en-CA');
-      
-      if ((isMonday || isFirstOfMonth) && lastFreshStartPrompt !== todayStr) {
-        setShowFreshStart(true);
-      }
-    } catch (err) {
-      console.error('Error evaluating fresh start day:', err);
-    }
-  }, [lastFreshStartPrompt]);
+
 
   // Dedicated useEffect to load remote user state and anchor metadata
   useEffect(() => {
@@ -221,8 +208,7 @@ function Dashboard() {
     };
   }, [currentStreak]);
 
-  // daily string matcher
-  const activeTodayAnchors = anchors.filter(a => a.isActive !== false && isAnchorActiveForDay(a.frequency));
+  const activeTodayAnchors = anchors.filter(a => a.isActive !== false);
 
   const totalPersonalAnchors = activeTodayAnchors.length;
   const completedPersonalAnchors = activeTodayAnchors.filter(a => a.completed).length;
@@ -235,41 +221,7 @@ function Dashboard() {
   return (
     <main className={`flex flex-col min-h-screen max-w-md mx-auto relative shadow-md bg-gradient-to-b ${phaseGradients[circadianPhase]} sm:border-x sm:border-muted transition-all duration-1000`}>
       
-      <AnimatePresence>
-        {showFreshStart && (
-          <motion.div
-            initial={{ opacity: 0, height: 0, y: -20 }}
-            animate={{ opacity: 1, height: 'auto', y: 0 }}
-            exit={{ opacity: 0, height: 0, y: -20 }}
-            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-            className="overflow-hidden bg-[#F7F6F2] dark:bg-[#1E1B17] border-b border-accent-teal/20 relative z-40"
-          >
-            <div className="px-6 py-4 flex flex-col items-start gap-3 max-w-md mx-auto">
-              <div className="flex flex-col gap-0.5">
-                <span className="text-[9px] uppercase tracking-widest text-accent-teal font-semibold">Fresh Start Moment</span>
-                <p className="text-xs text-ink-primary font-medium leading-relaxed">
-                  Want to start this {new Date().getDay() === 1 ? 'week' : 'month'} fresh? Your anchors stay exactly the same.
-                </p>
-              </div>
-              <button
-                onClick={async () => {
-                  try {
-                    await Haptics.impact({ style: ImpactStyle.Light });
-                  } catch (e) {
-                    // web fallback
-                  }
-                  const todayStr = new Date().toLocaleDateString('en-CA');
-                  setLastFreshStartPrompt(todayStr);
-                  setShowFreshStart(false);
-                }}
-                className="bg-accent-teal hover:bg-accent-teal/95 text-white text-xs font-semibold px-4 py-2 rounded-xl active:scale-98 transition-all whitespace-nowrap self-stretch text-center select-none"
-              >
-                Take a breath & begin
-              </button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+
       
       <header className="h-16 flex items-center justify-between px-6 border-b border-muted/50 bg-surface/90 backdrop-blur-md sticky top-0 z-30 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
         <div className="flex flex-col text-left select-none w-24">
@@ -347,7 +299,7 @@ function Dashboard() {
                   {/* Premium HUD Bar */}
                   <div className="w-full px-6">
                     <div className="w-full bg-surface rounded-3xl p-5 border border-muted/80 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05),0_1px_3px_rgba(0,0,0,0.02)] grid grid-cols-3 hover:shadow-[0_6px_24px_-4px_rgba(0,0,0,0.08)] transition-all">
-                      {/* Left: Promises Kept */}
+                      {/* Left: Total Wins */}
                       <div id="tour-promises-kept" className="flex flex-col items-center justify-center text-center border-r border-muted/30 pr-1">
                         <div className="w-9 h-9 rounded-xl bg-accent-teal/10 flex items-center justify-center shadow-sm mb-1.5 select-none">
                           <svg className="w-4 h-4 text-accent-teal" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -355,10 +307,10 @@ function Dashboard() {
                           </svg>
                         </div>
                         <span className="text-sm font-semibold text-accent-teal select-none leading-none">
-                          {lifetimeKeeps}
+                          {lifetimeKeeps + useRitualStore(state => getLifetimeGathers(state))}
                         </span>
                         <span className="text-[8px] tracking-wider text-ink-secondary uppercase font-semibold select-none mt-1.5 leading-none">
-                          Promises Kept
+                          Total Wins
                         </span>
                       </div>
 

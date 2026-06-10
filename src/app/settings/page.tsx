@@ -25,8 +25,6 @@ export default function SettingsPage() {
     toggleVision,
     anchors,
     renameAnchor,
-    setAnchorCodename,
-    setAnchorKeepDefinition,
     toggleAnchorActive,
     reorderAnchors,
     morningTapText,
@@ -41,20 +39,14 @@ export default function SettingsPage() {
 
   const [editingAnchorId, setEditingAnchorId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
-  const [editCodename, setEditCodename] = useState('');
-  const [editKeepDef, setEditKeepDef] = useState('');
 
   const startEditing = (anchor: any) => {
     setEditingAnchorId(anchor.id);
     setEditTitle(anchor.title);
-    setEditCodename(anchor.codename || '');
-    setEditKeepDef(anchor.keepDefinition || '');
   };
 
   const saveAnchorEdits = (id: string) => {
     renameAnchor(id, editTitle.trim());
-    setAnchorCodename(id, editCodename.trim() || null);
-    setAnchorKeepDefinition(id, editKeepDef.trim());
     setEditingAnchorId(null);
   };
 
@@ -366,11 +358,7 @@ export default function SettingsPage() {
                           <span className="text-xs font-semibold text-ink-primary truncate">
                             {anchor.title}
                           </span>
-                          {anchor.codename && (
-                            <span className="text-[10px] bg-accent-teal/10 text-accent-teal px-1.5 py-0.5 rounded font-mono">
-                              {anchor.codename}
-                            </span>
-                          )}
+
                           {anchor.isPermanent && (
                             <span className="text-[10px] bg-ink-primary/5 text-ink-secondary px-1.5 py-0.5 rounded">
                               Permanent
@@ -382,9 +370,7 @@ export default function SettingsPage() {
                             </span>
                           )}
                         </div>
-                        <span className="text-xs text-ink-secondary mt-1 block truncate">
-                          {anchor.keepDefinition || 'No custom keep definition'}
-                        </span>
+
                       </div>
 
                       {/* Reorder & Edit Buttons */}
@@ -436,52 +422,6 @@ export default function SettingsPage() {
                           </div>
                         </div>
 
-                        <div className="flex flex-col gap-1">
-                          <label className="text-[10px] text-ink-secondary font-bold uppercase tracking-wider">Mission Codename</label>
-                          <input
-                            type="text"
-                            value={editCodename}
-                            onChange={(e) => setEditCodename(e.target.value)}
-                            placeholder="E.g. Operation Daybreak"
-                            className="bg-surface border border-muted rounded px-2.5 py-1 text-xs text-ink-primary focus:outline-none focus:border-accent-teal"
-                          />
-                          {/* Codename suggestions */}
-                          <div className="mt-1.5 flex flex-wrap gap-1">
-                            {MISSION_CODENAMES.map((name) => (
-                              <button
-                                key={name}
-                                type="button"
-                                onClick={() => setEditCodename(name)}
-                                className="px-2.5 py-1 text-[10px] bg-canvas hover:bg-muted text-ink-primary border border-muted/90 rounded-md font-medium hover:border-accent-teal transition-all"
-                              >
-                                {name}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-
-                        <div className="flex flex-col gap-1">
-                          <label className="text-[10px] text-ink-secondary font-bold uppercase tracking-wider">Keep Definition</label>
-                          <input
-                            type="text"
-                            value={editKeepDef}
-                            onChange={(e) => setEditKeepDef(e.target.value)}
-                            className="bg-surface border border-muted rounded px-2.5 py-1 text-xs text-ink-primary focus:outline-none focus:border-accent-teal"
-                          />
-                          {/* Keep def suggestions */}
-                          <div className="mt-1.5 flex flex-wrap gap-1">
-                            {KEEP_DEFINITION_SUGGESTIONS.map((def) => (
-                              <button
-                                key={def}
-                                type="button"
-                                onClick={() => setEditKeepDef(def)}
-                                className="px-2.5 py-1 text-[10px] bg-canvas hover:bg-muted text-ink-primary border border-muted/90 rounded-md font-medium hover:border-accent-teal transition-all text-left"
-                              >
-                                {def}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
 
                         <div className="flex gap-2 justify-end mt-1">
                           <button

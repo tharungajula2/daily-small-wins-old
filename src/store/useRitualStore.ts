@@ -25,14 +25,6 @@ export interface Anchor {
   type?: AnchorType;
   prompt?: string;
   completed: boolean;
-  baselineTitle?: string;
-  usedBaseline?: boolean;
-  reflectionText?: string;
-  subItems?: { id: string; title: string; completed?: boolean }[];
-  frequency?: string[];
-  baseline_trg?: number;
-  codename?: string | null;
-  keepDefinition?: string;
   isPermanent?: boolean;
   isActive?: boolean;
   gathers?: Gather[];
@@ -44,10 +36,7 @@ export interface AnchorLog {
   anchorId: string;
   date?: string;
   completed: boolean;
-  usedBaseline: boolean;
-  reflectionText?: string;
   completedAt?: string;
-  subItemsState?: { id: string; completed: boolean }[];
 }
 
 interface RitualState {
@@ -88,12 +77,9 @@ interface RitualState {
   markFeetOnFloor: (time: string) => void;
   setStreak: (streak: number) => void;
   completeMorningCheckIn: (sleep: number, mood: number, bedTime: string, duration: number) => Promise<void>;
-  toggleAnchor: (id: string, asBaseline?: boolean, reflectionText?: string, prompt?: string) => void;
-  addAnchor: (title: string, pillarId?: PillarId | null, type?: AnchorType, baseline?: string, prompt?: string, subItems?: { id: string; title: string }[], frequency?: string[], codename?: string | null, keepDefinition?: string) => void;
+  toggleAnchor: (id: string) => void;
+  addAnchor: (title: string, pillarId?: PillarId | null) => void;
   renameAnchor: (id: string, newTitle: string) => void;
-  setAnchorCodename: (id: string, codename: string | null) => void;
-  setAnchorKeepDefinition: (id: string, keepDefinition: string) => void;
-  toggleSubItem: (anchorId: string, subItemId: string) => void;
   removeAnchor: (id: string) => void;
   toggleAnchorActive: (id: string) => void;
   reorderAnchors: (startIndex: number, endIndex: number) => void;
@@ -112,8 +98,7 @@ interface RitualState {
   
   focusThreeIds: string[];
   setFocusThree: (ids: string[]) => void;
-  lastFreshStartPrompt: string | null;
-  setLastFreshStartPrompt: (date: string) => void;
+
   isPremium: boolean;
   setPremiumStatus: (status: boolean) => void;
   isRestDay: boolean;
@@ -133,7 +118,7 @@ export const useRitualStore = create<RitualState>()(
   persist(
     (set, get) => ({
       focusThreeIds: [],
-      lastFreshStartPrompt: null,
+
       isPremium: false,
       isRestDay: false,
       onboardingCompleted: false,
@@ -154,8 +139,8 @@ export const useRitualStore = create<RitualState>()(
       visionText: "I am building the structure for a better life.",
       morningTapText: "I'm here. Let's begin.",
 
-      dDayTargetDate: "2026-01-01",
-      dDayTitle: "Jan 1, 2026",
+      dDayTargetDate: "2027-01-01",
+      dDayTitle: "Jan 1, 2027",
 
       hasSeenVisionTooltip: false,
 
@@ -193,81 +178,20 @@ export const useRitualStore = create<RitualState>()(
         syncPushDailyRitual(get());
       },
       
-      toggleAnchor: (id: string, asBaseline: boolean = false, reflectionText?: string, prompt?: string) => {
+      toggleAnchor: (id: string) => {
         set((state) => ({
-          anchors: state.anchors.map(a => {
-            if (a.id !== id) return a;
-            const willComplete = !a.completed;
-            const updatedSubItems = (a.subItems || []).map(s => ({
-              ...s,
-              completed: willComplete
-            }));
-            return {
-              ...a,
-              completed: willComplete,
-              usedBaseline: willComplete ? asBaseline : false,
-              reflectionText: willComplete ? reflectionText : undefined,
-              prompt: willComplete ? (prompt || a.prompt) : a.prompt,
-              subItems: updatedSubItems
-            };
-          })
+          anchors: state.anchors.map(a => 
+            a.id === id ? { ...a, completed: !a.completed } : a
+          )
         }));
         const anchor = get().anchors.find(a => a.id === id);
         if (anchor) {
-          const subItemsState = (anchor.subItems || []).map(s => ({
-            id: s.id,
-            completed: !!s.completed
-          }));
-          syncPushAnchorLog(anchor.id, anchor.completed, anchor.usedBaseline || false, anchor.reflectionText, subItemsState);
-          syncPushKeep(anchor.id, anchor.completed);
+          syncPushAnchorLog(anchor.id, anchor.completed);
           syncPushDailyRitual(get());
         }
       },
-      
-      toggleSubItem: (anchorId: string, subItemId: string) => {
-        set((state) => {
-          const updatedAnchors = state.anchors.map(a => {
-            if (a.id !== anchorId) return a;
-            
-            const updatedSubItems = (a.subItems || []).map(s => {
-              if (s.id !== subItemId) return s;
-              return { ...s, completed: !s.completed };
-            });
 
-            // Evaluate if ALL sub-items are completed
-            const allCompleted = updatedSubItems.length > 0 && updatedSubItems.every(s => s.completed);
-
-            return {
-              ...a,
-              subItems: updatedSubItems,
-              completed: allCompleted
-            };
-          });
-
-          return { anchors: updatedAnchors };
-        });
-
-        const anchor = get().anchors.find(a => a.id === anchorId);
-        if (anchor) {
-          const subItemsState = (anchor.subItems || []).map(s => ({
-            id: s.id,
-            completed: !!s.completed
-          }));
-          syncPushAnchorLog(anchor.id, anchor.completed, anchor.usedBaseline || false, anchor.reflectionText, subItemsState);
-        }
-      },
-
-      addAnchor: (
-        title: string, 
-        pillarId?: PillarId | null, 
-        type: AnchorType = 'action', 
-        baseline?: string, 
-        prompt?: string,
-        subItems?: { id: string; title: string }[],
-        frequency?: string[],
-        codename?: string | null,
-        keepDefinition?: string
-      ) => {
+      addAnchor: (title: string, pillarId?: PillarId | null) => {
         set((state) => ({
           anchors: [
             ...state.anchors, 
@@ -275,18 +199,7 @@ export const useRitualStore = create<RitualState>()(
               id: crypto.randomUUID(), 
               title, 
               pillarId: pillarId || 'stress_mental', 
-              type, 
               completed: false, 
-              baselineTitle: baseline || undefined,
-              prompt: prompt || undefined,
-              subItems: subItems || [],
-              frequency: frequency || ['all'],
-              baseline_trg: (function() {
-                const match = title.match(/([\d,]+)\s*step/i);
-                return match ? parseInt(match[1].replace(/,/g, ''), 10) : undefined;
-              })(),
-              codename: codename || null,
-              keepDefinition: keepDefinition || `Kept: ${title}`,
               isPermanent: false,
               isActive: true,
               gathers: []
@@ -299,20 +212,6 @@ export const useRitualStore = create<RitualState>()(
       renameAnchor: (id: string, newTitle: string) => {
         set((state) => ({
           anchors: state.anchors.map(a => a.id === id ? { ...a, title: newTitle } : a)
-        }));
-        syncPushAnchors(get().anchors);
-      },
-
-      setAnchorCodename: (id: string, codename: string | null) => {
-        set((state) => ({
-          anchors: state.anchors.map(a => a.id === id ? { ...a, codename } : a)
-        }));
-        syncPushAnchors(get().anchors);
-      },
-
-      setAnchorKeepDefinition: (id: string, keepDefinition: string) => {
-        set((state) => ({
-          anchors: state.anchors.map(a => a.id === id ? { ...a, keepDefinition } : a)
         }));
         syncPushAnchors(get().anchors);
       },
@@ -391,10 +290,7 @@ export const useRitualStore = create<RitualState>()(
           sleepDuration: null,
           anchors: state.anchors.map(a => ({ 
             ...a, 
-            completed: false, 
-            usedBaseline: false, 
-            reflectionText: undefined,
-            subItems: a.subItems?.map(s => ({ ...s, completed: false }))
+            completed: false
           })),
           eveningCheckInDone: false,
           winOfTheDay: '',
@@ -435,9 +331,7 @@ export const useRitualStore = create<RitualState>()(
       setFocusThree: (ids: string[]) => {
         set({ focusThreeIds: ids.slice(0, 3) });
       },
-      setLastFreshStartPrompt: (date: string) => {
-        set({ lastFreshStartPrompt: date });
-      },
+
       setPremiumStatus: (status: boolean) => {
         set({ isPremium: status });
       },

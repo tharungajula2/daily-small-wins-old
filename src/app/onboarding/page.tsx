@@ -156,42 +156,21 @@ export default function OnboardingPage() {
       if (includeQ1 && q1Title.trim()) {
         addAnchor(
           q1Title.trim(),
-          'stress_mental',
-          'action',
-          undefined,
-          undefined,
-          [],
-          ['all'],
-          q1Codename.trim() || null,
-          q1Keep.trim()
+          'stress_mental'
         );
       }
 
       if (includeQ2 && q2Title.trim()) {
         addAnchor(
           q2Title.trim(),
-          'movement',
-          'action',
-          undefined,
-          undefined,
-          [],
-          ['all'],
-          q2Codename.trim() || null,
-          q2Keep.trim()
+          'movement'
         );
       }
 
       if (includeQ3 && q3Title.trim()) {
         addAnchor(
           q3Title.trim(),
-          'stress_mental',
-          'action',
-          undefined,
-          undefined,
-          [],
-          ['all'],
-          q3Codename.trim() || null,
-          q3Keep.trim()
+          'stress_mental'
         );
       }
 

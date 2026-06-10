@@ -65,29 +65,26 @@ export default function SundayDebrief() {
       );
 
       // If it doesn't exist, create it dynamically
-      if (!debriefAnchor) {
-        addAnchor(
-          'Sunday Weekly Debrief',
-          'stress_mental',
-          'reflection',
-          undefined,
-          'Three prompts: what worked, what broke down, and one change.'
-        );
-        
-        // Find it in the newly updated state
-        const updatedAnchors = useRitualStore.getState().anchors;
-        debriefAnchor = updatedAnchors.find(
-          (a) => a.title === 'Sunday Weekly Debrief'
-        );
-      }
+        if (!debriefAnchor) {
+          addAnchor(
+            'Sunday Weekly Debrief',
+            'stress_mental'
+          );
+          
+          // Find it in the newly updated state
+          const updatedAnchors = useRitualStore.getState().anchors;
+          debriefAnchor = updatedAnchors.find(
+            (a) => a.title === 'Sunday Weekly Debrief'
+          );
+        }
 
-      if (debriefAnchor) {
-        const structuredReflectionText = `WHAT WORKED:\n${worked}\n\nWHAT BROKE DOWN:\n${brokeDown}\n\nCHANGE FOR NEXT WEEK:\n${changeText}`;
-        
-        const finalReflectionText = structuredReflectionText;
+        if (debriefAnchor) {
+          const structuredReflectionText = `WHAT WORKED:\n${worked}\n\nWHAT BROKE DOWN:\n${brokeDown}\n\nCHANGE FOR NEXT WEEK:\n${changeText}`;
+          
+          const finalReflectionText = structuredReflectionText;
 
-        // 2. Complete and log reflection to Zustand and remote database
-        toggleAnchor(debriefAnchor.id, false, finalReflectionText);
+          // 2. Complete and log reflection to Zustand and remote database
+          useRitualStore.getState().addGather(debriefAnchor.id, finalReflectionText, ['debrief']);
         
         // 3. Mark the review completed in the store
         completeWeeklyReview();

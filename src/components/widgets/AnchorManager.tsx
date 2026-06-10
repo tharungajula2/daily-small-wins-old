@@ -5,38 +5,33 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useRitualStore, AnchorType, PillarId } from '@/store/useRitualStore';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
 import { 
-  ANCHOR_NAME_SUGGESTIONS, 
-  KEEP_DEFINITION_SUGGESTIONS 
+  ANCHOR_NAME_SUGGESTIONS
 } from '@/utils/prompts';
 import { PUBLIC_TEMPLATES } from '@/lib/templates';
 import { Shield, Sparkles } from 'lucide-react';
 
 export default function AnchorManager({ onClose }: { onClose: () => void }) {
-  const { anchors, addAnchor, removeAnchor, renameAnchor, setAnchorKeepDefinition, toggleAnchorActive } = useRitualStore();
+  const { anchors, addAnchor, removeAnchor, renameAnchor, toggleAnchorActive } = useRitualStore();
   
   const activeAnchorsCount = anchors.filter(a => a.isActive !== false && a.title !== 'Sunday Weekly Debrief').length;
 
   // Add Anchor form states
   const [selectedTemplateKey, setSelectedTemplateKey] = useState<string>('scratch');
   const [newTitle, setNewTitle] = useState('');
-  const [newKeepDefinition, setNewKeepDefinition] = useState('');
   const [bypassCap, setBypassCap] = useState(false);
 
   // Editing States
   const [editingAnchorId, setEditingAnchorId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
-  const [editKeepDefinition, setEditKeepDefinition] = useState('');
 
   const selectTemplate = (key: string) => {
     setSelectedTemplateKey(key);
     if (key === 'scratch') {
       setNewTitle('');
-      setNewKeepDefinition('');
     } else {
       const tmpl = PUBLIC_TEMPLATES.find(t => t.key === key);
       if (tmpl) {
         setNewTitle(tmpl.title);
-        setNewKeepDefinition(tmpl.keepDefinition);
       }
     }
   };
@@ -49,19 +44,11 @@ export default function AnchorManager({ onClose }: { onClose: () => void }) {
 
     addAnchor(
       newTitle.trim(),
-      pillarId,
-      'action',
-      undefined,
-      undefined,
-      [],
-      ['all'],
-      null,
-      newKeepDefinition.trim() || `Kept: ${newTitle.trim()}`
+      pillarId
     );
 
     // Reset forms
     setNewTitle('');
-    setNewKeepDefinition('');
     setSelectedTemplateKey('scratch');
   };
 
@@ -74,7 +61,7 @@ export default function AnchorManager({ onClose }: { onClose: () => void }) {
     const anchor = anchors.find(a => a.id === id);
     if (!anchor) return;
     if (anchor.isActive === false && activeAnchorsCount >= 5) {
-      alert("Up to 5 personal promises — keep it focused.");
+      alert("Up to 5 categories — keep it focused.");
       return;
     }
     try { await Haptics.impact({ style: ImpactStyle.Light }); } catch (e) {}
@@ -84,7 +71,6 @@ export default function AnchorManager({ onClose }: { onClose: () => void }) {
   const startEditing = (anchor: any) => {
     setEditingAnchorId(anchor.id);
     setEditTitle(anchor.title);
-    setEditKeepDefinition(anchor.keepDefinition || '');
   };
 
   const handleSaveEdit = async (id: string) => {
@@ -92,7 +78,6 @@ export default function AnchorManager({ onClose }: { onClose: () => void }) {
     try { await Haptics.impact({ style: ImpactStyle.Light }); } catch (e) {}
     
     renameAnchor(id, editTitle.trim());
-    setAnchorKeepDefinition(id, editKeepDefinition.trim());
     setEditingAnchorId(null);
   };
 
@@ -107,15 +92,15 @@ export default function AnchorManager({ onClose }: { onClose: () => void }) {
       <div className="w-full max-w-md bg-surface rounded-t-3xl sm:rounded-3xl p-6 shadow-lg border border-muted max-h-[85vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h3 className="text-ink-primary font-semibold text-sm">Manage Anchors</h3>
-            <p className="text-[10px] text-ink-secondary mt-0.5">Anchors are the few promises that hold your day up. Add up to five.</p>
+            <h3 className="text-ink-primary font-semibold text-sm">Manage Categories</h3>
+            <p className="text-[10px] text-ink-secondary mt-0.5">Categories are the pillars you collect wins for. Add up to five.</p>
           </div>
           <button onClick={onClose} className="text-ink-tertiary hover:text-ink-primary p-2 focus:outline-none">
             ✕
           </button>
         </div>
 
-        {/* Existing Anchors List */}
+        {/* Existing Categories List */}
         <div className="space-y-3 mb-8">
           <AnimatePresence>
             {anchors.map((anchor) => (
@@ -129,7 +114,7 @@ export default function AnchorManager({ onClose }: { onClose: () => void }) {
                 >
                   <div>
                     <label className="block text-[10px] uppercase tracking-widest text-ink-secondary font-semibold mb-1">
-                      Rename Anchor
+                      Rename Category
                     </label>
                     <input 
                       type="text"
@@ -152,34 +137,6 @@ export default function AnchorManager({ onClose }: { onClose: () => void }) {
                       ))}
                     </div>
                   </div>
-
-                  <div>
-                    <label className="block text-[10px] uppercase tracking-widest text-ink-secondary font-semibold mb-1">
-                      Keep Definition
-                    </label>
-                    <input 
-                      type="text"
-                      value={editKeepDefinition}
-                      onChange={(e) => setEditKeepDefinition(e.target.value)}
-                      placeholder="e.g. Read 10 pages today"
-                      className="w-full bg-surface border border-muted rounded-lg p-2.5 text-xs text-ink-primary focus:outline-none focus:border-accent-teal"
-                    />
-
-                    {/* Keep Definition Suggestions */}
-                    <div className="mt-1.5 flex flex-wrap gap-1">
-                      {KEEP_DEFINITION_SUGGESTIONS.map((keep) => (
-                        <button
-                          key={keep}
-                          type="button"
-                          onClick={() => setEditKeepDefinition(keep)}
-                          className="px-2.5 py-1 text-[10px] bg-canvas hover:bg-muted text-ink-primary border border-muted/90 rounded-md font-medium hover:border-accent-teal transition-all text-left"
-                        >
-                          {keep}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
 
 
                   <div className="flex gap-2.5 mt-1 pt-2.5 border-t border-muted/40">
@@ -223,10 +180,6 @@ export default function AnchorManager({ onClose }: { onClose: () => void }) {
                         </span>
                       )}
                     </div>
-                    <p className="text-[11px] font-medium leading-relaxed text-ink-secondary mt-1">
-                      <span className="font-bold text-ink-tertiary/70 mr-1.5 uppercase tracking-widest text-[9px]">KEEP</span> 
-                      {anchor.keepDefinition || `Complete ${anchor.title}`}
-                    </p>
                   </div>
                   <div className="flex items-center gap-1 ml-4 shrink-0">
                     <button 
@@ -345,37 +298,6 @@ export default function AnchorManager({ onClose }: { onClose: () => void }) {
                     className="px-2.5 py-1 text-[10px] bg-canvas hover:bg-muted text-ink-primary border border-muted/90 rounded-md font-medium hover:border-accent-teal transition-all"
                   >
                     {name}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Keep Definition Field */}
-            <div>
-              <label className="block text-[10px] uppercase tracking-widest text-ink-tertiary font-bold mb-1 ml-1">
-                3. Define your Keep <span className="lowercase font-normal text-ink-secondary text-[9px] tracking-normal">(the one thing that counts as done)</span>
-              </label>
-              <input
-                type="text"
-                value={newKeepDefinition}
-                onChange={(e) => setNewKeepDefinition(e.target.value)}
-                placeholder="What's the one thing that counts as done? (e.g. Read 10 pages)"
-                className="w-full bg-canvas border border-muted rounded-xl p-3 text-xs text-ink-primary placeholder:text-ink-tertiary focus:outline-none focus:border-accent-teal"
-              />
-
-              {/* Keep Suggestions */}
-              <div className="mt-1.5 flex flex-wrap gap-1">
-                {KEEP_DEFINITION_SUGGESTIONS.map((keep) => (
-                  <button
-                    key={keep}
-                    type="button"
-                    onClick={() => {
-                      setNewKeepDefinition(keep);
-                      setSelectedTemplateKey('scratch');
-                    }}
-                    className="px-2.5 py-1 text-[10px] bg-canvas hover:bg-muted text-ink-primary border border-muted/90 rounded-md font-medium hover:border-accent-teal transition-all text-left"
-                  >
-                    {keep}
                   </button>
                 ))}
               </div>
