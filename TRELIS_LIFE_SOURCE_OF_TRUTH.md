@@ -30,14 +30,14 @@ Trelis Life is a premium daily routine companion designed to instill structural 
    ```
 6. **Two Font-Weights Rule**: Never use more than two font weights (400 and 600) on any single screen.
 7. **Unified Local Timezone Rule**: All date-string evaluations, log indexing, and review conditions strictly use device local time via `toLocaleDateString('en-CA')` (YYYY-MM-DD local format). This completely eliminates off-by-one or dropped-logs bugs common with UTC-based date operations.
-8. **Strict Metrics Architecture**:
-   - **Keeps (Promises Kept)**: The Arc counts as exactly **1 Keep per day** (canonically evaluated when the morning check-in is logged). Custom user anchors count as 1 Keep upon checkbox completion. Both live state selectors and database baseline checks query the exact same logic.
-   - **Gathers (Blooms)**: Gather layers track context logs (text labels, tags) for custom anchors. The evening check-in win is treated strictly as reflection note and does not contribute to Gathers or trigger visual vine blossoms.
+   - **Playlists (Anchors)**: The primary container mechanism. Rather than a checklist of habits to "complete", users maintain Playlists (categories like 'Body-Mind').
+   - **Gems (Small Wins)**: Users capture "Gems" within Playlists to track positive structural moments. The total number of Gems ever captured represents the user's "Total Wins".
+   - **The Arc**: The keystone of the day, tracking Morning and Evening bookend rituals. 
+   - **The Vault**: A chronological ledger of all Gems, Wins of the Day, and Debrief Reflections. No binary pass/fail metrics are displayed.
 
-### Deprecated Pillar Architecture (Purged in v2.0.0)
-The legacy six Mutually Exclusive, Collectively Exhaustive (MECE) pillars (Nutrition, Movement, Sleep, Stress/Mental, Social, Environment) have been completely purged from the application layer. Instead of rigid folders or categories, the app is centered on:
+The legacy six Mutually Exclusive, Collectively Exhaustive (MECE) pillars (Nutrition, Movement, Sleep, Stress/Mental, Social, Environment) and binary "Promises/Keeps" architecture have been completely purged from the application layer. Instead of rigid folders, checkboxes, or completion metrics, the app is centered on:
 1. **The Arc**: The permanent, non-deletable daily keystone anchor containing the night-to-morning cycle.
-2. **Personal Anchors**: Up to 4 custom, user-defined anchors (soft cap of 5 total including The Arc) to prevent perfectionist overwhelm.
+2. **Playlists (Custom Categories)**: Up to 4 custom, user-defined Playlists (soft cap of 5 total including The Arc) acting as containers to capture positive "Gems" throughout the day.
 
 ---
 
@@ -321,19 +321,17 @@ This section details exactly how a user experiences and interacts with every sys
 1. **Visual State**:
    - Changes colors dynamically based on the current hour of the day (Canvas, Crisp White, Warm Sepia, or Luxury Dark).
    - **Header Bar**: Display of active streak score. A clean SVG leaf icon sits adjacent to the numeric indicator. A small card displays remaining Pause Tokens (e.g., `2 Tokens`). If the streak is 0, it displays "Fresh Arc" in a soft, non-punitive layout. If a rest token is active, it displays "Resting" with a calm pause icon.
-   - **Concentric Pulse Score Ring (The Arc Ring)**: An open vector circular ring (with a visible gap/seam) representing today's flat progress score.
-   - **Flat Anchor List**: Displays today's active anchors in a clean, flat card list (no folders, categories, or filters).
+   - **Total Wins HUD**: Displays the lifetime total of all Gems captured and Wins logged. This replaces the old "Promises Kept" counter.
+   - **Concentric Daily Arc Ring**: An open vector circular ring representing the completion of Morning and Evening Arc bookends (no longer connected to custom anchors).
+   - **Playlists List**: Displays today's active Playlists in a clean, flat card list. Playlists contain no checkboxes and cannot be "completed".
    - **Partner Presence (Quiet Partner)**: A card showing the linked partner's email address and exactly 6 binary completion dots (colored green/teal when completed, gray when incomplete) for their active anchors today. Absolutely zero numbers, scores, or streaks are shared. Shows 3 pre-written nudge buttons: "Thinking of you", "Proud of you", "Want to walk?".
 2. **User Interaction**:
-    - **Toggling Keep Layer**:
-      * Tapping the checkbox completes the Keep action. The checkbox fills with solid teal, the title gets struck through, and a light haptic vibration fires.
-      * Completing the Keep layer preserves the streak and counts towards Promises Kept and active streak indicators.
-    - **Gathering Context**:
-      * Tapping the gather icon opens a clean input/modal to log a Gather instance. The user can add a simple text label and select tags. Long-form journaling is rejected.
-      * Logged gathers represent leafy growth or flowers on the trellis visualizers.
+    - **Capturing a Gem**:
+      * Tapping the "+ ✨ GEM" button opens a clean input drawer.
+      * The user adds a simple text label and selects tags.
+      * The Gem instantly drops into the Playlist, increasing Total Wins and saving to the Vault permanently.
 3. **Internal Mechanics & Database Outputs**:
-    - Completed Keeps invoke a background sync to `public.anchor_keeps` (upsert/delete).
-    - Logged Gathers invoke a background sync to `public.anchor_gathers` (upsert/delete).
+    - Logged Gems invoke a background sync to `public.anchor_gathers` (upsert/delete).
 
 ---
 
@@ -411,9 +409,9 @@ npx cap open android
 3. **PWA Landing Page & Circadian Mapping**: Rewrote `LandingPage.tsx` using exact product copy and integrated the `useCircadian` provider to ensure colors adapt beautifully to the time of day.
 4. **Production SEO & Open Graph (OG) Integration**: Upgraded `src/app/layout.tsx` metadata with complete OG tags, separate `Viewport` structure for light/dark theme color media queries, and configured `/manifest.json` for proper iOS and Android home screen installability.
 5. **Production Security Headers & Env Audit**: Injected production-grade HTTP security headers (`X-DNS-Prefetch-Control`, `Strict-Transport-Security`, `X-Frame-Options`, `X-Content-Type-Options`, and `Referrer-Policy`) inside `next.config.ts` and a root `vercel.json` file. Verified that only standard, safe public variables (`NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`) are exposed to client browsers.
-6. **Onboarding Guided Tour & Reset Flow**: Implemented a 7-step spotlight onboarding tour on the Dashboard (`/`). It tracks `onboarding_tour_completed` in `public.user_state` and Zustand store. "Skip" closes it temporarily (re-offers on next load), while "Hide it" or completion sets it permanently to `true`. Replaying the tour is accessible in Settings, which resets state and triggers the tour overlay.
+6. **Onboarding Guided Tour & Reset Flow**: Implemented a 10-step spotlight onboarding tour on the Dashboard (`/`). It walks users through the new Playlist & Gems mechanics, the Arc, the Vault, and the hardcoded Jan 1, 2027 D-Day timer. Replaying the tour is accessible in Settings, which resets state and triggers the tour overlay.
 7. **Authentication SignUp Verification**: Added a dedicated "Create Account" toggle on `/login` that requires password confirmation matching and prompts for email verification before redirecting.
-8. **Anchor Seeding Database Constraint Fix**: Resolved a database error (`null value in column "pillar_id" violates NOT NULL constraint`) by ensuring custom anchors created during onboarding, via Anchor Manager, or Sunday Debriefs dynamically resolve and pass valid `PillarId` string literals (`'stress_mental'`, `'movement'`) instead of `null` or `undefined`.
+8. **Erase Data Feature**: Added a highly visible, permanent nuclear reset option in Settings to wipe all legacy table rows (`user_state`, `anchor_gathers`, etc.) so the user can wipe all ghost data and start fresh perfectly mapped to the new paradigm.
 
 ---
 
