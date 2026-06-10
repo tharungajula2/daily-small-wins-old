@@ -35,6 +35,7 @@ export default function VaultPageClient() {
   const [isLoading, setIsLoading] = useState(true);
   const [groupedDays, setGroupedDays] = useState<Record<string, VaultDay>>({});
   const [dates, setDates] = useState<string[]>([]);
+  const [visibleDays, setVisibleDays] = useState(7);
   const [totalCount, setTotalCount] = useState(0);
 
   useEffect(() => {
@@ -226,7 +227,7 @@ export default function VaultPageClient() {
         </div>
       ) : (
         <div className="px-4 py-6 max-w-lg mx-auto">
-          {dates.map((dateStr) => {
+          {dates.slice(0, visibleDays).map((dateStr) => {
             const dateObj = parseISO(dateStr);
             const displayDate = format(dateObj, 'EEEE, MMMM d, yyyy');
             const dayData = groupedDays[dateStr];
@@ -332,6 +333,17 @@ export default function VaultPageClient() {
               </motion.div>
             );
           })}
+          
+          {visibleDays < dates.length && (
+            <motion.button
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setVisibleDays(prev => prev + 7)}
+              className="w-full mt-4 bg-canvas border border-muted/80 text-ink-secondary py-4 rounded-2xl text-[10px] uppercase tracking-widest font-semibold hover:bg-surface hover:text-ink-primary hover:border-muted transition-all flex items-center justify-center gap-2"
+            >
+              <Cookie className="w-3 h-3" />
+              Load More History
+            </motion.button>
+          )}
         </div>
       )}
     </div>

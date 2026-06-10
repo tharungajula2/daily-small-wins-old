@@ -18,7 +18,6 @@ import QuietPartner from '@/components/core/QuietPartner';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import { isAnchorActiveForDay } from '@/utils/dayMatcher';
-import VisionPrimer from '@/components/VisionPrimer';
 import { evaluateYesterdayStreak } from '@/utils/streakEngine';
 import GentleReEntryScreen from '@/components/core/GentleReEntryScreen';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
@@ -452,7 +451,7 @@ function Dashboard() {
                       <MorningRoutineCard />
                     </div>
                     <div id="tour-vision-card">
-                      <VisionPrimer />
+                      <VisionPriming />
                     </div>
                     <div id="tour-dday-timer">
                       <DDayTimer />
@@ -460,12 +459,6 @@ function Dashboard() {
                   </div>
 
 
-                 {isVisionEnabled && (
-                   <div className="w-full px-6">
-                     <VisionPriming />
-                   </div>
-                 )}
-                 
                  <div className="w-full px-6 flex flex-col gap-6">
                     {/* Standalone Collapsible MECE Six Pillars or All Done Hero Card */}
                     {allCompleted ? (

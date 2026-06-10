@@ -2,7 +2,8 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { 
   syncPushDailyRitual, syncPushAnchors, syncPushAnchorLog,
-  syncPushVision, syncPushKeep, syncPushGather, syncDeleteGather
+  syncPushVision, syncPushKeep, syncPushGather, syncDeleteGather,
+  syncPushDDayTarget
 } from '@/lib/supabase/syncEngine';
 
 export type PillarId = 'nutrition' | 'movement' | 'sleep' | 'stress_mental' | 'social' | 'environment';
@@ -448,9 +449,17 @@ export const useRitualStore = create<RitualState>()(
       },
       setDDayTargetDate: (date: string | null) => {
         set({ dDayTargetDate: date });
+        const state = get();
+        if (state.dDayTargetDate && state.dDayTitle) {
+          syncPushDDayTarget(state.dDayTargetDate, state.dDayTitle);
+        }
       },
       setDDayTitle: (title: string | null) => {
         set({ dDayTitle: title });
+        const state = get();
+        if (state.dDayTargetDate && state.dDayTitle) {
+          syncPushDDayTarget(state.dDayTargetDate, state.dDayTitle);
+        }
       },
     }),
     {
