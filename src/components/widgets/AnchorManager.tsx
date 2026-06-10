@@ -20,41 +20,12 @@ export default function AnchorManager({ onClose }: { onClose: () => void }) {
   const [selectedTemplateKey, setSelectedTemplateKey] = useState<string>('scratch');
   const [newTitle, setNewTitle] = useState('');
   const [newKeepDefinition, setNewKeepDefinition] = useState('');
-  const [frequency, setFrequency] = useState<string[]>(['all']);
   const [bypassCap, setBypassCap] = useState(false);
 
   // Editing States
   const [editingAnchorId, setEditingAnchorId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
   const [editKeepDefinition, setEditKeepDefinition] = useState('');
-
-  const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-
-  const toggleDay = (day: string) => {
-    if (frequency.includes('all')) {
-      setFrequency([day]);
-    } else {
-      if (frequency.includes(day)) {
-        const next = frequency.filter(d => d !== day);
-        if (next.length === 0) {
-          setFrequency(['all']);
-        } else {
-          setFrequency(next);
-        }
-      } else {
-        const next = [...frequency, day];
-        if (next.length === 7) {
-          setFrequency(['all']);
-        } else {
-          setFrequency(next);
-        }
-      }
-    }
-  };
-
-  const setEveryday = () => {
-    setFrequency(['all']);
-  };
 
   const selectTemplate = (key: string) => {
     setSelectedTemplateKey(key);
@@ -83,7 +54,7 @@ export default function AnchorManager({ onClose }: { onClose: () => void }) {
       undefined,
       undefined,
       [],
-      frequency,
+      ['all'],
       null,
       newKeepDefinition.trim() || `Kept: ${newTitle.trim()}`
     );
@@ -91,7 +62,6 @@ export default function AnchorManager({ onClose }: { onClose: () => void }) {
     // Reset forms
     setNewTitle('');
     setNewKeepDefinition('');
-    setFrequency(['all']);
     setSelectedTemplateKey('scratch');
   };
 
@@ -256,9 +226,7 @@ export default function AnchorManager({ onClose }: { onClose: () => void }) {
                     <p className="text-xs uppercase tracking-widest text-ink-tertiary mt-0.5">
                       Keep: {anchor.keepDefinition || `Complete ${anchor.title}`}
                     </p>
-                    {anchor.frequency && anchor.frequency.length > 0 && !anchor.frequency.includes('all') && (
-                      <p className="text-[10px] text-ink-secondary mt-0.5">Days: {anchor.frequency.join(', ')}</p>
-                    )}
+
                   </div>
                   <div className="flex items-center gap-1 ml-4 shrink-0">
                     <button 
@@ -413,51 +381,6 @@ export default function AnchorManager({ onClose }: { onClose: () => void }) {
               </div>
             </div>
 
-            {/* Frequency Selection */}
-            <div>
-              <label className="block text-[10px] uppercase tracking-widest text-ink-tertiary font-bold mb-2 ml-1">
-                4. Schedule Frequency
-              </label>
-              <div className="bg-canvas border border-muted rounded-xl p-3">
-                <div className="flex items-center justify-between mb-3 pb-2 border-b border-muted/50">
-                  <span className="text-xs text-ink-secondary font-semibold">Active Days</span>
-                  <button
-                    type="button"
-                    onClick={setEveryday}
-                    className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors ${
-                      frequency.includes('all')
-                        ? 'bg-accent-teal/10 text-accent-teal border border-accent-teal/20'
-                        : 'bg-muted text-ink-secondary border border-transparent hover:bg-canvas'
-                    }`}
-                  >
-                    Everyday
-                  </button>
-                </div>
-                <div className="flex justify-between items-center px-1">
-                  {DAYS.map((day) => {
-                    const isSelected = frequency.includes('all') || frequency.includes(day);
-                    const isAllActive = frequency.includes('all');
-                    return (
-                      <button
-                        key={day}
-                        type="button"
-                        onClick={() => toggleDay(day)}
-                        className={`w-9 h-9 rounded-full text-xs font-semibold flex items-center justify-center transition-all ${
-                          isSelected
-                            ? isAllActive 
-                              ? 'bg-accent-teal/5 text-accent-teal/50 border border-accent-teal/20 cursor-not-allowed'
-                              : 'bg-accent-teal text-white shadow-sm'
-                              : 'bg-canvas border border-muted text-ink-secondary hover:border-ink-secondary/35'
-                        }`}
-                        disabled={isAllActive}
-                      >
-                        {day[0]}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
 
             <button
               onClick={handleAdd}
