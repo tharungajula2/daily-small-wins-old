@@ -5,7 +5,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useRitualStore, AnchorType, PillarId } from '@/store/useRitualStore';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
 import { 
-  MISSION_CODENAMES, 
   ANCHOR_NAME_SUGGESTIONS, 
   KEEP_DEFINITION_SUGGESTIONS 
 } from '@/utils/prompts';
@@ -13,7 +12,7 @@ import { PUBLIC_TEMPLATES } from '@/lib/templates';
 import { Shield, Sparkles } from 'lucide-react';
 
 export default function AnchorManager({ onClose }: { onClose: () => void }) {
-  const { anchors, addAnchor, removeAnchor, renameAnchor, setAnchorCodename, setAnchorKeepDefinition, toggleAnchorActive } = useRitualStore();
+  const { anchors, addAnchor, removeAnchor, renameAnchor, setAnchorKeepDefinition, toggleAnchorActive } = useRitualStore();
   
   const activeAnchorsCount = anchors.filter(a => a.isActive !== false && a.title !== 'Sunday Weekly Debrief').length;
 
@@ -21,14 +20,12 @@ export default function AnchorManager({ onClose }: { onClose: () => void }) {
   const [selectedTemplateKey, setSelectedTemplateKey] = useState<string>('scratch');
   const [newTitle, setNewTitle] = useState('');
   const [newKeepDefinition, setNewKeepDefinition] = useState('');
-  const [newCodename, setNewCodename] = useState('');
   const [frequency, setFrequency] = useState<string[]>(['all']);
   const [bypassCap, setBypassCap] = useState(false);
 
   // Editing States
   const [editingAnchorId, setEditingAnchorId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
-  const [editCodename, setEditCodename] = useState('');
   const [editKeepDefinition, setEditKeepDefinition] = useState('');
 
   const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -64,13 +61,11 @@ export default function AnchorManager({ onClose }: { onClose: () => void }) {
     if (key === 'scratch') {
       setNewTitle('');
       setNewKeepDefinition('');
-      setNewCodename('');
     } else {
       const tmpl = PUBLIC_TEMPLATES.find(t => t.key === key);
       if (tmpl) {
         setNewTitle(tmpl.title);
         setNewKeepDefinition(tmpl.keepDefinition);
-        setNewCodename(tmpl.suggestedCodenames[0] || '');
       }
     }
   };
@@ -89,14 +84,13 @@ export default function AnchorManager({ onClose }: { onClose: () => void }) {
       undefined,
       [],
       frequency,
-      newCodename.trim() || null,
+      null,
       newKeepDefinition.trim() || `Kept: ${newTitle.trim()}`
     );
 
     // Reset forms
     setNewTitle('');
     setNewKeepDefinition('');
-    setNewCodename('');
     setFrequency(['all']);
     setSelectedTemplateKey('scratch');
   };
@@ -120,7 +114,6 @@ export default function AnchorManager({ onClose }: { onClose: () => void }) {
   const startEditing = (anchor: any) => {
     setEditingAnchorId(anchor.id);
     setEditTitle(anchor.title);
-    setEditCodename(anchor.codename || '');
     setEditKeepDefinition(anchor.keepDefinition || '');
   };
 
@@ -129,7 +122,6 @@ export default function AnchorManager({ onClose }: { onClose: () => void }) {
     try { await Haptics.impact({ style: ImpactStyle.Light }); } catch (e) {}
     
     renameAnchor(id, editTitle.trim());
-    setAnchorCodename(id, editCodename.trim() || null);
     setAnchorKeepDefinition(id, editKeepDefinition.trim());
     setEditingAnchorId(null);
   };
@@ -218,52 +210,7 @@ export default function AnchorManager({ onClose }: { onClose: () => void }) {
                     </div>
                   </div>
 
-                  <div>
-                    <div className="flex justify-between items-center mb-1">
-                      <label className="block text-[10px] uppercase tracking-widest text-ink-secondary font-semibold">
-                        Mission Codename (Privacy Alias)
-                      </label>
-                      {editCodename && (
-                        <button
-                          type="button"
-                          onClick={() => setEditCodename('')}
-                          className="text-[9px] uppercase tracking-wider font-semibold text-error hover:opacity-80"
-                        >
-                          Clear
-                        </button>
-                      )}
-                    </div>
-                    <input 
-                      type="text"
-                      value={editCodename}
-                      onChange={(e) => setEditCodename(e.target.value)}
-                      placeholder="Operation Daybreak, base camp, etc."
-                      className="w-full bg-surface border border-muted rounded-lg p-2.5 text-xs text-ink-primary focus:outline-none focus:border-accent-teal"
-                    />
-                    
-                    {/* Suggested Codenames */}
-                    <div className="mt-2.5">
-                      <p className="text-[10px] text-ink-secondary font-semibold uppercase tracking-wider mb-1.5">
-                        Suggested Codenames
-                      </p>
-                      <div className="flex flex-wrap gap-1.5">
-                        {MISSION_CODENAMES.map((name) => (
-                          <button
-                            key={name}
-                            type="button"
-                            onClick={() => setEditCodename(name)}
-                            className={`px-2.5 py-1 text-[10px] font-medium rounded-md border transition-all ${
-                              editCodename === name
-                                ? 'bg-accent-teal/10 text-accent-teal border-accent-teal/30 font-semibold'
-                                : 'bg-canvas hover:bg-muted text-ink-primary border border-muted/90'
-                            }`}
-                          >
-                            {name}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
+
 
                   <div className="flex gap-2.5 mt-1 pt-2.5 border-t border-muted/40">
                     <button
@@ -299,11 +246,7 @@ export default function AnchorManager({ onClose }: { onClose: () => void }) {
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 flex-wrap min-w-0">
                       <p className={`text-sm font-semibold truncate ${anchor.isActive === false ? 'text-ink-secondary line-through' : 'text-ink-primary'}`}>{anchor.title}</p>
-                      {anchor.codename && (
-                        <span className="text-[10px] text-accent-teal font-semibold italic">
-                          ({anchor.codename})
-                        </span>
-                      )}
+
                       {anchor.isActive === false && (
                         <span className="text-[8px] tracking-wider uppercase font-semibold text-ink-tertiary bg-muted/60 px-1.5 py-0.5 rounded-sm">
                           Dormant
@@ -470,42 +413,10 @@ export default function AnchorManager({ onClose }: { onClose: () => void }) {
               </div>
             </div>
 
-            {/* Codename Field */}
-            <div>
-              <label className="block text-[10px] uppercase tracking-widest text-ink-tertiary font-bold mb-1 ml-1">
-                4. Mission Codename (Optional)
-              </label>
-              <input
-                type="text"
-                value={newCodename}
-                onChange={(e) => setNewCodename(e.target.value)}
-                placeholder="Privacy Alias (e.g. Operation Daybreak)"
-                className="w-full bg-canvas border border-muted rounded-xl p-3 text-xs text-ink-primary placeholder:text-ink-tertiary focus:outline-none focus:border-accent-teal"
-              />
-
-              {/* Codename Suggestions */}
-              <div className="mt-1.5 flex flex-wrap gap-1.5">
-                {MISSION_CODENAMES.map((name) => (
-                  <button
-                    key={name}
-                    type="button"
-                    onClick={() => setNewCodename(name)}
-                    className={`px-2.5 py-1 text-[10px] font-medium rounded-md border transition-all ${
-                      newCodename === name
-                        ? 'bg-accent-teal/10 text-accent-teal border-accent-teal/30 font-semibold'
-                        : 'bg-canvas hover:bg-muted text-ink-primary border border-muted/90'
-                    }`}
-                  >
-                    {name}
-                  </button>
-                ))}
-              </div>
-            </div>
-
             {/* Frequency Selection */}
             <div>
               <label className="block text-[10px] uppercase tracking-widest text-ink-tertiary font-bold mb-2 ml-1">
-                5. Schedule Frequency
+                4. Schedule Frequency
               </label>
               <div className="bg-canvas border border-muted rounded-xl p-3">
                 <div className="flex items-center justify-between mb-3 pb-2 border-b border-muted/50">
