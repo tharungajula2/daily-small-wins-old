@@ -211,9 +211,9 @@ export default function AnchorManager({ onClose }: { onClose: () => void }) {
                   animate={{ opacity: 1, height: 'auto' }}
                   exit={{ opacity: 0, height: 0 }}
                   transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                  className="flex items-center justify-between p-3.5 bg-canvas border border-muted rounded-xl animate-in fade-in-20 duration-300"
+                  className="flex items-start justify-between p-4 bg-canvas border border-muted rounded-xl animate-in fade-in-20 duration-300"
                 >
-                  <div className="min-w-0 flex-1">
+                  <div className="min-w-0 flex-1 pr-3">
                     <div className="flex items-center gap-2 flex-wrap min-w-0">
                       <p className={`text-sm font-semibold truncate ${anchor.isActive === false ? 'text-ink-secondary line-through' : 'text-ink-primary'}`}>{anchor.title}</p>
 
@@ -223,10 +223,10 @@ export default function AnchorManager({ onClose }: { onClose: () => void }) {
                         </span>
                       )}
                     </div>
-                    <p className="text-xs uppercase tracking-widest text-ink-tertiary mt-0.5">
-                      Keep: {anchor.keepDefinition || `Complete ${anchor.title}`}
+                    <p className="text-[11px] font-medium leading-relaxed text-ink-secondary mt-1">
+                      <span className="font-bold text-ink-tertiary/70 mr-1.5 uppercase tracking-widest text-[9px]">KEEP</span> 
+                      {anchor.keepDefinition || `Complete ${anchor.title}`}
                     </p>
-
                   </div>
                   <div className="flex items-center gap-1 ml-4 shrink-0">
                     <button 
