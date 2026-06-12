@@ -1,145 +1,155 @@
-# Welcome to Trelis Life — Master User Manual & Concept Guide
+# Trelis Life — The Master User Manual & Concept Guide
 
-This document is the absolute source of truth for understanding the architecture, philosophy, and UI/UX of **Trelis Life**. 
+Welcome to **Trelis Life**. 
 
-Trelis Life is not a typical habit tracker. It does not track complicated numbers, nor does it enforce punishing streaks or stress you out with notifications. Instead, it is a **Life Operating System** built to help you bring calm, quiet structure to your day through the simple capture of "Small Wins" (Gems).
-
----
-
-## Table of Contents
-1. [The Trelis Philosophy: Playlists & Gems](#1-the-trelis-philosophy-playlists--gems)
-2. [First-Time Account Creation & Log In](#2-first-time-account-creation--log-in)
-3. [The Onboarding Setup Screen](#3-the-onboarding-setup-screen)
-4. [The Dashboard (Your Main Screen)](#4-the-dashboard-your-main-screen)
-5. [The Arc Card (Morning & Evening Rituals)](#5-the-arc-card-morning--evening-rituals)
-6. [Playlists (Anchors) & Gems (Small Wins)](#6-playlists-anchors--gems-small-wins)
-7. [The Vault (Your Ledger of Wins)](#7-the-vault-your-ledger-of-wins)
-8. [The D-Day Target](#8-the-d-day-target)
-9. [Quiet Partners (Silent Support System)](#9-quiet-partners-silent-support-system)
-10. [The Sunday Weekly Debrief](#10-the-sunday-weekly-debrief)
-11. [Settings Portal](#11-settings-portal)
+This document is the absolute source of truth for understanding the architecture, philosophy, and practical usage of the Trelis Life application. Whether you are a complete beginner logging in for the first time or a developer reviewing the system, this manual explains not just *how* the app works, but *why* it was built this way.
 
 ---
 
-## 1. The Trelis Philosophy: Playlists & Gems
-To understand Trelis Life, you must understand its core paradigm shift:
+## 1. The Core Philosophy: What Trelis Stands For
 
-*   **No "Promises" to break:** In traditional apps, you make a promise (e.g., "Run 5 miles") and if you fail, you feel bad. Trelis Life completely removes the concept of completion or failure for your daily habits.
-*   **Playlists (Anchors):** Your custom habits are no longer tasks to be checked off. They are simply **Categories** (think of them as YouTube Playlists). They sit on your dashboard as sleek, pure white cards. You cannot "check" them off or "complete" them. They are just containers.
-*   **Gems (Small Wins):** Throughout the day, you perform actions related to your Playlists. Every time you do something positive, you log a **Gem ✨**. For example, if your Playlist is "Body-Mind", you might capture a Gem that says "15 min walk #sunlight". 
-*   **The Goal:** The goal is simply to capture as many beautiful Gems as you can into your Playlists, building a ledger of positive momentum without the stress of binary pass/fail metrics.
+Trelis Life is **not a health app**. It is a **Life Operating System**. 
+Its core motto is: *"Structure for a better life."*
 
----
+Most modern habit trackers and quantified-self apps rely on anxiety. They use bright red notifications, punishing broken streaks, and binary pass/fail mechanics (e.g., "Did you run 5 miles today? Yes or No?"). If you miss a day, the app makes you feel like a failure, which ultimately causes you to abandon the system entirely.
 
-## 2. First-Time Account Creation & Log In
-When you open Trelis Life at `/login`, you will see a clean sign-in screen.
-*   The application operates strictly via Supabase Authentication.
-*   It is offline-first but synchronizes securely to the cloud (Row Level Security enforced).
-*   A grayscale compliance message reminds users that Trelis is a wellness structure, not a medical device.
+**Trelis is the antithesis of this.** It is designed to be a quiet, clinical, and premium space that brings calm structure to your chaotic life.
+- **Subtraction over Addition:** Features are minimal and self-evident. 
+- **Aesthetic Dominance:** The app uses a premium `#F7F6F2` off-white canvas, pure white cards, and subtle shadows. It feels like a high-end tool, not a video game.
+- **Visual Muting:** When something is inactive, it fades into an elegant grayscale rather than flashing red.
+- **Permanent Progress:** Trelis focuses on building a ledger of lifetime momentum. Progress only goes up. 
 
 ---
 
-## 3. The Onboarding Setup Screen
-New accounts enter a guided setup screen (`/onboarding`).
-*   **Set Windows:** You set your target wake and sleep times. These define the boundaries of your "Arc".
-*   **Set Your Playlists:** You are prompted to set up your core Playlists (formerly called Anchors). By default, these cover themes like "Breaking Loops", "Body-Mind", and "Stillness/Reset". 
-*   *Note: During onboarding, you are no longer asked to provide "Keep definitions" or "Codenames" or "Frequencies". You are simply naming the categories where your future Gems will live.*
+## 2. The Great Shift: Playlists & Gems
+
+To use Trelis perfectly, you must understand its central paradigm. 
+
+Early versions of Trelis (and almost all other apps) relied on "Promises" or "Habits" that you had to check off every day. We completely destroyed that system because human life does not fit into rigid daily checkboxes.
+
+Instead, Trelis uses **Playlists and Gems**.
+
+### What are Playlists?
+Think of Playlists as **Categories** or **Buckets** for your life. They sit on your dashboard as sleek, pure white cards. 
+- **They are NOT checklists.** You cannot "complete" a Playlist. There is no checkbox.
+- You are softly capped at 4 custom Playlists to prevent cognitive overload.
+- *Examples of Playlists:* "Body-Mind", "Breaking Loops", "Deep Work", "Stillness".
+
+### What are Gems (✨)?
+Gems are the atomic unit of progress in Trelis. Throughout your day, whenever you perform an action that aligns with one of your Playlists, you capture a **Gem**.
+- **The Psychology:** Instead of feeling the pressure of "I must do a 45-minute workout," you simply go for a 10-minute walk and log it as a Gem under "Body-Mind". 
+- A Gem is any **Small Win**. By focusing on capturing small wins whenever you can, you build massive momentum without the stress of binary failure.
 
 ---
 
-## 4. The Dashboard (Your Main Screen)
-This is where you spend your time. It is designed to look like "Steve Jobs range perfection": clean, sleek, pure white cards with crisp shadows against an off-white `#F7F6F2` canvas.
+## 3. Getting Started: The Onboarding
 
-### The Header Bar:
-*   **Total Wins HUD:** Displays the lifetime total of all Gems you have ever captured. This is your ultimate score of positive momentum.
-*   **Pause Tokens:** Displays how many streak-saving tokens you have left (you start with 2 per month).
+When you first open Trelis at `/login`, you enter via a passwordless Magic Link. Once authenticated, a guided setup screen introduces you to the system:
 
-### The Circadian Color Themes:
-The app background automatically shifts colors depending on the time of day, moving from a warm morning glow to bright daylight, twilight amber, and finally a cool dark slate at night.
-
----
-
-## 5. The Arc Card (Morning & Evening Rituals)
-This is the central keystone card at the top of your dashboard.
-
-### Morning Check-In (Tap when you wake up)
-*   **Wake Time Button:** Shows what time you woke up.
-*   **Feet-on-Floor Checkbox:** Check this as soon as you physically get out of bed.
-*   **Sleep Quality & Mood:** Rate your sleep and mood using the 1-to-5 scale.
-*   Tap the **Submit** button to lock in your morning.
-
-### Evening Wind-Down (Tap before sleep)
-*   **Win of the Day Text Box:** Write one good thing that happened today.
-*   **Parking Lot Text Box:** Dump any worries or to-dos to clear your mind before sleep.
-*   **Bedtime Log:** Click to log when you go to sleep.
+1. **Set Your Windows:** You define your target wake and sleep times. This establishes your circadian rhythm boundaries.
+2. **Meet The Arc:** You are introduced to the foundational rhythm of the app—your morning and evening bookends.
+3. **Set Your Playlists:** You name the categories where your future Gems will live.
+4. **The 10-Step Tour:** Once on the dashboard, a spotlight tour will walk you through the HUD elements, explaining the mechanics of the app in real-time.
 
 ---
 
-## 6. Playlists (Anchors) & Gems (Small Wins)
-This is the core interaction loop of Trelis Life.
+## 4. The Dashboard: Your Mission Control
 
-### The UI / UX:
-*   Your Playlists are displayed as pure white cards on the dashboard.
-*   **There is no checkbox.** You cannot complete a Playlist. 
-*   On the right side of every Playlist is an elegant, translucent amber button: **`+ ✨ GEM`**.
+The dashboard is your daily interface. Its colors shift dynamically throughout the day, matching your circadian rhythm (warm dawn, bright daylight, twilight amber, cool night slate).
 
-### How to Capture a Gem:
-1.  Tap the **`+ ✨ GEM`** button.
-2.  A sleek drawer slides up titled **"✨ LOG A GEM"**.
-3.  **Label Field:** Type a short description of your small win (e.g., "Ate an apple", "Walked the dog", "Paused before reacting").
-4.  **Quick Tags:** Tap any relevant preset tags (e.g., `#nutrition`, `#sunlight`).
-5.  Tap the golden **CAPTURE GEM ✨** button.
+### The Total Wins HUD
+At the top left of your screen is the **Total Wins** counter. 
+- **How it works:** This is the lifetime total of all the Gems you have ever captured. 
+- **The Reasoning:** This number *never goes down*. It serves as a permanent, undeniable record of your positive momentum. It celebrates consistency over perfection.
 
-### What happens when you capture a Gem?
-*   The drawer closes.
-*   Your new Gem immediately appears at the bottom of the Playlist card on your dashboard as a beautifully styled, amber-tinted row with the ✨ icon.
-*   Your Total Wins counter at the top of the app instantly increases by 1.
-*   The Gem is saved permanently to your ledger (The Vault).
+### The Daily Arc Ring
+In the center of the screen sits a beautiful, concentric progress ring with an open seam at the bottom.
+- **How it works:** This ring tracks only two things: Your Morning Check-in and your Evening Wind-down.
+- **The Reasoning:** The bookends of your day dictate the middle of your day. If you control how you wake up and how you go to sleep, the rest of your life falls into structure. The open seam at the bottom is a philosophical reminder that the loop of life is never fully "closed" or "perfect"; it is simply maintained daily.
+
+### The D-Day Timer
+At the top of the dashboard sits the D-Day Target card.
+- **How it works:** It is a hardcoded, unchangeable countdown timer pointing exactly to **January 1, 2027**. It displays the days, hours, and minutes remaining.
+- **The Reasoning:** Humans struggle with abstract time. By anchoring your life to a specific, immovable milestone in the future, it forces perspective. It acts as a silent, urgent reminder to capture your Gems *today*, because time is finite.
 
 ---
 
-## 7. The Vault (Your Ledger of Wins)
-The Vault (`/vault`) is your permanent historical record. 
-Because we do not use failure-based streaks, the Vault is simply a beautiful, chronological ledger of all the good things you have done.
+## 5. The Daily Workflow
 
-### What is stored in the Vault?
-*   **Gems:** Every small win you capture via your Playlists.
-*   **Wins of the Day:** The daily highlight you write during your Evening Wind-Down.
-*   **Reflections:** Your Sunday Weekly Debrief entries.
+Using Trelis Life takes less than 3 minutes a day. Here is the perfect daily flow:
 
-*Note: Legacy data structures (like 'Keeps') are silently calculated into your total lifetime score, but the Vault strictly renders the new Gems paradigm to keep the interface perfectly clean.*
+### 1. The Morning Start (The Arc)
+As soon as you wake up, open the app.
+- Tap **"Checked in at [Time]"**.
+- Confirm **"Feet on Floor"** (the moment you physically leave the bed).
+- Rate your **Sleep Quality** and **Morning Mood** (1-5 scale).
+- *Why?* This immediately forces you into a state of structural awareness before the chaos of the day begins.
 
----
+### 2. The Daytime Loop (Capturing Gems)
+Throughout the day, your dashboard simply displays your Playlists. 
+- When you do something positive (e.g., drinking a glass of water, meditating, finishing a hard work task), tap the translucent amber **`+ ✨ GEM`** button next to the relevant Playlist.
+- A drawer slides up: type a quick label (e.g., "15 min meditation"), tap a quick tag (e.g., `#stillness`), and tap **CAPTURE GEM ✨**.
+- The Gem drops into the card, and your Total Wins counter ticks up.
+- *Why?* Frictionless positive reinforcement.
 
-## 8. The D-Day Target
-At the top of the dashboard sits the **D-Day Target** card.
-*   This is a hardcoded, unchangeable countdown target set to **January 1, 2027**.
-*   It displays the exact days, hours, and minutes remaining until this deadline.
-*   It serves as a constant, silent reminder of your ultimate timeline, pushing you to capture Gems today rather than tomorrow.
-
----
-
-## 9. Quiet Partners (Silent Support System)
-The **Quiet Partner** feature lets you stay connected with an accountability partner without the toxicity of social media.
-*   **No Numbers:** You cannot see their streak numbers or the actual text of their Gems.
-*   **Progress Dots:** You only see simple dots indicating activity.
-*   **Nudges:** You can send a silent, pre-written nudge (e.g., `Proud of you`) that appears gently on their screen.
+### 3. The Evening Wind-Down (The Arc)
+Before you go to sleep, complete the loop.
+- Write your **Win of the Day** (one good thing that happened).
+- Use the **Parking Lot** to dump any stressful thoughts, tasks, or worries out of your brain so you can sleep.
+- Tap **Sleep** to log your bedtime.
+- *Why?* This closes out the cognitive loops of the day, allowing for deep, restful recovery.
 
 ---
 
-## 10. The Sunday Weekly Debrief
-The `/debrief` page is locked from Monday to Saturday. On Sunday, the vault opens to allow you to reflect.
-*   **Drain Box:** What drained your energy?
-*   **Win Box:** What was your biggest victory?
-*   **Change Box:** What is the one thing you will do differently next week?
-*   Once committed, this reflection is permanently sealed and logged in your Vault.
+## 6. The Vault: Your Immutable Ledger
+
+The Vault (accessible via the cookie icon on the top right) is your permanent historical record. 
+
+- **What it is:** A chronological ledger of every single Gem you have ever captured, every Win of the Day you have logged, and every Sunday Debrief you have written.
+- **The Reasoning:** Because Trelis rejects failure metrics, there is no page that shows "Habits you missed." Instead, the Vault is a beautifully designed timeline of pure positive momentum. When you feel lost or unmotivated, scrolling through the Vault serves as undeniable proof of your capabilities.
 
 ---
 
-## 11. Settings Portal
-The `/settings` screen allows you to manage the deep parameters of your Life OS.
-*   **Manage Playlists (Anchors):** Add new Playlists or retire old ones. Since Playlists are just categories, you only need to provide a Title.
-*   **Vision Priming:** Write a core intention statement that you can choose to display every morning.
-*   **Morning Tap Line:** Customize the text on your Morning Check-In button (e.g., `"I am awake."`).
-*   **Quiet Partner Setup:** Send or revoke partner invitations.
-*   **Sign Out:** Securely purge the local cache and disconnect from Supabase.
+## 7. Quiet Partners & Momentum Forgiveness
+
+### Pause Tokens (Streak Forgiveness)
+Life happens. People get sick, travel, or simply need a break.
+- You are granted **2 Pause Tokens per month**. 
+- If you miss a day, Trelis automatically consumes a Pause Token and labels the day as a "Rest Day." Your streak survives with zero guilt.
+- If you run out of tokens and miss a day, your streak resets gracefully without aggressive red warnings.
+
+### Quiet Partners (Silent Accountability)
+You can invite one person to silently share your journey via the Settings page.
+- **How it works:** You will see a small card showing their email and up to 6 binary dots indicating their activity. You see **no numbers, no scores, and no text**.
+- **Nudges:** You can send them a silent, pre-written nudge like "Proud of you" or "Thinking of you."
+- **The Reasoning:** Traditional social features in apps breed toxic comparison. Quiet Partners provides the psychological safety of knowing someone is in the trenches with you, without the anxiety of comparing your scores to theirs.
+
+---
+
+## 8. The Sunday Debrief
+
+The `/debrief` page is locked from Monday to Saturday. On Sunday, the gate unlocks.
+- You are prompted to fill out three specific text boxes:
+  1. **Drain Box:** What drained your mental reserve this week?
+  2. **Win Box:** What was your primary structural win?
+  3. **Main Priority:** What is the single focus for next week?
+- **The Reasoning:** Forced reflection. By gating this to Sundays only, it prevents over-journaling and ensures that once a week, you course-correct your life's trajectory. Once committed, the debrief is permanently sealed in your Vault.
+
+---
+
+## 9. Settings & The Nuclear Reset
+
+The `/settings` portal allows you to manage the deep parameters of your Life OS:
+- **Manage Playlists:** Add, prioritize, or retire your custom categories.
+- **Vision Priming:** Write a core intention statement ("Your Daily Why") that you can choose to display every morning.
+- **Quiet Partner Setup:** Send or revoke partner invitations.
+
+### The "Erase All My Data" Button
+At the very bottom of the Settings page lies a red button labeled **"ERASE ALL MY DATA (START FRESH)"**.
+- **How it works:** Clicking this completely wipes your Supabase database profile, clears your local cache, and resets your entire account to absolute zero.
+- **The Reasoning:** Sometimes, life gets too cluttered. If your Playlists become messy, or you've been inactive for months and the ghosts of old data are bothering you, this button allows you to declare "bankruptcy" and start a fresh Arc immediately. It is the ultimate guarantee of a clean slate.
+
+---
+
+**End of Manual.**  
+*Trelis Life: Structure for a better life. Start capturing your Gems today.*
