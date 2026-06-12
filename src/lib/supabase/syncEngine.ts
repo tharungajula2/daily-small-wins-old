@@ -58,21 +58,7 @@ export async function syncPullInitialState(userId: string, localState: any, setL
       .select('*')
       .eq('user_id', userId);
 
-    // 4. Pull Today's Anchor Logs (legacy fallback)
-    const { data: anchorLogs } = await supabase
-      .from('anchor_logs')
-      .select('*')
-      .eq('user_id', userId)
-      .eq('date', today);
-
-    // 5. Pull Today's Keeps
-    const { data: anchorKeeps } = await supabase
-      .from('anchor_keeps')
-      .select('*')
-      .eq('user_id', userId)
-      .eq('log_date', today);
-
-    // 6. Pull Today's Gathers
+    // 4. Pull Today's Gathers
     const { data: anchorGathers } = await supabase
       .from('anchor_gathers')
       .select('*')
@@ -130,39 +116,27 @@ export async function syncPullInitialState(userId: string, localState: any, setL
     }
 
     if (userAnchors && userAnchors.length > 0) {
-      const isLocalEmptyOrDefault = !localState.anchors || localState.anchors.length === 0 || (localState.anchors.length > 0 && localState.anchors[0].id.startsWith('default-'));
+      const isLocalEmptyOrDefault = !localState.playlists || localState.playlists.length === 0 || (localState.playlists.length > 0 && localState.playlists[0].id.startsWith('default-'));
       if (isLocalEmptyOrDefault) {
-        updates.anchors = userAnchors.map((a: any) => ({
+        updates.playlists = userAnchors.map((a: any) => ({
           id: a.id,
           title: a.title,
-          pillarId: a.pillar_id,
-          type: a.type,
-          prompt: a.prompt || undefined,
-          completed: false,
           isPermanent: a.is_permanent || false,
           isActive: a.is_active !== false,
-          gathers: []
+          gems: []
         }));
       } else {
-        let localAnchorsChanged = false;
-        const mergedAnchors = localState.anchors.map((la: any) => {
+        let localPlaylistsChanged = false;
+        const mergedPlaylists = localState.playlists.map((la: any) => {
           const cloud = userAnchors.find((ca: any) => ca.id === la.id);
           if (cloud) {
-            const hasSubItemsChanged = JSON.stringify(la.subItems || []) !== JSON.stringify(cloud.sub_items || []);
-            const hasFrequencyChanged = JSON.stringify(la.frequency || []) !== JSON.stringify(cloud.frequency || []);
-            const hasCodenameChanged = la.codename !== cloud.codename;
-            const hasKeepDefinitionChanged = la.keepDefinition !== cloud.keep_definition;
             const hasIsPermanentChanged = la.isPermanent !== cloud.is_permanent;
             const hasIsActiveChanged = la.isActive !== cloud.is_active;
 
-            if (hasSubItemsChanged || hasFrequencyChanged || hasCodenameChanged || hasKeepDefinitionChanged || hasIsPermanentChanged || hasIsActiveChanged) {
-              localAnchorsChanged = true;
+            if (hasIsPermanentChanged || hasIsActiveChanged) {
+              localPlaylistsChanged = true;
               return {
                 ...la,
-                subItems: cloud.sub_items || [],
-                frequency: cloud.frequency || ['all'],
-                codename: cloud.codename !== undefined ? cloud.codename : la.codename,
-                keepDefinition: cloud.keep_definition !== undefined ? cloud.keep_definition : la.keepDefinition,
                 isPermanent: cloud.is_permanent !== undefined ? cloud.is_permanent : la.isPermanent,
                 isActive: cloud.is_active !== undefined ? cloud.is_active : la.isActive
               };
@@ -170,65 +144,30 @@ export async function syncPullInitialState(userId: string, localState: any, setL
           }
           return la;
         });
-        if (localAnchorsChanged) {
-          updates.anchors = mergedAnchors;
+        if (localPlaylistsChanged) {
+          updates.playlists = mergedPlaylists;
         }
       }
     }
 
-    // Determine completion status (Keeps) and Gathers for each anchor
-    const currentAnchors = updates.anchors || localState.anchors || [];
-    let anchorsChanged = false;
+    // Determine Gems for each playlist
+    const currentPlaylists = updates.playlists || localState.playlists || [];
+    let playlistsChanged = false;
     
-    const mappedAnchors = currentAnchors.map((anchor: any) => {
+    const mappedPlaylists = currentPlaylists.map((playlist: any) => {
       let modified = false;
-      let newAnchor = { ...anchor };
+      let newPlaylist = { ...playlist };
 
-      // 1. Resolve Keep status (either from anchor_keeps or legacy anchor_logs)
-      const hasKeepRecord = anchorKeeps?.some((k: any) => k.anchor_id === anchor.id);
-      const hasLegacyRecord = anchorLogs?.find((l: any) => l.anchor_id === anchor.id);
-      const isKept = hasKeepRecord || (hasLegacyRecord ? hasLegacyRecord.completed : false);
-
-      if (newAnchor.completed !== isKept) {
-        newAnchor.completed = isKept;
-        modified = true;
-      }
-
-      if (hasLegacyRecord) {
-        if (!newAnchor.usedBaseline && hasLegacyRecord.used_baseline) {
-          newAnchor.usedBaseline = true;
-          modified = true;
-        }
-        if (hasLegacyRecord.reflection_text !== undefined && newAnchor.reflectionText !== hasLegacyRecord.reflection_text) {
-          newAnchor.reflectionText = hasLegacyRecord.reflection_text || undefined;
-          modified = true;
-        }
-        
-        if (hasLegacyRecord.sub_items_state && Array.isArray(hasLegacyRecord.sub_items_state)) {
-          const mergedSubItems = (newAnchor.subItems || []).map((s: any) => {
-            const stateItem = hasLegacyRecord.sub_items_state.find((st: any) => st.id === s.id);
-            if (stateItem && s.completed !== stateItem.completed) {
-              modified = true;
-              return { ...s, completed: stateItem.completed };
-            }
-            return s;
-          });
-          if (modified) {
-            newAnchor.subItems = mergedSubItems;
-          }
-        }
-      }
-
-      // 2. Resolve Gather records (anchor_gathers)
-      const gathersForAnchor = anchorGathers?.filter((g: any) => g.anchor_id === anchor.id) || [];
-      const currentGathers = newAnchor.gathers || [];
+      // 2. Resolve Gather records (anchor_gathers to gems)
+      const gathersForPlaylist = anchorGathers?.filter((g: any) => g.anchor_id === playlist.id) || [];
+      const currentGems = newPlaylist.gems || [];
       
-      const hasGathersCountChanged = gathersForAnchor.length !== currentGathers.length;
-      const hasGathersMetaChanged = !hasGathersCountChanged && 
-        JSON.stringify(gathersForAnchor.map(g => g.id)) !== JSON.stringify(currentGathers.map((cg: any) => cg.id));
+      const hasGemsCountChanged = gathersForPlaylist.length !== currentGems.length;
+      const hasGemsMetaChanged = !hasGemsCountChanged && 
+        JSON.stringify(gathersForPlaylist.map((g: any) => g.id)) !== JSON.stringify(currentGems.map((cg: any) => cg.id));
 
-      if (hasGathersCountChanged || hasGathersMetaChanged) {
-        newAnchor.gathers = gathersForAnchor.map((g: any) => ({
+      if (hasGemsCountChanged || hasGemsMetaChanged) {
+        newPlaylist.gems = gathersForPlaylist.map((g: any) => ({
           id: g.id,
           anchorId: g.anchor_id,
           logDate: g.log_date,
@@ -240,14 +179,14 @@ export async function syncPullInitialState(userId: string, localState: any, setL
       }
 
       if (modified) {
-        anchorsChanged = true;
-        return newAnchor;
+        playlistsChanged = true;
+        return newPlaylist;
       }
-      return anchor;
+      return playlist;
     });
 
-    if (anchorsChanged) {
-      updates.anchors = mappedAnchors;
+    if (playlistsChanged) {
+      updates.playlists = mappedPlaylists;
     }
 
 
@@ -279,13 +218,11 @@ export async function syncPushDailyRitual(state: any) {
     
     const today = new Date().toLocaleDateString('en-CA');
 
-    // Compute pulse_score
-    const activeTodayAnchors = (state.anchors || []).filter((a: any) => isAnchorActiveForDay(a.frequency));
-    const totalPersonalAnchors = activeTodayAnchors.length;
-    const completedPersonalAnchors = activeTodayAnchors.filter((a: any) => a.completed).length;
+    const activeTodayPlaylists = (state.playlists || []).filter((a: any) => a.isActive !== false);
+    const totalPersonalPlaylists = activeTodayPlaylists.length;
 
-    const totalCount = 2 + totalPersonalAnchors;
-    const completedCount = (state.feetOnFloorLogged ? 1 : 0) + (state.eveningCheckInDone ? 1 : 0) + completedPersonalAnchors;
+    const totalCount = 2; // the arc count
+    const completedCount = (state.feetOnFloorLogged ? 1 : 0) + (state.eveningCheckInDone ? 1 : 0);
     const calculatedPulseScore = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
 
     const payload = {
@@ -316,10 +253,10 @@ export async function syncPushDailyRitual(state: any) {
 }
 
 /**
- * Pushes the full array of anchor definitions to user_anchors.
+ * Pushes the full array of playlist definitions to user_anchors.
  * Uses UPSERT to ensure the cloud perfectly matches local state.
  */
-export async function syncPushAnchors(anchors: any[]) {
+export async function syncPushPlaylists(playlists: any[]) {
   const supabase = createClient();
   
   try {
@@ -330,19 +267,16 @@ export async function syncPushAnchors(anchors: any[]) {
     const userId = session.user.id;
     
     // Filter out anchors with non-UUID IDs (e.g., default-a1) that haven't been synced yet
-    const syncableAnchors = anchors.filter(a => isValidUUID(a.id));
-    if (syncableAnchors.length === 0) {
-      console.log("Sync Engine: No syncable anchors (all have local-only IDs).");
+    const syncablePlaylists = playlists.filter(a => isValidUUID(a.id));
+    if (syncablePlaylists.length === 0) {
+      console.log("Sync Engine: No syncable playlists (all have local-only IDs).");
       return;
     }
 
-    const payload = syncableAnchors.map(a => ({
+    const payload = syncablePlaylists.map(a => ({
       id: a.id,
       user_id: userId,
       title: a.title,
-      pillar_id: a.pillarId || 'stress_mental',
-      type: a.type || 'action',
-      prompt: a.prompt || null,
       is_active: a.isActive !== false,
       is_permanent: a.isPermanent || false
     }));
@@ -354,50 +288,9 @@ export async function syncPushAnchors(anchors: any[]) {
       .upsert(payload, { onConflict: 'id' });
 
     if (error) throw error;
-    console.log("Sync Engine: Push Anchors Successful");
+    console.log("Sync Engine: Push Playlists Successful");
   } catch (error) {
-    console.error("Sync Engine: Push Anchors Error", error);
-  }
-}
-
-/**
- * Pushes an individual anchor log (completion status) to anchor_logs.
- * Uses UPSERT on user_id, anchor_id, date.
- */
-export async function syncPushAnchorLog(
-  anchorId: string, 
-  completed: boolean
-) {
-  const supabase = createClient();
-  
-  try {
-    const { data: { session }, error: sessionError } = await getSessionWithTimeout(supabase);
-    if (sessionError) throw sessionError;
-    if (!session?.user) return;
-
-    // Skip sync for anchors with non-UUID IDs (default/offline-generated)
-    if (!isValidUUID(anchorId)) {
-      console.log(`Sync Engine: Skipping anchor log push for non-UUID anchor (${anchorId}).`);
-      return;
-    }
-    
-    const today = new Date().toLocaleDateString('en-CA');
-
-    const payload = {
-      user_id: session.user.id,
-      anchor_id: anchorId,
-      date: today,
-      completed
-    };
-
-    const { error } = await supabase
-      .from('anchor_logs')
-      .upsert(payload, { onConflict: 'user_id,anchor_id,date' });
-
-    if (error) throw error;
-    console.log(`Sync Engine: Push Anchor Log (${anchorId}) Successful`);
-  } catch (error: any) {
-    console.error("Sync Engine: Push Anchor Log Error", error.message || error);
+    console.error("Sync Engine: Push Playlists Error", error);
   }
 }
 
@@ -475,67 +368,26 @@ export async function syncPushDDayTarget(targetDate: string, title: string) {
 }
 
 /**
- * Pushes today's Keep status (kept/not kept) to anchor_keeps.
- * Upserts if completed, deletes from table if false.
+ * Pushes an individual Gem record to anchor_gathers.
  */
-export async function syncPushKeep(anchorId: string, completed: boolean) {
+export async function syncPushGem(gem: { id: string; playlistId: string; label?: string; tags?: string[]; logDate?: string }) {
   const supabase = createClient();
   try {
     const { data: { session }, error: sessionError } = await getSessionWithTimeout(supabase);
     if (sessionError) throw sessionError;
     if (!session?.user) return;
     
-    if (!isValidUUID(anchorId)) return;
+    if (!isValidUUID(gem.playlistId) || !isValidUUID(gem.id)) return;
     
-    const today = new Date().toLocaleDateString('en-CA');
-    
-    if (completed) {
-      const payload = {
-        user_id: session.user.id,
-        anchor_id: anchorId,
-        log_date: today
-      };
-      const { error } = await supabase
-        .from('anchor_keeps')
-        .upsert(payload, { onConflict: 'user_id,anchor_id,log_date' });
-      if (error) throw error;
-      console.log(`Sync Engine: Push Keep (${anchorId}) Successful`);
-    } else {
-      const { error } = await supabase
-        .from('anchor_keeps')
-        .delete()
-        .eq('user_id', session.user.id)
-        .eq('anchor_id', anchorId)
-        .eq('log_date', today);
-      if (error) throw error;
-      console.log(`Sync Engine: Delete Keep (${anchorId}) Successful`);
-    }
-  } catch (error: any) {
-    console.error("Sync Engine: Push Keep Error", error.message || error);
-  }
-}
-
-/**
- * Pushes an individual Gather record to anchor_gathers.
- */
-export async function syncPushGather(gather: { id: string; anchorId: string; label?: string; tags?: string[]; logDate?: string }) {
-  const supabase = createClient();
-  try {
-    const { data: { session }, error: sessionError } = await getSessionWithTimeout(supabase);
-    if (sessionError) throw sessionError;
-    if (!session?.user) return;
-    
-    if (!isValidUUID(gather.anchorId) || !isValidUUID(gather.id)) return;
-    
-    const logDate = gather.logDate || new Date().toLocaleDateString('en-CA');
+    const logDate = gem.logDate || new Date().toLocaleDateString('en-CA');
     
     const payload = {
-      id: gather.id,
+      id: gem.id,
       user_id: session.user.id,
-      anchor_id: gather.anchorId,
+      anchor_id: gem.playlistId,
       log_date: logDate,
-      label: gather.label || null,
-      tags: gather.tags || []
+      label: gem.label || null,
+      tags: gem.tags || []
     };
     
     const { error } = await supabase
@@ -543,33 +395,33 @@ export async function syncPushGather(gather: { id: string; anchorId: string; lab
       .upsert(payload, { onConflict: 'id' });
       
     if (error) throw error;
-    console.log(`Sync Engine: Push Gather (${gather.id}) Successful`);
+    console.log(`Sync Engine: Push Gem (${gem.id}) Successful`);
   } catch (error: any) {
-    console.error("Sync Engine: Push Gather Error", error.message || error);
+    console.error("Sync Engine: Push Gem Error", error.message || error);
   }
 }
 
 /**
- * Deletes an individual Gather record from anchor_gathers.
+ * Deletes an individual Gem record from anchor_gathers.
  */
-export async function syncDeleteGather(gatherId: string) {
+export async function syncDeleteGem(gemId: string) {
   const supabase = createClient();
   try {
     const { data: { session }, error: sessionError } = await getSessionWithTimeout(supabase);
     if (sessionError) throw sessionError;
     if (!session?.user) return;
     
-    if (!isValidUUID(gatherId)) return;
+    if (!isValidUUID(gemId)) return;
     
     const { error } = await supabase
       .from('anchor_gathers')
       .delete()
-      .eq('id', gatherId)
+      .eq('id', gemId)
       .eq('user_id', session.user.id);
       
     if (error) throw error;
-    console.log(`Sync Engine: Delete Gather (${gatherId}) Successful`);
+    console.log(`Sync Engine: Delete Gem (${gemId}) Successful`);
   } catch (error: any) {
-    console.error("Sync Engine: Delete Gather Error", error.message || error);
+    console.error("Sync Engine: Delete Gem Error", error.message || error);
   }
 }

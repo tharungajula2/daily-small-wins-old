@@ -10,7 +10,7 @@ import { ChevronLeft, CheckCircle2, Sparkles, BookOpen } from 'lucide-react';
 export default function SundayDebrief() {
   const router = useRouter();
   const supabase = createClient();
-  const { anchors, addAnchor, toggleAnchor, completeWeeklyReview } = useRitualStore();
+  const { playlists, addPlaylist, completeWeeklyReview } = useRitualStore();
 
   const [isSunday, setIsSunday] = useState<boolean | null>(null);
   const [worked, setWorked] = useState('');
@@ -59,32 +59,29 @@ export default function SundayDebrief() {
     setIsSubmitting(true);
 
     try {
-      // 1. Check if "Sunday Weekly Debrief" anchor already exists in the store
-      let debriefAnchor = anchors.find(
-        (a) => a.title === 'Sunday Weekly Debrief'
+      // 1. Check if "Sunday Weekly Debrief" playlist already exists in the store
+      let debriefPlaylist = playlists.find(
+        (a: any) => a.title === 'Sunday Weekly Debrief'
       );
 
       // If it doesn't exist, create it dynamically
-        if (!debriefAnchor) {
-          addAnchor(
-            'Sunday Weekly Debrief',
-            'stress_mental'
-          );
+        if (!debriefPlaylist) {
+          addPlaylist('Sunday Weekly Debrief');
           
           // Find it in the newly updated state
-          const updatedAnchors = useRitualStore.getState().anchors;
-          debriefAnchor = updatedAnchors.find(
-            (a) => a.title === 'Sunday Weekly Debrief'
+          const updatedPlaylists = useRitualStore.getState().playlists;
+          debriefPlaylist = updatedPlaylists.find(
+            (a: any) => a.title === 'Sunday Weekly Debrief'
           );
         }
 
-        if (debriefAnchor) {
+        if (debriefPlaylist) {
           const structuredReflectionText = `WHAT WORKED:\n${worked}\n\nWHAT BROKE DOWN:\n${brokeDown}\n\nCHANGE FOR NEXT WEEK:\n${changeText}`;
           
           const finalReflectionText = structuredReflectionText;
 
           // 2. Complete and log reflection to Zustand and remote database
-          useRitualStore.getState().addGather(debriefAnchor.id, finalReflectionText, ['debrief']);
+          useRitualStore.getState().addGem(debriefPlaylist.id, finalReflectionText, ['debrief']);
         
         // 3. Mark the review completed in the store
         completeWeeklyReview();

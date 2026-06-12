@@ -23,10 +23,10 @@ export default function SettingsPage() {
     setVisionText, 
     isVisionEnabled, 
     toggleVision,
-    anchors,
-    renameAnchor,
-    toggleAnchorActive,
-    reorderAnchors,
+    playlists,
+    renamePlaylist,
+    togglePlaylistActive,
+    reorderPlaylists,
     morningTapText,
     setMorningTapText,
     setOnboardingTourCompleted,
@@ -37,17 +37,17 @@ export default function SettingsPage() {
   const [profileEmail, setProfileEmail] = useState<string | null>(null);
   const [isClearing, setIsClearing] = useState(false);
 
-  const [editingAnchorId, setEditingAnchorId] = useState<string | null>(null);
+  const [editingPlaylistId, setEditingPlaylistId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
 
-  const startEditing = (anchor: any) => {
-    setEditingAnchorId(anchor.id);
-    setEditTitle(anchor.title);
+  const startEditing = (playlist: any) => {
+    setEditingPlaylistId(playlist.id);
+    setEditTitle(playlist.title);
   };
 
-  const saveAnchorEdits = (id: string) => {
-    renameAnchor(id, editTitle.trim());
-    setEditingAnchorId(null);
+  const savePlaylistEdits = (id: string) => {
+    renamePlaylist(id, editTitle.trim());
+    setEditingPlaylistId(null);
   };
 
   const [partnerRelation, setPartnerRelation] = useState<any | null>(null);
@@ -366,31 +366,31 @@ export default function SettingsPage() {
 
           {/* Manage Anchors Panel */}
           <div className="p-4 rounded-xl bg-surface border border-muted/80 flex flex-col gap-3 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05),0_1px_3px_rgba(0,0,0,0.02)]">
-            <h3 className="text-xs font-semibold text-ink-secondary uppercase tracking-wider mb-1">Manage Anchors</h3>
+            <h3 className="text-xs font-semibold text-ink-secondary uppercase tracking-wider mb-1">Manage Playlists</h3>
             <p className="text-xs text-ink-secondary leading-relaxed font-normal mb-2">
-              Personal active anchors are soft-capped at 5 (The Arc + 4 custom anchors). Move up/down to prioritize, edit properties, or retire them.
+              Personal active playlists are soft-capped at 5 (The Arc + 4 custom playlists). Move up/down to prioritize, edit properties, or retire them.
             </p>
 
             <div className="flex flex-col gap-4">
-              {anchors.map((anchor, index) => {
-                const isEditing = editingAnchorId === anchor.id;
+              {playlists.map((playlist, index) => {
+                const isEditing = editingPlaylistId === playlist.id;
                 return (
-                  <div key={anchor.id} className="p-3 bg-canvas border border-muted/50 rounded-xl flex flex-col gap-3">
+                  <div key={playlist.id} className="p-3 bg-canvas border border-muted/50 rounded-xl flex flex-col gap-3">
                     
-                    {/* Anchor Header Info / Non-editing state */}
+                    {/* Playlist Header Info / Non-editing state */}
                     <div className="flex justify-between items-start gap-2">
                       <div className="flex flex-col min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="text-xs font-semibold text-ink-primary truncate">
-                            {anchor.title}
+                            {playlist.title}
                           </span>
 
-                          {anchor.isPermanent && (
+                          {playlist.isPermanent && (
                             <span className="text-[10px] bg-ink-primary/5 text-ink-secondary px-1.5 py-0.5 rounded">
-                              Permanent
+                               Permanent
                             </span>
                           )}
-                          {!anchor.isActive && (
+                          {!playlist.isActive && (
                             <span className="text-[10px] bg-red-500/10 text-red-500 px-1.5 py-0.5 rounded">
                               Retired
                             </span>
@@ -403,7 +403,7 @@ export default function SettingsPage() {
                       <div className="flex items-center gap-1 shrink-0">
                         <button
                           type="button"
-                          onClick={() => reorderAnchors(index, index - 1)}
+                          onClick={() => reorderPlaylists(index, index - 1)}
                           disabled={index === 0}
                           className="p-1 rounded bg-surface border border-muted/40 text-ink-secondary hover:text-ink-primary disabled:opacity-30 disabled:pointer-events-none"
                           title="Move Up"
@@ -412,8 +412,8 @@ export default function SettingsPage() {
                         </button>
                         <button
                           type="button"
-                          onClick={() => reorderAnchors(index, index + 1)}
-                          disabled={index === anchors.length - 1}
+                          onClick={() => reorderPlaylists(index, index + 1)}
+                          disabled={index === playlists.length - 1}
                           className="p-1 rounded bg-surface border border-muted/40 text-ink-secondary hover:text-ink-primary disabled:opacity-30 disabled:pointer-events-none"
                           title="Move Down"
                         >
@@ -426,7 +426,7 @@ export default function SettingsPage() {
                     {isEditing ? (
                       <div className="flex flex-col gap-3 mt-2 border-t border-muted/30 pt-3">
                         <div className="flex flex-col gap-1">
-                          <label className="text-[10px] text-ink-secondary font-bold uppercase tracking-wider">Anchor Title</label>
+                          <label className="text-[10px] text-ink-secondary font-bold uppercase tracking-wider">Playlist Title</label>
                           <input
                             type="text"
                             value={editTitle}
@@ -452,14 +452,14 @@ export default function SettingsPage() {
                         <div className="flex gap-2 justify-end mt-1">
                           <button
                             type="button"
-                            onClick={() => setEditingAnchorId(null)}
+                            onClick={() => setEditingPlaylistId(null)}
                             className="px-3 py-1 bg-surface border border-muted rounded text-[10px] uppercase font-semibold text-ink-secondary hover:bg-canvas"
                           >
                             Cancel
                           </button>
                           <button
                             type="button"
-                            onClick={() => saveAnchorEdits(anchor.id)}
+                            onClick={() => savePlaylistEdits(playlist.id)}
                             className="px-3 py-1 bg-accent-teal text-white rounded-[10px] text-[10px] uppercase font-semibold"
                           >
                             Save
@@ -468,25 +468,25 @@ export default function SettingsPage() {
                       </div>
                     ) : (
                       <div className="flex gap-2 justify-end">
-                        {!anchor.isPermanent && (
+                        {!playlist.isPermanent && (
                           <button
                             type="button"
                             onClick={() => {
                               try { Haptics.impact({ style: ImpactStyle.Light }); } catch {}
-                              toggleAnchorActive(anchor.id);
+                              togglePlaylistActive(playlist.id);
                             }}
                             className={`px-3 py-1 border rounded text-[10px] uppercase font-semibold transition-colors ${
-                              anchor.isActive 
+                              playlist.isActive 
                                 ? 'border-red-500/20 text-red-500 hover:bg-red-500/[0.02]' 
                                 : 'border-accent-teal/20 text-accent-teal hover:bg-accent-teal/[0.02]'
                             }`}
                           >
-                            {anchor.isActive ? 'Retire' : 'Activate'}
+                            {playlist.isActive ? 'Retire' : 'Activate'}
                           </button>
                         )}
                         <button
                           type="button"
-                          onClick={() => startEditing(anchor)}
+                          onClick={() => startEditing(playlist)}
                           className="px-3 py-1 bg-surface border border-muted text-ink-secondary hover:text-ink-primary rounded text-[10px] uppercase font-semibold"
                         >
                           Edit

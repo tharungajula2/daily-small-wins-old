@@ -4,14 +4,14 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import FeetOnFloor from '@/components/rituals/FeetOnFloor';
 import PulseScore from '@/components/core/PulseScore';
-import AnchorCard from '@/components/core/AnchorCard';
+import PlaylistCard from '@/components/core/PlaylistCard';
 import MorningRoutineCard from '@/components/rituals/MorningRoutineCard';
 import EveningRoutineCard from '@/components/rituals/EveningRoutineCard';
-import { useRitualStore, getLifetimeKeeps, getLifetimeGathers } from '@/store/useRitualStore';
+import { useRitualStore, getTotalWins } from '@/store/useRitualStore';
 import { syncPullInitialState } from '@/lib/supabase/syncEngine';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Settings, Cookie } from 'lucide-react';
-import AnchorManager from '@/components/widgets/AnchorManager';
+import PlaylistManager from '@/components/widgets/PlaylistManager';
 import VisionPriming from '@/components/widgets/VisionPriming';
 import DDayTimer from '@/components/widgets/DDayTimer';
 import QuietPartner from '@/components/core/QuietPartner';
@@ -29,17 +29,17 @@ function Dashboard() {
   const supabase = createClient();
   const router = useRouter();
   const { 
-    feetOnFloorLogged, morningCheckInDone, sleepScore, moodScore, anchors, eveningCheckInDone,
+    feetOnFloorLogged, morningCheckInDone, sleepScore, moodScore, playlists, eveningCheckInDone,
     isVisionEnabled, currentStreak, lastActiveDate, setLastActiveDate,
     isRestDay, toggleRestDay
   } = useRitualStore();
   
-  const lifetimeKeeps = useRitualStore(state => getLifetimeKeeps(state));
+  const totalWins = useRitualStore(state => getTotalWins(state));
   
   const [showGentleReEntry, setShowGentleReEntry] = useState(false);
 
   const [showEvening, setShowEvening] = useState(false);
-  const [isManagingAnchors, setIsManagingAnchors] = useState(false);
+  const [isManagingPlaylists, setIsManagingPlaylists] = useState(false);
   const [userState, setUserState] = useState<{
     user_id: string;
     pause_tokens_remaining: number;
@@ -48,7 +48,7 @@ function Dashboard() {
     lifetime_anchor_count: number;
   } | null>(null);
 
-  const [anchorMetadata, setAnchorMetadata] = useState<Record<string, { is_non_negotiable: boolean; baseline_target: number | null }>>({});
+  const [playlistMetadata, setPlaylistMetadata] = useState<Record<string, { is_non_negotiable: boolean; baseline_target: number | null }>>({});
 
   type CircadianPhase = 'morning' | 'day' | 'evening' | 'night';
   const [circadianPhase, setCircadianPhase] = useState<CircadianPhase>('day');
@@ -137,18 +137,12 @@ function Dashboard() {
         }
 
         // Fetch baseline historical counts (up to today, excluding today)
-        const [keepsBeforeToday, gathersBeforeToday, ritualsBeforeToday] = await Promise.all([
-          supabase.from('anchor_keeps').select('*', { count: 'exact', head: true }).eq('user_id', uid).lt('log_date', todayStr),
+        const [gemsBeforeToday, ritualsBeforeToday] = await Promise.all([
           supabase.from('anchor_gathers').select('*', { count: 'exact', head: true }).eq('user_id', uid).lt('log_date', todayStr),
           supabase.from('daily_rituals').select('*', { count: 'exact', head: true }).eq('user_id', uid).lt('date', todayStr)
         ]);
 
-        const historicalKeeps = (keepsBeforeToday.count || 0) + (ritualsBeforeToday.count || 0);
-        const historicalGathers = gathersBeforeToday.count || 0;
-        
-        if (active) {
-          state.setHistoricalCounts(historicalKeeps, historicalGathers);
-        }
+          state.setHistoricalTotalWins(gemsBeforeToday.count || 0);
 
         // 1. Fetch user state
         const { data: stateData, error: stateErr } = await supabase
@@ -194,7 +188,7 @@ function Dashboard() {
               baseline_target: item.baseline_target
             };
           });
-          setAnchorMetadata(metaMap);
+          setPlaylistMetadata(metaMap);
         }
       } catch (err) {
         console.error("Error loading user state and anchor metadata:", err);
@@ -208,10 +202,10 @@ function Dashboard() {
     };
   }, [currentStreak]);
 
-  const activeTodayAnchors = anchors.filter(a => a.isActive !== false);
+  const activeTodayPlaylists = playlists.filter((a: any) => a.isActive !== false);
 
-  const totalPersonalAnchors = activeTodayAnchors.length;
-  // Anchors are just Playlists now, so they don't get "completed".
+  const totalPersonalPlaylists = activeTodayPlaylists.length;
+  // Playlists don't get "completed".
   // The daily ring only tracks The Arc (Morning & Evening check-ins).
 
   const totalCount = 2; // Morning + Evening
@@ -308,7 +302,7 @@ function Dashboard() {
                           </svg>
                         </div>
                         <span className="text-sm font-semibold text-accent-teal select-none leading-none">
-                          {lifetimeKeeps + useRitualStore(state => getLifetimeGathers(state))}
+                          {totalWins}
                         </span>
                         <span className="text-[8px] tracking-wider text-ink-secondary uppercase font-semibold select-none mt-1.5 leading-none">
                           Total Wins
@@ -459,7 +453,7 @@ function Dashboard() {
                             Today is Complete
                           </h3>
                           <p className="text-sm text-ink-secondary leading-relaxed font-normal">
-                            All {activeTodayAnchors.length} anchors completed.<br/>
+                            All {activeTodayPlaylists.length} check-ins completed.<br/>
                             Your daily protocol is fully achieved.
                           </p>
                         </div>
@@ -478,18 +472,18 @@ function Dashboard() {
                       <div className="flex flex-col gap-3">
 
                         <div id="tour-anchors-list" className="flex flex-col gap-3">
-                          {activeTodayAnchors.map(anchor => (
-                            <AnchorCard 
-                              key={anchor.id} 
-                              anchor={anchor} 
-                              metadata={anchorMetadata[anchor.id]} 
+                          {activeTodayPlaylists.map((playlist: any) => (
+                            <PlaylistCard 
+                              key={playlist.id} 
+                              playlist={playlist} 
+                              metadata={playlistMetadata[playlist.id]} 
                             />
                           ))}
                           <button
-                            onClick={() => setIsManagingAnchors(true)}
+                            onClick={() => setIsManagingPlaylists(true)}
                             className="w-full bg-canvas hover:bg-muted border border-dashed border-muted hover:border-ink-secondary/30 rounded-xl py-3 text-xs font-semibold tracking-widest uppercase text-ink-secondary transition-all flex items-center justify-center gap-2"
                           >
-                            + Add New Anchor
+                            + Add New Playlist
                           </button>
                         </div>
                       </div>
@@ -526,7 +520,7 @@ function Dashboard() {
       </div>
       
       <AnimatePresence>
-        {isManagingAnchors && <AnchorManager onClose={() => setIsManagingAnchors(false)} />}
+        {isManagingPlaylists && <PlaylistManager onClose={() => setIsManagingPlaylists(false)} />}
       </AnimatePresence>
 
       <AnimatePresence>

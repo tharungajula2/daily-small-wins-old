@@ -1,42 +1,26 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { 
-  syncPushDailyRitual, syncPushAnchors, syncPushAnchorLog,
-  syncPushVision, syncPushKeep, syncPushGather, syncDeleteGather,
+  syncPushDailyRitual, syncPushPlaylists,
+  syncPushVision, syncPushGem, syncDeleteGem,
   syncPushDDayTarget
 } from '@/lib/supabase/syncEngine';
 
-export type PillarId = 'nutrition' | 'movement' | 'sleep' | 'stress_mental' | 'social' | 'environment';
-export type AnchorType = 'action' | 'reflection';
-
-export interface Gather {
+export interface Gem {
   id: string;
-  anchorId: string;
+  playlistId: string;
   logDate: string;
   label?: string;
   tags?: string[];
   createdAt?: string;
 }
 
-export interface Anchor {
+export interface Playlist {
   id: string;
   title: string;
-  pillarId?: PillarId | null;
-  type?: AnchorType;
-  prompt?: string;
-  completed: boolean;
   isPermanent?: boolean;
   isActive?: boolean;
-  gathers?: Gather[];
-}
-
-export interface AnchorLog {
-  id?: string;
-  userId?: string;
-  anchorId: string;
-  date?: string;
-  completed: boolean;
-  completedAt?: string;
+  gems?: Gem[];
 }
 
 interface RitualState {
@@ -48,7 +32,7 @@ interface RitualState {
   moodScore: number | null;
   bedTime: string | null;
   sleepDuration: number | null;
-  anchors: Anchor[];
+  playlists: Playlist[];
   eveningCheckInDone: boolean;
   winOfTheDay: string;
   parkingLotNotes: string;
@@ -64,9 +48,8 @@ interface RitualState {
   lastActiveDate: string | null;
   setLastActiveDate: (date: string) => void;
 
-  historicalKeepsCount: number;
-  historicalGathersCount: number;
-  setHistoricalCounts: (keeps: number, gathers: number) => void;
+  historicalTotalWins: number;
+  setHistoricalTotalWins: (wins: number) => void;
 
   // Wake/Sleep Windows for The Arc definition
   wakeWindow: string;
@@ -77,14 +60,13 @@ interface RitualState {
   markFeetOnFloor: (time: string) => void;
   setStreak: (streak: number) => void;
   completeMorningCheckIn: (sleep: number, mood: number, bedTime: string, duration: number) => Promise<void>;
-  toggleAnchor: (id: string) => void;
-  addAnchor: (title: string, pillarId?: PillarId | null) => void;
-  renameAnchor: (id: string, newTitle: string) => void;
-  removeAnchor: (id: string) => void;
-  toggleAnchorActive: (id: string) => void;
-  reorderAnchors: (startIndex: number, endIndex: number) => void;
-  addGather: (anchorId: string, label?: string, tags?: string[]) => void;
-  deleteGather: (anchorId: string, gatherId: string) => void;
+  addPlaylist: (title: string) => void;
+  renamePlaylist: (id: string, newTitle: string) => void;
+  removePlaylist: (id: string) => void;
+  togglePlaylistActive: (id: string) => void;
+  reorderPlaylists: (startIndex: number, endIndex: number) => void;
+  addGem: (playlistId: string, label?: string, tags?: string[]) => void;
+  deleteGem: (playlistId: string, gemId: string) => void;
   completeEveningCheckIn: (win: string, parkingLot: string) => Promise<void>;
   reverseEveningCheckIn: () => Promise<void>;
   resetDaily: () => void;
@@ -131,7 +113,7 @@ export const useRitualStore = create<RitualState>()(
       moodScore: null,
       bedTime: null,
       sleepDuration: null,
-      anchors: [],
+      playlists: [],
       eveningCheckInDone: false,
       winOfTheDay: '',
       parkingLotNotes: '',
@@ -148,9 +130,8 @@ export const useRitualStore = create<RitualState>()(
       lastWeeklyReviewDate: null,
       lastActiveDate: null,
 
-      historicalKeepsCount: 0,
-      historicalGathersCount: 0,
-      setHistoricalCounts: (keeps: number, gathers: number) => set({ historicalKeepsCount: keeps, historicalGathersCount: gathers }),
+      historicalTotalWins: 0,
+      setHistoricalTotalWins: (wins: number) => set({ historicalTotalWins: wins }),
       
       wakeWindow: '07:00',
       sleepWindow: '23:00',
@@ -178,94 +159,79 @@ export const useRitualStore = create<RitualState>()(
         syncPushDailyRitual(get());
       },
       
-      toggleAnchor: (id: string) => {
+      addPlaylist: (title: string) => {
         set((state) => ({
-          anchors: state.anchors.map(a => 
-            a.id === id ? { ...a, completed: !a.completed } : a
-          )
-        }));
-        const anchor = get().anchors.find(a => a.id === id);
-        if (anchor) {
-          syncPushAnchorLog(anchor.id, anchor.completed);
-          syncPushDailyRitual(get());
-        }
-      },
-
-      addAnchor: (title: string, pillarId?: PillarId | null) => {
-        set((state) => ({
-          anchors: [
-            ...state.anchors, 
+          playlists: [
+            ...state.playlists, 
             { 
               id: crypto.randomUUID(), 
               title, 
-              pillarId: pillarId || 'stress_mental', 
-              completed: false, 
               isPermanent: false,
               isActive: true,
-              gathers: []
+              gems: []
             }
           ]
         }));
-        syncPushAnchors(get().anchors);
+        syncPushPlaylists(get().playlists);
       },
         
-      renameAnchor: (id: string, newTitle: string) => {
+      renamePlaylist: (id: string, newTitle: string) => {
         set((state) => ({
-          anchors: state.anchors.map(a => a.id === id ? { ...a, title: newTitle } : a)
+          playlists: state.playlists.map(a => a.id === id ? { ...a, title: newTitle } : a)
         }));
-        syncPushAnchors(get().anchors);
+        syncPushPlaylists(get().playlists);
       },
         
-      removeAnchor: (id: string) => {
+      removePlaylist: (id: string) => {
         set((state) => ({
-          anchors: state.anchors.filter(a => a.id !== id)
+          playlists: state.playlists.filter(a => a.id !== id)
         }));
-        syncPushAnchors(get().anchors);
+        syncPushPlaylists(get().playlists);
       },
 
-      toggleAnchorActive: (id: string) => {
+      togglePlaylistActive: (id: string) => {
         set((state) => ({
-          anchors: state.anchors.map(a => a.id === id ? { ...a, isActive: a.isActive === false } : a)
+          playlists: state.playlists.map(a => a.id === id ? { ...a, isActive: a.isActive === false } : a)
         }));
-        syncPushAnchors(get().anchors);
+        syncPushPlaylists(get().playlists);
       },
 
-      reorderAnchors: (startIndex: number, endIndex: number) => {
+      reorderPlaylists: (startIndex: number, endIndex: number) => {
         set((state) => {
-          const next = [...state.anchors];
+          const next = [...state.playlists];
           const [removed] = next.splice(startIndex, 1);
           next.splice(endIndex, 0, removed);
-          return { anchors: next };
+          return { playlists: next };
         });
-        syncPushAnchors(get().anchors);
+        syncPushPlaylists(get().playlists);
       },
 
-      addGather: (anchorId: string, label?: string, tags?: string[]) => {
-        const newGather: Gather = {
+      addGem: (playlistId: string, label?: string, tags?: string[]) => {
+        const newGem: Gem = {
           id: crypto.randomUUID(),
-          anchorId,
+          playlistId,
           logDate: new Date().toLocaleDateString('en-CA'),
           label: label || undefined,
           tags: tags || [],
           createdAt: new Date().toISOString()
         };
         set((state) => ({
-          anchors: state.anchors.map(a => a.id === anchorId ? {
+          playlists: state.playlists.map(a => a.id === playlistId ? {
             ...a,
-            gathers: [...(a.gathers || []), newGather]
+            gems: [...(a.gems || []), newGem]
           } : a)
         }));
-        syncPushGather(newGather);
+        syncPushGem(newGem);
       },
 
-      deleteGather: (anchorId: string, gatherId: string) => {
+      deleteGem: (playlistId: string, gemId: string) => {
         set((state) => ({
-          anchors: state.anchors.map(a => a.id === anchorId ? {
+          playlists: state.playlists.map(a => a.id === playlistId ? {
             ...a,
-            gathers: (a.gathers || []).filter(g => g.id !== gatherId)
+            gems: (a.gems || []).filter(g => g.id !== gemId)
           } : a)
         }));
-        syncDeleteGather(gatherId);
+        syncDeleteGem(gemId);
       },
 
       completeEveningCheckIn: async (win: string, parkingLot: string) => {
@@ -288,10 +254,7 @@ export const useRitualStore = create<RitualState>()(
           moodScore: null,
           bedTime: null,
           sleepDuration: null,
-          anchors: state.anchors.map(a => ({ 
-            ...a, 
-            completed: false
-          })),
+          playlists: state.playlists,
           eveningCheckInDone: false,
           winOfTheDay: '',
           parkingLotNotes: '',
@@ -362,32 +325,22 @@ export const useRitualStore = create<RitualState>()(
   )
 );
 
-export function getLifetimeKeeps(state: any): number {
-  // Today's check-ins: The Arc is 1 Keep per day, canonically marked when morning check-in is logged
+export function getTotalWins(state: any): number {
   const arcKept = state.feetOnFloorLogged ? 1 : 0;
   
-  // Today's completed custom anchors
-  const activeCustomAnchors = (state.anchors || []).filter((a: any) => a.isActive !== false);
-  const customKept = activeCustomAnchors.filter((a: any) => a.completed).length;
-  
-  return (state.historicalKeepsCount || 0) + arcKept + customKept;
-}
-
-export function getLifetimeGathers(state: any): number {
   const today = new Date().toLocaleDateString('en-CA');
+  let customGemsToday = 0;
   
-  // Today's gathers from custom anchors
-  let customGathersToday = 0;
-  (state.anchors || []).forEach((a: any) => {
-    if (a.isActive !== false && a.gathers) {
-      a.gathers.forEach((g: any) => {
+  (state.playlists || []).forEach((a: any) => {
+    if (a.isActive !== false && a.gems) {
+      a.gems.forEach((g: any) => {
         if (g.logDate === today && g.label) {
-          customGathersToday += 1;
+          customGemsToday += 1;
         }
       });
     }
   });
   
-  return (state.historicalGathersCount || 0) + customGathersToday;
+  return (state.historicalTotalWins || 0) + arcKept + customGemsToday;
 }
 

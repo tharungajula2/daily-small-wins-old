@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useRitualStore, AnchorType, PillarId } from '@/store/useRitualStore';
+import { useRitualStore } from '@/store/useRitualStore';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
 import { 
   ANCHOR_NAME_SUGGESTIONS
@@ -10,18 +10,18 @@ import {
 import { PUBLIC_TEMPLATES } from '@/lib/templates';
 import { Shield, Sparkles } from 'lucide-react';
 
-export default function AnchorManager({ onClose }: { onClose: () => void }) {
-  const { anchors, addAnchor, removeAnchor, renameAnchor, toggleAnchorActive } = useRitualStore();
+export default function PlaylistManager({ onClose }: { onClose: () => void }) {
+  const { playlists, addPlaylist, removePlaylist, renamePlaylist, togglePlaylistActive } = useRitualStore();
   
-  const activeAnchorsCount = anchors.filter(a => a.isActive !== false && a.title !== 'Sunday Weekly Debrief').length;
+  const activePlaylistsCount = playlists.filter((a: any) => a.isActive !== false && a.title !== 'Sunday Weekly Debrief').length;
 
-  // Add Anchor form states
+  // Add Playlist form states
   const [selectedTemplateKey, setSelectedTemplateKey] = useState<string>('scratch');
   const [newTitle, setNewTitle] = useState('');
   const [bypassCap, setBypassCap] = useState(false);
 
   // Editing States
-  const [editingAnchorId, setEditingAnchorId] = useState<string | null>(null);
+  const [editingPlaylistId, setEditingPlaylistId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
 
   const selectTemplate = (key: string) => {
@@ -40,11 +40,10 @@ export default function AnchorManager({ onClose }: { onClose: () => void }) {
     if (!newTitle.trim()) return;
     try { await Haptics.impact({ style: ImpactStyle.Light }); } catch (e) {}
     
-    const pillarId: PillarId = selectedTemplateKey === 'body-mind' ? 'movement' : 'stress_mental';
 
-    addAnchor(
-      newTitle.trim(),
-      pillarId
+
+    addPlaylist(
+      newTitle.trim()
     );
 
     // Reset forms
@@ -54,31 +53,31 @@ export default function AnchorManager({ onClose }: { onClose: () => void }) {
 
   const handleRemove = async (id: string) => {
     try { await Haptics.impact({ style: ImpactStyle.Medium }); } catch (e) {}
-    removeAnchor(id);
+    removePlaylist(id);
   };
 
   const handleToggleActive = async (id: string) => {
-    const anchor = anchors.find(a => a.id === id);
-    if (!anchor) return;
-    if (anchor.isActive === false && activeAnchorsCount >= 5) {
+    const playlist = playlists.find((a: any) => a.id === id);
+    if (!playlist) return;
+    if (playlist.isActive === false && activePlaylistsCount >= 5) {
       alert("Up to 5 categories — keep it focused.");
       return;
     }
     try { await Haptics.impact({ style: ImpactStyle.Light }); } catch (e) {}
-    toggleAnchorActive(id);
+    togglePlaylistActive(id);
   };
 
-  const startEditing = (anchor: any) => {
-    setEditingAnchorId(anchor.id);
-    setEditTitle(anchor.title);
+  const startEditing = (playlist: any) => {
+    setEditingPlaylistId(playlist.id);
+    setEditTitle(playlist.title);
   };
 
   const handleSaveEdit = async (id: string) => {
     if (!editTitle.trim()) return;
     try { await Haptics.impact({ style: ImpactStyle.Light }); } catch (e) {}
     
-    renameAnchor(id, editTitle.trim());
-    setEditingAnchorId(null);
+    renamePlaylist(id, editTitle.trim());
+    setEditingPlaylistId(null);
   };
 
   return (
@@ -103,10 +102,10 @@ export default function AnchorManager({ onClose }: { onClose: () => void }) {
         {/* Existing Categories List */}
         <div className="space-y-3 mb-8">
           <AnimatePresence>
-            {anchors.map((anchor) => (
-              editingAnchorId === anchor.id ? (
+            {playlists.map((playlist: any) => (
+              editingPlaylistId === playlist.id ? (
                 <motion.div 
-                  key={anchor.id}
+                  key={playlist.id}
                   initial={{ opacity: 0, y: -5 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -5 }}
@@ -142,14 +141,14 @@ export default function AnchorManager({ onClose }: { onClose: () => void }) {
                   <div className="flex gap-2.5 mt-1 pt-2.5 border-t border-muted/40">
                     <button
                       type="button"
-                      onClick={() => setEditingAnchorId(null)}
+                      onClick={() => setEditingPlaylistId(null)}
                       className="flex-1 py-2 text-xs uppercase tracking-widest font-semibold border border-muted rounded-lg text-ink-secondary hover:text-ink-primary bg-surface transition-all active:scale-98"
                     >
                       Cancel
                     </button>
                     <button
                       type="button"
-                      onClick={() => handleSaveEdit(anchor.id)}
+                      onClick={() => handleSaveEdit(playlist.id)}
                       disabled={!editTitle.trim()}
                       className={`flex-1 py-2 text-xs uppercase tracking-widest font-semibold rounded-lg text-surface transition-all active:scale-98 ${
                         editTitle.trim()
@@ -163,7 +162,7 @@ export default function AnchorManager({ onClose }: { onClose: () => void }) {
                 </motion.div>
               ) : (
                 <motion.div 
-                  key={anchor.id}
+                  key={playlist.id}
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: 'auto' }}
                   exit={{ opacity: 0, height: 0 }}
@@ -172,9 +171,9 @@ export default function AnchorManager({ onClose }: { onClose: () => void }) {
                 >
                   <div className="min-w-0 flex-1 pr-3">
                     <div className="flex items-center gap-2 flex-wrap min-w-0">
-                      <p className={`text-sm font-semibold truncate ${anchor.isActive === false ? 'text-ink-secondary line-through' : 'text-ink-primary'}`}>{anchor.title}</p>
+                      <p className={`text-sm font-semibold truncate ${playlist.isActive === false ? 'text-ink-secondary line-through' : 'text-ink-primary'}`}>{playlist.title}</p>
 
-                      {anchor.isActive === false && (
+                      {playlist.isActive === false && (
                         <span className="text-[8px] tracking-wider uppercase font-semibold text-ink-tertiary bg-muted/60 px-1.5 py-0.5 rounded-sm">
                           Dormant
                         </span>
@@ -183,21 +182,21 @@ export default function AnchorManager({ onClose }: { onClose: () => void }) {
                   </div>
                   <div className="flex items-center gap-1 ml-4 shrink-0">
                     <button 
-                      onClick={() => startEditing(anchor)}
+                      onClick={() => startEditing(playlist)}
                       className="text-accent-teal text-xs font-semibold px-1.5 py-1 hover:opacity-80 focus:outline-none"
                     >
                       Edit
                     </button>
                     <span className="text-ink-tertiary/20 text-xs">|</span>
                     <button 
-                      onClick={() => handleToggleActive(anchor.id)}
+                      onClick={() => handleToggleActive(playlist.id)}
                       className="text-ink-secondary hover:text-ink-primary text-xs font-semibold px-1.5 py-1 focus:outline-none"
                     >
-                      {anchor.isActive !== false ? 'Retire' : 'Activate'}
+                      {playlist.isActive !== false ? 'Retire' : 'Activate'}
                     </button>
                     <span className="text-ink-tertiary/20 text-xs">|</span>
                     <button 
-                      onClick={() => handleRemove(anchor.id)}
+                      onClick={() => handleRemove(playlist.id)}
                       className="text-error/70 hover:text-error text-xs px-1.5 py-1 focus:outline-none"
                     >
                       Delete
@@ -207,21 +206,21 @@ export default function AnchorManager({ onClose }: { onClose: () => void }) {
               )
             ))}
           </AnimatePresence>
-          {anchors.length === 0 && (
+          {playlists.length === 0 && (
             <p className="text-ink-secondary text-xs text-center py-6 leading-relaxed max-w-[280px] mx-auto">
               No anchors yet. Start with one — what's the thing that, when you skip it, your whole day quietly falls apart?
             </p>
           )}
         </div>
 
-        {/* Add New Anchor */}
-        {activeAnchorsCount >= 5 && !bypassCap ? (
+        {/* Add New Playlist */}
+        {activePlaylistsCount >= 5 && !bypassCap ? (
           <div className="border-t border-muted pt-6 text-center flex flex-col items-center gap-3">
             <span className="text-xl select-none">⚓</span>
             <div>
-              <h4 className="text-sm font-semibold text-ink-primary">Personal Anchors Cap</h4>
+              <h4 className="text-sm font-semibold text-ink-primary">Personal Playlists Cap</h4>
               <p className="text-xs text-ink-secondary leading-relaxed max-w-[280px] mx-auto font-normal mt-1">
-                Up to 5 personal anchors — keep it focused.
+                Up to 5 personal playlists — keep it focused.
               </p>
             </div>
             <button
@@ -233,7 +232,7 @@ export default function AnchorManager({ onClose }: { onClose: () => void }) {
           </div>
         ) : (
           <div className="border-t border-muted pt-6 flex flex-col gap-4 text-left">
-            <h4 className="text-ink-secondary text-sm font-semibold uppercase tracking-wider">Add New Anchor</h4>
+            <h4 className="text-ink-secondary text-sm font-semibold uppercase tracking-wider">Add New Playlist</h4>
             
             {/* Template Selection */}
             <div>
@@ -275,13 +274,13 @@ export default function AnchorManager({ onClose }: { onClose: () => void }) {
             {/* Title / Name Field */}
             <div>
               <label className="block text-[10px] uppercase tracking-widest text-ink-tertiary font-bold mb-1 ml-1">
-                2. Anchor Name / Title
+                2. Playlist Name / Title
               </label>
               <input
                 type="text"
                 value={newTitle}
                 onChange={(e) => setNewTitle(e.target.value)}
-                placeholder="e.g., Cold Plunge, Read 10 Pages"
+                placeholder="e.g., Deep Work, Stillness"
                 className="w-full bg-canvas border border-muted rounded-xl p-3 text-xs text-ink-primary placeholder:text-ink-tertiary focus:outline-none focus:border-accent-teal"
               />
 
@@ -313,7 +312,7 @@ export default function AnchorManager({ onClose }: { onClose: () => void }) {
                   : 'bg-muted text-ink-tertiary cursor-not-allowed'
               }`}
             >
-              Add Anchor
+              Add Playlist
             </button>
           </div>
         )}

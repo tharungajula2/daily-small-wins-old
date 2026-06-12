@@ -3,31 +3,30 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
-import { Anchor, useRitualStore } from '@/store/useRitualStore';
+import { Playlist, useRitualStore } from '@/store/useRitualStore';
 import { getRandomPrompt } from '@/utils/prompts';
 
 
 
-export default function AnchorCard({ 
-  anchor, 
+export default function PlaylistCard({ 
+  playlist, 
   metadata 
 }: { 
-  anchor: Anchor; 
+  playlist: Playlist; 
   metadata?: { is_non_negotiable: boolean; baseline_target: number | null }; 
 }) {
-  const toggleAnchor = useRitualStore((state) => state.toggleAnchor);
-  const anchors = useRitualStore((state) => state.anchors);
+  const playlists = useRitualStore((state) => state.playlists);
   const focusThreeIds = useRitualStore((state) => state.focusThreeIds);
-  const addGather = useRitualStore((state) => state.addGather);
-  const deleteGather = useRitualStore((state) => state.deleteGather);
+  const addGem = useRitualStore((state) => state.addGem);
+  const deleteGem = useRitualStore((state) => state.deleteGem);
   
   const isFocusThreeActive = focusThreeIds && focusThreeIds.length > 0;
-  const isMuted = isFocusThreeActive && !focusThreeIds.includes(anchor.id) && !anchor.completed;
+  const isMuted = isFocusThreeActive && !focusThreeIds.includes(playlist.id);
   
   const [isTooltipOpen, setIsTooltipOpen] = useState(false);
-  const [isGatherDrawerOpen, setIsGatherDrawerOpen] = useState(false);
-  const [gatherLabel, setGatherLabel] = useState('');
-  const [gatherTagsInput, setGatherTagsInput] = useState('');
+  const [isGemDrawerOpen, setIsGemDrawerOpen] = useState(false);
+  const [gemLabel, setGemLabel] = useState('');
+  const [gemTagsInput, setGemTagsInput] = useState('');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   
   const getTooltipText = (title: string) => {
@@ -59,24 +58,24 @@ export default function AnchorCard({
     return null;
   };
 
-  const tooltipText = getTooltipText(anchor.title);
+  const tooltipText = getTooltipText(playlist.title);
 
 
 
-  const handleAddGather = async () => {
-    if (!gatherLabel.trim() && selectedTags.length === 0 && !gatherTagsInput.trim()) return;
+  const handleAddGem = async () => {
+    if (!gemLabel.trim() && selectedTags.length === 0 && !gemTagsInput.trim()) return;
     try { await Haptics.impact({ style: ImpactStyle.Light }); } catch (e) {}
     
-    const manualTags = gatherTagsInput
+    const manualTags = gemTagsInput
       .split(',')
       .map(t => t.trim().replace(/^#/, ''))
       .filter(t => t.length > 0);
       
     const allTags = Array.from(new Set([...selectedTags, ...manualTags]));
       
-    addGather(anchor.id, gatherLabel.trim() || undefined, allTags);
-    setGatherLabel('');
-    setGatherTagsInput('');
+    addGem(playlist.id, gemLabel.trim() || undefined, allTags);
+    setGemLabel('');
+    setGemTagsInput('');
     setSelectedTags([]);
   };
 
@@ -97,83 +96,10 @@ export default function AnchorCard({
     return ['active', 'focus', 'health', 'daily'];
   };
   
-  const suggestedTags = getSuggestedTags(anchor.title);
-  const todayGathers = anchor.gathers || [];
+  const suggestedTags = getSuggestedTags(playlist.title);
+  const todayGems = playlist.gems || [];
 
-
-
-  // handleTap removed since anchors cannot be completed.
-
-
-
-  // 1. COMPLETED REFLECTION CARD (Timeline Feed UI)
-  if (anchor.type === 'reflection' && anchor.completed) {
-    return (
-      <motion.div
-        initial={{ opacity: 0, y: 5 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-        className="p-6 rounded-2xl bg-accent-teal/[0.02] border-accent-teal/20 shadow-sm flex flex-col gap-3 relative overflow-hidden transition-all duration-300 hover:shadow-md"
-      >
-        <div className="flex justify-between items-start">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2.5 flex-wrap">
-                {anchor.title}
-              <span className="bg-accent-teal/10 text-accent-teal text-[8px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full flex items-center gap-1 select-none">
-                <span className="text-[9px]">✓</span> Logged
-              </span>
-              {metadata?.is_non_negotiable && (
-                <span className="text-[8px] font-semibold tracking-wider text-accent-teal bg-accent-teal/10 px-1.5 py-0.5 rounded-sm select-none uppercase">
-                  ★ Non-negotiable
-                </span>
-              )}
-              {metadata?.baseline_target && (
-                <span className="text-[8px] font-semibold tracking-wider text-ink-secondary bg-canvas px-1.5 py-0.5 rounded-sm select-none uppercase">
-                  Target: {metadata.baseline_target}
-                </span>
-              )}
-            </div>
-            <p className="text-[9px] uppercase tracking-widest text-ink-tertiary mt-0.5 font-semibold leading-relaxed">
-              Reflection 
-            </p>
-          </div>
-          <div className="flex items-center gap-3 flex-shrink-0 ml-4">
-            <button
-              onClick={() => setIsGatherDrawerOpen(true)}
-              className="px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-widest text-white bg-gradient-to-r from-amber-400 to-amber-500 rounded-xl hover:from-amber-500 hover:to-amber-600 shadow-[0_2px_10px_rgba(245,158,11,0.25)] hover:shadow-[0_4px_16px_rgba(245,158,11,0.4)] transition-all active:scale-95 select-none cursor-pointer focus:outline-none flex items-center gap-1.5"
-            >
-              <span className="text-[13px] leading-none drop-shadow-sm">✨</span>
-              <span className="drop-shadow-sm pt-[1px]">GEM</span>
-            </button>
-          </div>
-        </div>
-
-
-
-        {/* Home Screen Transaction Logs (Gems) */}
-        {todayGathers.length > 0 && (
-          <div className="mt-4 pt-4 border-t border-black/[0.04] dark:border-white/[0.05] flex flex-col gap-2">
-            {todayGathers.map(g => (
-              <div key={g.id} className="flex items-start gap-2.5 bg-gradient-to-r from-amber-500/10 to-transparent border-l-[3px] border-amber-500/40 rounded-r-xl px-3 py-2.5">
-                <span className="text-[13px] mt-0.5 leading-none opacity-90 drop-shadow-sm">✨</span>
-                <div className="flex flex-col min-w-0 flex-1">
-                  <span className="text-[13px] font-bold text-ink-primary leading-snug">{g.label || 'Win Captured'}</span>
-                  <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-                    {g.tags && g.tags.length > 0 && (
-                      <span className="text-[9px] font-bold text-amber-600/80 uppercase tracking-widest">{g.tags.map(t => `#${t}`).join(' ')}</span>
-                    )}
-                    {g.createdAt && <span className="text-[9px] opacity-40 font-semibold tracking-wider">({new Date(g.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})</span>}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </motion.div>
-    );
-  }
-
-  // 2. STANDARD ACTION / INCOMPLETE REFLECTION CARD / SUB-STACK CARD
+  // 2. STANDARD CARD
   return (
     <>
       <motion.div
@@ -197,7 +123,7 @@ export default function AnchorCard({
           <div className="flex-1 pr-4 min-w-0">
             <div className="flex items-center gap-2 flex-wrap min-w-0">
               <p className={`text-sm font-semibold break-words leading-relaxed text-ink-primary`}>
-                {anchor.title}
+                {playlist.title}
               </p>
               {tooltipText && (
                 <button
@@ -224,7 +150,7 @@ export default function AnchorCard({
               )}
             </div>
             <p className="text-[10px] uppercase tracking-widest text-ink-tertiary mt-1 font-semibold">
-              {anchor.type}
+              Playlist
             </p>
           </div>
           
@@ -232,7 +158,7 @@ export default function AnchorCard({
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                setIsGatherDrawerOpen(true);
+                setIsGemDrawerOpen(true);
               }}
               className="px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-amber-700 bg-amber-500/10 rounded-xl border border-amber-500/20 hover:bg-amber-500/20 hover:border-amber-500/30 transition-all active:scale-95 select-none cursor-pointer focus:outline-none flex items-center gap-1.5"
             >
@@ -261,9 +187,9 @@ export default function AnchorCard({
 
 
         {/* Home Screen Transaction Logs (Gems) */}
-        {todayGathers.length > 0 && (
+        {todayGems.length > 0 && (
           <div className="mt-4 pt-4 border-t border-black/[0.04] dark:border-white/[0.05] flex flex-col gap-2">
-            {todayGathers.map(g => (
+            {todayGems.map(g => (
               <div key={g.id} className="flex items-start gap-2.5 bg-gradient-to-r from-amber-500/10 to-transparent border-l-[3px] border-amber-500/40 rounded-r-xl px-3 py-2.5">
                 <span className="text-[13px] mt-0.5 leading-none opacity-90 drop-shadow-sm">✨</span>
                 <div className="flex flex-col min-w-0 flex-1">
@@ -284,9 +210,9 @@ export default function AnchorCard({
 
 
 
-      {/* Gather Transaction Log Drawer */}
+      {/* Gem Transaction Log Drawer */}
       <AnimatePresence>
-        {isGatherDrawerOpen && (
+        {isGemDrawerOpen && (
           <div className="fixed inset-0 z-50 flex items-end justify-center">
             {/* Backdrop */}
             <motion.div
@@ -294,7 +220,7 @@ export default function AnchorCard({
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-              onClick={() => setIsGatherDrawerOpen(false)}
+              onClick={() => setIsGemDrawerOpen(false)}
               className="absolute inset-0 bg-black/40 backdrop-blur-xs"
             />
 
@@ -314,7 +240,7 @@ export default function AnchorCard({
                   <span>✨</span> LOG A GEM
                 </p>
                 <h3 className="text-lg font-semibold text-ink-primary mt-1">
-                  {anchor.title}
+                  {playlist.title}
                 </h3>
                 <p className="text-xs text-ink-secondary mt-1">Capture a small win for this playlist.</p>
               </div>
@@ -327,8 +253,8 @@ export default function AnchorCard({
                   </label>
                   <input
                     type="text"
-                    value={gatherLabel}
-                    onChange={(e) => setGatherLabel(e.target.value)}
+                    value={gemLabel}
+                    onChange={(e) => setGemLabel(e.target.value)}
                     placeholder="e.g. 500ml, 8000 steps, cold plunge done"
                     className="w-full p-3 rounded-xl border border-muted bg-surface text-sm text-ink-primary focus:outline-none focus:border-accent-teal transition-all"
                   />
@@ -340,8 +266,8 @@ export default function AnchorCard({
                   </label>
                   <input
                     type="text"
-                    value={gatherTagsInput}
-                    onChange={(e) => setGatherTagsInput(e.target.value)}
+                    value={gemTagsInput}
+                    onChange={(e) => setGemTagsInput(e.target.value)}
                     placeholder="e.g. morning, outdoor"
                     className="w-full p-3 rounded-xl border border-muted bg-surface text-sm text-ink-primary focus:outline-none focus:border-accent-teal transition-all"
                   />
@@ -382,10 +308,10 @@ export default function AnchorCard({
 
               {/* Log Button */}
               <button
-                onClick={handleAddGather}
-                disabled={!gatherLabel.trim() && selectedTags.length === 0 && !gatherTagsInput.trim()}
+                onClick={handleAddGem}
+                disabled={!gemLabel.trim() && selectedTags.length === 0 && !gemTagsInput.trim()}
                 className={`w-full py-3 rounded-xl text-xs uppercase tracking-widest font-bold transition-all active:scale-98 flex items-center justify-center gap-2 ${
-                  gatherLabel.trim() || selectedTags.length > 0 || gatherTagsInput.trim()
+                  gemLabel.trim() || selectedTags.length > 0 || gemTagsInput.trim()
                     ? 'bg-amber-500 text-surface hover:bg-amber-600 shadow-[0_4px_14px_0_rgba(245,158,11,0.39)]'
                     : 'bg-ink-tertiary/20 text-ink-tertiary cursor-not-allowed'
                 }`}
@@ -399,9 +325,9 @@ export default function AnchorCard({
                 <label className="text-[10px] font-semibold uppercase tracking-widest text-amber-600/80">
                   Today's Gems ✨
                 </label>
-                {todayGathers.length > 0 ? (
+                {todayGems.length > 0 ? (
                   <div className="space-y-2 max-h-36 overflow-y-auto pr-1">
-                    {todayGathers.map((g) => (
+                    {todayGems.map((g) => (
                       <div key={g.id} className="flex items-center justify-between p-3 bg-surface border border-muted/65 rounded-xl">
                         <div className="flex flex-col gap-1 min-w-0">
                           <div className="flex items-center gap-2">
@@ -425,7 +351,7 @@ export default function AnchorCard({
                         <button
                           onClick={async () => {
                             try { await Haptics.impact({ style: ImpactStyle.Medium }); } catch (e) {}
-                            deleteGather(anchor.id, g.id);
+                            deleteGem(playlist.id, g.id);
                           }}
                           className="text-xs text-error hover:text-error/80 px-2 font-semibold uppercase tracking-wider text-[10px]"
                         >
@@ -443,7 +369,7 @@ export default function AnchorCard({
 
               {/* Close Drawer Button */}
               <button
-                onClick={() => setIsGatherDrawerOpen(false)}
+                onClick={() => setIsGemDrawerOpen(false)}
                 className="w-full py-3 text-xs uppercase tracking-widest font-semibold border border-muted bg-surface rounded-xl text-ink-secondary hover:text-ink-primary transition-all active:scale-98"
               >
                 Close Transaction Logger

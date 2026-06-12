@@ -12,7 +12,7 @@ import { MISSION_CODENAMES, ANCHOR_NAME_SUGGESTIONS, KEEP_DEFINITION_SUGGESTIONS
 export default function OnboardingPage() {
   const router = useRouter();
   const supabase = createClient();
-  const addAnchor = useRitualStore(state => state.addAnchor);
+  const addPlaylist = useRitualStore(state => state.addPlaylist);
 
   // Steps: 
   // 1: Set Windows
@@ -149,29 +149,20 @@ export default function OnboardingPage() {
       store.setWakeWindow(wakeTime);
       store.setSleepWindow(sleepTime);
 
-      // 3. Reset/Clear anchors
-      useRitualStore.setState({ anchors: [] });
+      // 3. Reset/Clear playlists
+      useRitualStore.setState({ playlists: [] });
 
-      // 4. Seed the user selected anchors (including codenames, keep definitions)
+      // 4. Seed the user selected playlists (including codenames, keep definitions)
       if (includeQ1 && q1Title.trim()) {
-        addAnchor(
-          q1Title.trim(),
-          'stress_mental'
-        );
+        addPlaylist(q1Title.trim());
       }
 
       if (includeQ2 && q2Title.trim()) {
-        addAnchor(
-          q2Title.trim(),
-          'movement'
-        );
+        addPlaylist(q2Title.trim());
       }
 
       if (includeQ3 && q3Title.trim()) {
-        addAnchor(
-          q3Title.trim(),
-          'stress_mental'
-        );
+        addPlaylist(q3Title.trim());
       }
 
       // Update local store state
