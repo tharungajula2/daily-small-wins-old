@@ -3,7 +3,7 @@
 import { motion, useInView } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
-import { Plus, Minus } from 'lucide-react';
+import { Sparkles, Minus } from 'lucide-react';
 
 interface PulseScoreProps {
   completedCount: number;
@@ -174,7 +174,7 @@ export default function PulseScore({ completedCount, totalCount, totalWins = 0, 
             onClick={onQuickLog}
             className="w-14 h-14 rounded-full bg-gradient-to-br from-accent-teal to-[#1e5c5c] shadow-[0_0_15px_rgba(42,127,127,0.3)] hover:shadow-[0_0_25px_rgba(42,127,127,0.5)] border border-accent-teal/20 flex items-center justify-center text-white transition-all active:scale-95 flex-shrink-0 z-20"
           >
-            <Plus className="w-6 h-6" />
+            <Sparkles className="w-6 h-6" />
           </motion.button>
         )}
       </div>

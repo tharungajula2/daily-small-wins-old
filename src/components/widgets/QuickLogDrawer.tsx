@@ -160,7 +160,7 @@ export default function QuickLogDrawer({
               }`}
             >
               RECORD WIN
-              <Plus className="w-4 h-4 ml-1" />
+              <Sparkles className="w-4 h-4 ml-1" />
             </button>
             
           </motion.div>

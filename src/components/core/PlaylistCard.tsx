@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
 import { Playlist, useRitualStore } from '@/store/useRitualStore';
-import { Plus, X, Info } from 'lucide-react';
+import { Sparkles, X, Info } from 'lucide-react';
 
 export default function PlaylistCard({ 
   playlist, 
@@ -119,7 +119,7 @@ export default function PlaylistCard({
               }}
               className="w-10 h-10 rounded-full bg-gradient-to-br from-accent-teal to-[#1e5c5c] text-white shadow-[0_0_15px_rgba(42,127,127,0.3)] hover:shadow-[0_0_25px_rgba(42,127,127,0.5)] flex items-center justify-center transition-all active:scale-95 cursor-pointer focus:outline-none"
             >
-              <Plus className="w-5 h-5" />
+              <Sparkles className="w-5 h-5" />
             </button>
           </div>
         </div>

@@ -105,7 +105,7 @@ export default function WinsPage() {
               onClick={() => setIsManagingPlaylists(true)}
               className="text-[10px] uppercase tracking-widest text-accent-teal hover:text-[#38a3a3] font-bold transition-colors flex items-center gap-1"
             >
-              <Plus className="w-3 h-3" /> Edit
+              <Sparkles className="w-3 h-3" /> Edit
             </button>
           </div>
 
