@@ -146,9 +146,9 @@ export default function PlaylistCard({
             {todayGems.map(g => (
               <div key={g.id} className="flex items-start gap-3 bg-gradient-to-r from-accent-teal/10 to-transparent border-l-[2px] border-accent-teal/40 rounded-r-xl px-3 py-2.5">
                 <div className="flex flex-col min-w-0 flex-1">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold text-ink-primary leading-snug">{g.label || 'Win Captured'}</span>
-                    {g.createdAt && <span className="text-[8px] text-ink-tertiary uppercase tracking-widest">{new Date(g.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>}
+                  <div className="flex items-start justify-between gap-3">
+                    <span className="text-xs font-semibold text-ink-primary leading-snug flex-1 break-words">{g.label || 'Win Captured'}</span>
+                    {g.createdAt && <span className="text-[8px] text-ink-tertiary uppercase tracking-widest shrink-0 mt-0.5">{new Date(g.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>}
                   </div>
                   <div className="flex items-center gap-1.5 mt-1 flex-wrap">
                     {g.tags && g.tags.length > 0 && (
