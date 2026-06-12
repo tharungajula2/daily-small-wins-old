@@ -165,6 +165,7 @@ export default function PulseScore({ completedCount, totalCount, totalWins = 0, 
             </span>
           </div>
         </button>
+        </div>
         
         {/* Right: Quick Log */}
         {onQuickLog && (
