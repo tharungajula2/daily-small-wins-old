@@ -10,11 +10,12 @@ import EveningRoutineCard from '@/components/rituals/EveningRoutineCard';
 import { useRitualStore, getTotalWins } from '@/store/useRitualStore';
 import { syncPullInitialState } from '@/lib/supabase/syncEngine';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Settings, Sunrise, Sun, Sunset, Moon } from 'lucide-react';
+import { Settings, Sunrise, Sun, Sunset, Moon, Plus, Minus } from 'lucide-react';
 import PlaylistManager from '@/components/widgets/PlaylistManager';
 import VisionPriming from '@/components/widgets/VisionPriming';
 import DDayTimer from '@/components/widgets/DDayTimer';
 import QuietPartner from '@/components/core/QuietPartner';
+import QuickLogDrawer from '@/components/widgets/QuickLogDrawer';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 
@@ -40,6 +41,7 @@ function Dashboard() {
 
   const [showEvening, setShowEvening] = useState(false);
   const [isManagingPlaylists, setIsManagingPlaylists] = useState(false);
+  const [isQuickLogOpen, setIsQuickLogOpen] = useState(false);
   const [userState, setUserState] = useState<{
     user_id: string;
     pause_tokens_remaining: number;
@@ -361,10 +363,19 @@ function Dashboard() {
                     </div>
                   </div>
 
-                  <div id="tour-pulse-score" className="w-full px-6 mt-4">
+                  <div id="tour-pulse-score" className="w-full px-6 mt-4 flex items-center justify-between">
+                    
+                    <motion.button 
+                      whileTap={{ scale: 0.9 }}
+                      onClick={() => setIsPlaylistManagerOpen(true)}
+                      className="w-12 h-12 rounded-full bg-surface shadow-[0_2px_10px_-4px_rgba(0,0,0,0.1)] border border-muted/80 flex items-center justify-center text-ink-tertiary hover:text-ink-primary hover:border-muted transition-all active:scale-95"
+                    >
+                      <Minus className="w-5 h-5" />
+                    </motion.button>
+
                     <button 
                       onClick={() => router.push('/wins')}
-                      className="w-full group focus:outline-none block"
+                      className="group focus:outline-none block px-4"
                     >
                       <div className="relative transform transition-all duration-300 active:scale-[0.98] group-hover:scale-[1.02]">
                         <PulseScore 
@@ -374,6 +385,14 @@ function Dashboard() {
                         />
                       </div>
                     </button>
+
+                    <motion.button 
+                      whileTap={{ scale: 0.9 }}
+                      onClick={() => setIsQuickLogOpen(true)}
+                      className="w-14 h-14 rounded-full bg-gradient-to-br from-accent-teal to-[#1e5c5c] shadow-[0_0_15px_rgba(42,127,127,0.3)] hover:shadow-[0_0_25px_rgba(42,127,127,0.5)] border border-accent-teal/20 flex items-center justify-center text-white transition-all active:scale-95"
+                    >
+                      <Plus className="w-6 h-6" />
+                    </motion.button>
                   </div>
 
                   <div className="w-full px-6 mt-3 flex flex-col gap-3">
@@ -486,6 +505,15 @@ function Dashboard() {
       <AnimatePresence>
         {isManagingPlaylists && <PlaylistManager onClose={() => setIsManagingPlaylists(false)} />}
       </AnimatePresence>
+
+      <QuickLogDrawer 
+        isOpen={isQuickLogOpen} 
+        onClose={() => setIsQuickLogOpen(false)} 
+        onOpenPlaylistManager={() => {
+          setIsQuickLogOpen(false);
+          setIsManagingPlaylists(true);
+        }}
+      />
 
       <AnimatePresence>
         {showGentleReEntry && <GentleReEntryScreen onResume={handleResume} />}
