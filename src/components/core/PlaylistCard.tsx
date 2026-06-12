@@ -4,9 +4,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
 import { Playlist, useRitualStore } from '@/store/useRitualStore';
-import { getRandomPrompt } from '@/utils/prompts';
-
-
+import { Plus, X, Info } from 'lucide-react';
 
 export default function PlaylistCard({ 
   playlist, 
@@ -15,13 +13,8 @@ export default function PlaylistCard({
   playlist: Playlist; 
   metadata?: { is_non_negotiable: boolean; baseline_target: number | null }; 
 }) {
-  const playlists = useRitualStore((state) => state.playlists);
-  const focusThreeIds = useRitualStore((state) => state.focusThreeIds);
   const addGem = useRitualStore((state) => state.addGem);
   const deleteGem = useRitualStore((state) => state.deleteGem);
-  
-  const isFocusThreeActive = focusThreeIds && focusThreeIds.length > 0;
-  const isMuted = isFocusThreeActive && !focusThreeIds.includes(playlist.id);
   
   const [isTooltipOpen, setIsTooltipOpen] = useState(false);
   const [isGemDrawerOpen, setIsGemDrawerOpen] = useState(false);
@@ -31,36 +24,18 @@ export default function PlaylistCard({
   
   const getTooltipText = (title: string) => {
     const normalized = title.toLowerCase().trim();
-    if (normalized.includes('water') || normalized.includes('2.5l')) {
-      return 'Water keeps you hydrated and clear throughout the day.';
-    }
-    if (normalized.includes('protein') || normalized.includes('30g')) {
-      return 'Protein keeps your energy stable between meals.';
-    }
-    if (normalized.includes('steps') || normalized.includes('7,000')) {
-      return 'A simple walk clears the mind and keeps you moving.';
-    }
-    if (normalized.includes('desk rule') || normalized.includes('20-8-2')) {
-      return 'Move a little every hour to stay limber.';
-    }
-    if (normalized.includes('in bed') || normalized.includes('23:00')) {
-      return 'Going to bed on time gives you a clean head start tomorrow.';
-    }
-    if (normalized.includes('evening reflection') || normalized.includes('reflection')) {
-      return 'Writing down your day helps clear your head for sleep.';
-    }
-    if (normalized.includes('conversation') || normalized.includes('one real')) {
-      return 'Connecting with someone keeps you grounded.';
-    }
-    if (normalized.includes('sunlight') || normalized.includes('10 minutes')) {
-      return 'A little morning light wakes up your body naturally.';
-    }
+    if (normalized.includes('water') || normalized.includes('2.5l')) return 'Water keeps you hydrated and clear throughout the day.';
+    if (normalized.includes('protein') || normalized.includes('30g')) return 'Protein keeps your energy stable between meals.';
+    if (normalized.includes('steps') || normalized.includes('7,000')) return 'A simple walk clears the mind and keeps you moving.';
+    if (normalized.includes('desk rule') || normalized.includes('20-8-2')) return 'Move a little every hour to stay limber.';
+    if (normalized.includes('in bed') || normalized.includes('23:00')) return 'Going to bed on time gives you a clean head start tomorrow.';
+    if (normalized.includes('evening reflection') || normalized.includes('reflection')) return 'Writing down your day helps clear your head for sleep.';
+    if (normalized.includes('conversation') || normalized.includes('one real')) return 'Connecting with someone keeps you grounded.';
+    if (normalized.includes('sunlight') || normalized.includes('10 minutes')) return 'A little morning light wakes up your body naturally.';
     return null;
   };
 
   const tooltipText = getTooltipText(playlist.title);
-
-
 
   const handleAddGem = async () => {
     if (!gemLabel.trim() && selectedTags.length === 0 && !gemTagsInput.trim()) return;
@@ -81,48 +56,31 @@ export default function PlaylistCard({
 
   const getSuggestedTags = (title: string) => {
     const normalized = title.toLowerCase().trim();
-    if (normalized.includes('water') || normalized.includes('hydrate')) {
-      return ['hydration', 'glass', 'bottle', 'morning'];
-    }
-    if (normalized.includes('step') || normalized.includes('walk') || normalized.includes('run')) {
-      return ['cardio', 'walk', 'sunlight', 'active'];
-    }
-    if (normalized.includes('gym') || normalized.includes('workout') || normalized.includes('lift')) {
-      return ['strength', 'fitness', 'lifting', 'gym'];
-    }
-    if (normalized.includes('read') || normalized.includes('book') || normalized.includes('study')) {
-      return ['learning', 'focus', 'mind', 'growth'];
-    }
+    if (normalized.includes('water') || normalized.includes('hydrate')) return ['hydration', 'glass', 'bottle', 'morning'];
+    if (normalized.includes('step') || normalized.includes('walk') || normalized.includes('run')) return ['cardio', 'walk', 'sunlight', 'active'];
+    if (normalized.includes('gym') || normalized.includes('workout') || normalized.includes('lift')) return ['strength', 'fitness', 'lifting', 'gym'];
+    if (normalized.includes('read') || normalized.includes('book') || normalized.includes('study')) return ['learning', 'focus', 'mind', 'growth'];
     return ['active', 'focus', 'health', 'daily'];
   };
   
   const suggestedTags = getSuggestedTags(playlist.title);
   const todayGems = playlist.gems || [];
 
-  // 2. STANDARD CARD
   return (
     <>
       <motion.div
         whileTap={{ scale: 0.98 }}
-        onClick={undefined}
-        animate={{
-          borderLeftColor: metadata?.is_non_negotiable 
-            ? '#E04C3C' 
-            : undefined,
-          borderLeftWidth: metadata?.is_non_negotiable ? '4px' : undefined,
-          borderLeftStyle: metadata?.is_non_negotiable ? 'solid' : undefined
-        }}
-        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-        className={`p-5 mb-4 rounded-2xl bg-surface border border-muted/80 shadow-sm hover:shadow-md transition-all duration-300 ${
-          metadata?.is_non_negotiable ? 'border-l-4 border-l-error' : ''
-        } ${
-          isMuted ? 'opacity-40 grayscale' : ''
-        }`}
+        className={`p-5 rounded-2xl bg-white/[0.02] border border-white/5 shadow-sm hover:border-white/10 transition-all duration-300 relative overflow-hidden`}
       >
+        {/* Glow effect if non-negotiable */}
+        {metadata?.is_non_negotiable && (
+          <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-[#E04C3C] to-transparent" />
+        )}
+
         <div className="flex items-center justify-between">
           <div className="flex-1 pr-4 min-w-0">
             <div className="flex items-center gap-2 flex-wrap min-w-0">
-              <p className={`text-sm font-semibold break-words leading-relaxed text-ink-primary`}>
+              <p className="text-sm font-semibold break-words leading-relaxed text-white/90">
                 {playlist.title}
               </p>
               {tooltipText && (
@@ -132,24 +90,23 @@ export default function PlaylistCard({
                     e.stopPropagation();
                     setIsTooltipOpen(!isTooltipOpen);
                   }}
-                  className="w-3.5 h-3.5 rounded-full border border-muted/50 flex items-center justify-center text-[9px] font-mono font-semibold text-ink-secondary hover:text-accent-teal hover:border-accent-teal/50 transition-all select-none cursor-pointer focus:outline-none bg-canvas/30"
-                  title="Why this matters"
+                  className="w-4 h-4 rounded-full border border-white/10 flex items-center justify-center text-white/40 hover:text-[#2A7F7F] hover:border-[#2A7F7F]/50 transition-all cursor-pointer bg-white/5"
                 >
-                  i
+                  <Info className="w-2.5 h-2.5" />
                 </button>
               )}
               {metadata?.is_non_negotiable && (
-                <span className="text-[8px] font-semibold tracking-wider text-accent-teal bg-accent-teal/10 px-1.5 py-0.5 rounded-sm select-none uppercase">
-                  ★ Non-negotiable
+                <span className="text-[8px] font-semibold tracking-wider text-[#E04C3C] bg-[#E04C3C]/10 border border-[#E04C3C]/20 px-1.5 py-0.5 rounded-sm uppercase">
+                  Non-negotiable
                 </span>
               )}
               {metadata?.baseline_target && (
-                <span className="text-[8px] font-semibold tracking-wider text-ink-secondary bg-canvas px-1.5 py-0.5 rounded-sm select-none uppercase">
+                <span className="text-[8px] font-semibold tracking-wider text-white/40 bg-white/5 border border-white/10 px-1.5 py-0.5 rounded-sm uppercase">
                   Target: {metadata.baseline_target}
                 </span>
               )}
             </div>
-            <p className="text-[10px] uppercase tracking-widest text-ink-tertiary mt-1 font-semibold">
+            <p className="text-[9px] uppercase tracking-widest text-[#2A7F7F] mt-1.5 font-bold">
               Playlist
             </p>
           </div>
@@ -160,10 +117,9 @@ export default function PlaylistCard({
                 e.stopPropagation();
                 setIsGemDrawerOpen(true);
               }}
-              className="px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-amber-700 bg-amber-500/10 rounded-xl border border-amber-500/20 hover:bg-amber-500/20 hover:border-amber-500/30 transition-all active:scale-95 select-none cursor-pointer focus:outline-none flex items-center gap-1.5"
+              className="w-10 h-10 rounded-full bg-gradient-to-br from-[#2A7F7F] to-[#1e5c5c] text-white shadow-[0_0_15px_rgba(42,127,127,0.3)] hover:shadow-[0_0_25px_rgba(42,127,127,0.5)] flex items-center justify-center transition-all active:scale-95 cursor-pointer focus:outline-none"
             >
-              <span className="text-xs leading-none">✨</span>
-              <span className="pt-[1px]">GEM</span>
+              <Plus className="w-5 h-5" />
             </button>
           </div>
         </div>
@@ -177,28 +133,27 @@ export default function PlaylistCard({
               transition={{ type: 'spring', stiffness: 300, damping: 30 }}
               className="overflow-hidden"
             >
-              <div className="mt-3 pt-3 border-t border-muted/30 text-[10px] text-accent-teal leading-relaxed select-none italic bg-accent-teal/[0.03] rounded-lg p-3">
-                <span className="font-semibold uppercase tracking-wider text-[9px] not-italic">Clinical Context:</span> {tooltipText}
+              <div className="mt-4 pt-3 border-t border-white/5 text-[10px] text-[#2A7F7F] leading-relaxed italic bg-[#2A7F7F]/5 rounded-lg p-3">
+                <span className="font-semibold uppercase tracking-wider text-[9px] not-italic text-white/60 mr-2">Context:</span> {tooltipText}
               </div>
             </motion.div>
           )}
         </AnimatePresence>
 
-
-
-        {/* Home Screen Transaction Logs (Gems) */}
+        {/* Transaction Logs */}
         {todayGems.length > 0 && (
-          <div className="mt-4 pt-4 border-t border-black/[0.04] dark:border-white/[0.05] flex flex-col gap-2">
+          <div className="mt-5 pt-4 border-t border-white/5 flex flex-col gap-2">
             {todayGems.map(g => (
-              <div key={g.id} className="flex items-start gap-2.5 bg-gradient-to-r from-amber-500/10 to-transparent border-l-[3px] border-amber-500/40 rounded-r-xl px-3 py-2.5">
-                <span className="text-[13px] mt-0.5 leading-none opacity-90 drop-shadow-sm">✨</span>
+              <div key={g.id} className="flex items-start gap-3 bg-gradient-to-r from-[#2A7F7F]/10 to-transparent border-l-[2px] border-[#2A7F7F]/40 rounded-r-xl px-3 py-2.5">
                 <div className="flex flex-col min-w-0 flex-1">
-                  <span className="text-[13px] font-bold text-ink-primary leading-snug">{g.label || 'Win Captured'}</span>
-                  <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold text-white/90 leading-snug">{g.label || 'Win Captured'}</span>
+                    {g.createdAt && <span className="text-[8px] text-white/30 uppercase tracking-widest">{new Date(g.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>}
+                  </div>
+                  <div className="flex items-center gap-1.5 mt-1 flex-wrap">
                     {g.tags && g.tags.length > 0 && (
-                      <span className="text-[9px] font-bold text-amber-600/80 uppercase tracking-widest">{g.tags.map(t => `#${t}`).join(' ')}</span>
+                      <span className="text-[8px] font-bold text-[#2A7F7F] uppercase tracking-widest">{g.tags.map(t => `#${t}`).join(' ')}</span>
                     )}
-                    {g.createdAt && <span className="text-[9px] opacity-40 font-semibold tracking-wider">({new Date(g.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})</span>}
                   </div>
                 </div>
               </div>
@@ -207,10 +162,7 @@ export default function PlaylistCard({
         )}
       </motion.div>
 
-
-
-
-      {/* Gem Transaction Log Drawer */}
+      {/* Drawer */}
       <AnimatePresence>
         {isGemDrawerOpen && (
           <div className="fixed inset-0 z-50 flex items-end justify-center">
@@ -219,9 +171,9 @@ export default function PlaylistCard({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+              transition={{ duration: 0.3 }}
               onClick={() => setIsGemDrawerOpen(false)}
-              className="absolute inset-0 bg-black/40 backdrop-blur-xs"
+              className="absolute inset-0 bg-[#0a0a0c]/80 backdrop-blur-md"
             />
 
             {/* Content Drawer */}
@@ -230,55 +182,53 @@ export default function PlaylistCard({
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
               transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-              className="relative w-full max-w-md bg-canvas rounded-t-3xl border-t border-muted shadow-2xl p-6 flex flex-col gap-5 z-10 pb-10"
+              className="relative w-full max-w-md bg-[#13131a] rounded-t-3xl border-t border-white/10 shadow-[0_-10px_40px_rgba(0,0,0,0.5)] p-6 flex flex-col gap-6 z-10 pb-10"
             >
-              {/* Drag Handle */}
-              <div className="w-12 h-1 bg-muted rounded-full self-center -mt-2 mb-2" />
+              <div className="w-12 h-1 bg-white/20 rounded-full self-center -mt-2 mb-2" />
 
               <div>
-                <p className="text-[10px] tracking-widest font-semibold text-amber-500 uppercase flex items-center gap-2">
-                  <span>✨</span> LOG A GEM
+                <p className="text-[10px] tracking-widest font-bold text-[#2A7F7F] uppercase mb-1">
+                  Log a Win
                 </p>
-                <h3 className="text-lg font-semibold text-ink-primary mt-1">
+                <h3 className="text-xl font-light text-white/90 tracking-tight">
                   {playlist.title}
                 </h3>
-                <p className="text-xs text-ink-secondary mt-1">Capture a small win for this playlist.</p>
               </div>
 
               {/* Input Fields */}
-              <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-4">
                 <div>
-                  <label className="text-[10px] font-semibold uppercase tracking-widest text-ink-tertiary block mb-1">
-                    Value / Note
+                  <label className="text-[9px] font-bold uppercase tracking-widest text-white/40 block mb-2">
+                    Details
                   </label>
                   <input
                     type="text"
                     value={gemLabel}
                     onChange={(e) => setGemLabel(e.target.value)}
-                    placeholder="e.g. 500ml, 8000 steps, cold plunge done"
-                    className="w-full p-3 rounded-xl border border-muted bg-surface text-sm text-ink-primary focus:outline-none focus:border-accent-teal transition-all"
+                    placeholder="e.g. 500ml, 8000 steps"
+                    className="w-full p-4 rounded-2xl border border-white/10 bg-white/5 text-sm text-white placeholder-white/20 focus:outline-none focus:border-[#2A7F7F] transition-all"
                   />
                 </div>
 
                 <div>
-                  <label className="text-[10px] font-semibold uppercase tracking-widest text-ink-tertiary block mb-1">
-                    Tags (Optional, comma separated)
+                  <label className="text-[9px] font-bold uppercase tracking-widest text-white/40 block mb-2">
+                    Tags (Optional)
                   </label>
                   <input
                     type="text"
                     value={gemTagsInput}
                     onChange={(e) => setGemTagsInput(e.target.value)}
                     placeholder="e.g. morning, outdoor"
-                    className="w-full p-3 rounded-xl border border-muted bg-surface text-sm text-ink-primary focus:outline-none focus:border-accent-teal transition-all"
+                    className="w-full p-4 rounded-2xl border border-white/10 bg-white/5 text-sm text-white placeholder-white/20 focus:outline-none focus:border-[#2A7F7F] transition-all"
                   />
                 </div>
 
                 {/* Suggested Quick Tags */}
                 <div>
-                  <p className="text-[9px] text-ink-tertiary font-semibold uppercase tracking-wider mb-1.5">
+                  <p className="text-[9px] text-white/40 font-bold uppercase tracking-widest mb-2">
                     Quick Tags
                   </p>
-                  <div className="flex flex-wrap gap-1.5">
+                  <div className="flex flex-wrap gap-2">
                     {suggestedTags.map((tag) => {
                       const isSelected = selectedTags.includes(tag);
                       return (
@@ -292,13 +242,13 @@ export default function PlaylistCard({
                               setSelectedTags([...selectedTags, tag]);
                             }
                           }}
-                          className={`px-2 py-1 text-[10px] font-medium rounded-md border transition-all ${
+                          className={`px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest rounded-lg border transition-all ${
                             isSelected
-                              ? 'bg-accent-teal/10 text-accent-teal border-accent-teal/30 font-semibold'
-                              : 'bg-surface border-muted/80 text-ink-secondary hover:border-ink-secondary/35'
+                              ? 'bg-[#2A7F7F]/20 text-[#2A7F7F] border-[#2A7F7F]/50'
+                              : 'bg-white/5 border-white/10 text-white/40 hover:border-white/20'
                           }`}
                         >
-                          #{tag}
+                          {tag}
                         </button>
                       );
                     })}
@@ -310,39 +260,38 @@ export default function PlaylistCard({
               <button
                 onClick={handleAddGem}
                 disabled={!gemLabel.trim() && selectedTags.length === 0 && !gemTagsInput.trim()}
-                className={`w-full py-3 rounded-xl text-xs uppercase tracking-widest font-bold transition-all active:scale-98 flex items-center justify-center gap-2 ${
+                className={`w-full py-4 rounded-2xl text-xs uppercase tracking-widest font-bold transition-all active:scale-98 flex items-center justify-center gap-2 mt-2 ${
                   gemLabel.trim() || selectedTags.length > 0 || gemTagsInput.trim()
-                    ? 'bg-amber-500 text-surface hover:bg-amber-600 shadow-[0_4px_14px_0_rgba(245,158,11,0.39)]'
-                    : 'bg-ink-tertiary/20 text-ink-tertiary cursor-not-allowed'
+                    ? 'bg-[#2A7F7F] text-white hover:bg-[#349e9e] shadow-[0_0_20px_rgba(42,127,127,0.4)]'
+                    : 'bg-white/5 text-white/20 cursor-not-allowed'
                 }`}
               >
-                <span>CAPTURE GEM</span>
-                <span>✨</span>
+                RECORD WIN
               </button>
 
               {/* Today's Gathers List */}
-              <div className="flex flex-col gap-2 pt-2 border-t border-muted/50">
-                <label className="text-[10px] font-semibold uppercase tracking-widest text-amber-600/80">
-                  Today's Gems ✨
+              <div className="flex flex-col gap-3 pt-4 border-t border-white/5">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-[#2A7F7F]">
+                  Today's Logs
                 </label>
                 {todayGems.length > 0 ? (
                   <div className="space-y-2 max-h-36 overflow-y-auto pr-1">
                     {todayGems.map((g) => (
-                      <div key={g.id} className="flex items-center justify-between p-3 bg-surface border border-muted/65 rounded-xl">
+                      <div key={g.id} className="flex items-center justify-between p-3 bg-white/5 border border-white/10 rounded-xl">
                         <div className="flex flex-col gap-1 min-w-0">
                           <div className="flex items-center gap-2">
-                            <span className="text-xs text-ink-primary font-semibold break-words">
+                            <span className="text-xs text-white/90 font-medium break-words">
                               {g.label || 'Logged'}
                             </span>
-                            <span className="text-[9px] text-ink-tertiary">
+                            <span className="text-[9px] text-white/30">
                               {g.createdAt ? new Date(g.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
                             </span>
                           </div>
                           {g.tags && g.tags.length > 0 && (
                             <div className="flex flex-wrap gap-1">
                               {g.tags.map(t => (
-                                <span key={t} className="text-[9px] text-accent-teal/80 bg-accent-teal/5 border border-accent-teal/10 px-1 rounded-sm">
-                                  #{t}
+                                <span key={t} className="text-[9px] text-[#2A7F7F] bg-[#2A7F7F]/10 border border-[#2A7F7F]/20 px-1.5 rounded uppercase tracking-widest font-bold">
+                                  {t}
                                 </span>
                               ))}
                             </div>
@@ -353,27 +302,19 @@ export default function PlaylistCard({
                             try { await Haptics.impact({ style: ImpactStyle.Medium }); } catch (e) {}
                             deleteGem(playlist.id, g.id);
                           }}
-                          className="text-xs text-error hover:text-error/80 px-2 font-semibold uppercase tracking-wider text-[10px]"
+                          className="text-white/30 hover:text-[#E04C3C] p-2 transition-colors"
                         >
-                          Delete
+                          <X className="w-4 h-4" />
                         </button>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center py-3 bg-surface border border-dashed border-muted rounded-xl">
-                    <p className="text-xs text-ink-tertiary">No logs captured today yet.</p>
+                  <div className="text-center py-4 bg-white/5 border border-dashed border-white/10 rounded-xl">
+                    <p className="text-xs text-white/30 italic">Empty canvas today.</p>
                   </div>
                 )}
               </div>
-
-              {/* Close Drawer Button */}
-              <button
-                onClick={() => setIsGemDrawerOpen(false)}
-                className="w-full py-3 text-xs uppercase tracking-widest font-semibold border border-muted bg-surface rounded-xl text-ink-secondary hover:text-ink-primary transition-all active:scale-98"
-              >
-                Close Transaction Logger
-              </button>
             </motion.div>
           </div>
         )}

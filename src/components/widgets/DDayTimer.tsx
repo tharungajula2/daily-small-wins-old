@@ -35,53 +35,36 @@ export default function DDayTimer() {
   if (!timeLeft) return null;
 
   return (
-    <div className="w-full relative rounded-2xl overflow-hidden bg-surface border border-muted/80 shadow-sm p-5 transition-all mb-5">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <Target className="w-4 h-4 text-accent-teal" />
-          <span className="text-[10px] uppercase tracking-widest font-semibold text-ink-secondary">
-            D-Day Target
-          </span>
-        </div>
+  return (
+    <div className="w-full p-5 mt-4 rounded-2xl bg-canvas border border-muted shadow-sm">
+      <div className="flex items-center justify-between mb-3 border-b border-muted/30 pb-3">
+        <h3 className="text-ink-secondary text-xs uppercase tracking-widest ml-1 flex items-center gap-2">
+          <Target className="w-3.5 h-3.5 text-accent-teal" /> The Horizon
+        </h3>
+        <span className="text-[10px] uppercase tracking-wider font-semibold text-ink-tertiary">Jan 1, 2027</span>
       </div>
 
-      <div className="flex flex-col items-center mt-2">
-        <h3 className="text-sm font-semibold tracking-wider text-ink-primary mb-5 uppercase text-center w-full italic">
-          Jan 1, 2027
-        </h3>
+      <div className="flex items-end justify-between px-2 pt-1">
+        <div className="flex flex-col">
+          <span className="text-4xl font-light text-ink-primary tabular-nums tracking-tighter leading-none">
+            {timeLeft.days}
+          </span>
+          <span className="text-[9px] uppercase tracking-widest text-ink-secondary mt-2 font-bold">Days Away</span>
+        </div>
         
-        <div className="flex items-center justify-center gap-4 w-full">
-          <div className="flex flex-col items-center flex-1">
-            <span className="text-3xl font-bold text-ink-primary tabular-nums tracking-tight">
-              {timeLeft.days.toString().padStart(2, '0')}
-            </span>
-            <span className="text-[9px] uppercase tracking-widest text-ink-tertiary mt-1 font-semibold">Days</span>
-          </div>
-          
-          <div className="w-px h-8 bg-muted/50"></div>
-          
-          <div className="flex flex-col items-center flex-1">
-            <span className="text-3xl font-bold text-ink-primary tabular-nums tracking-tight">
+        <div className="flex gap-5 mb-0.5">
+          <div className="flex flex-col items-end">
+            <span className="text-xl font-light text-ink-secondary tabular-nums leading-none">
               {timeLeft.hours.toString().padStart(2, '0')}
             </span>
-            <span className="text-[9px] uppercase tracking-widest text-ink-tertiary mt-1 font-semibold">Hours</span>
+            <span className="text-[8px] uppercase tracking-widest text-ink-tertiary mt-1.5 font-semibold">Hrs</span>
           </div>
-          
-          <div className="w-px h-8 bg-muted/50"></div>
-          
-          <div className="flex flex-col items-center flex-1">
-            <span className="text-3xl font-bold text-ink-primary tabular-nums tracking-tight">
+          <div className="flex flex-col items-end">
+            <span className="text-xl font-light text-ink-secondary tabular-nums leading-none">
               {timeLeft.minutes.toString().padStart(2, '0')}
             </span>
-            <span className="text-[9px] uppercase tracking-widest text-ink-tertiary mt-1 font-semibold">Mins</span>
+            <span className="text-[8px] uppercase tracking-widest text-ink-tertiary mt-1.5 font-semibold">Min</span>
           </div>
-        </div>
-
-        <div className="mt-5 bg-accent-teal/10 px-3 py-1.5 rounded-full flex items-center gap-1.5">
-          <Clock className="w-3 h-3 text-accent-teal" />
-          <span className="text-[10px] uppercase tracking-widest font-bold text-accent-teal">
-            {timeLeft.seconds.toString().padStart(2, '0')}s remaining
-          </span>
         </div>
       </div>
     </div>

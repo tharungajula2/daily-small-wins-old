@@ -10,7 +10,7 @@ import EveningRoutineCard from '@/components/rituals/EveningRoutineCard';
 import { useRitualStore, getTotalWins } from '@/store/useRitualStore';
 import { syncPullInitialState } from '@/lib/supabase/syncEngine';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Settings, Cookie } from 'lucide-react';
+import { Settings, Sunrise, Sun, Sunset, Moon } from 'lucide-react';
 import PlaylistManager from '@/components/widgets/PlaylistManager';
 import VisionPriming from '@/components/widgets/VisionPriming';
 import DDayTimer from '@/components/widgets/DDayTimer';
@@ -227,10 +227,10 @@ function Dashboard() {
             {new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }).replace(',', '').toUpperCase()}
           </span>
           <span className="text-[8px] uppercase tracking-wider text-accent-teal font-semibold mt-1 flex items-center gap-1 leading-none select-none">
-            {circadianPhase === 'morning' && '🌅 Dawn'}
-            {circadianPhase === 'day' && '☀️ Meridian'}
-            {circadianPhase === 'evening' && '🌆 Dusk'}
-            {circadianPhase === 'night' && '🌌 Vigil'}
+            {circadianPhase === 'morning' && <><Sunrise className="w-3 h-3" /> Morning</>}
+            {circadianPhase === 'day' && <><Sun className="w-3 h-3" /> Afternoon</>}
+            {circadianPhase === 'evening' && <><Sunset className="w-3 h-3" /> Evening</>}
+            {circadianPhase === 'night' && <><Moon className="w-3 h-3" /> Night</>}
           </span>
         </div>
         <div className="flex items-center gap-2">
@@ -247,16 +247,6 @@ function Dashboard() {
         </div>
         <div className="w-24 flex justify-end gap-2">
           <motion.button 
-            id="tour-lifetime-vault"
-            whileTap={{ scale: 0.95 }}
-            onClick={() => router.push('/vault')}
-            className="w-8 h-8 flex items-center justify-center rounded-xl bg-canvas border border-muted/50 text-amber-500 hover:text-amber-600 hover:border-amber-500/30 hover:bg-surface hover:shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] transition-all duration-300 select-none cursor-pointer focus:outline-none"
-            title="Lifetime Wins Vault"
-          >
-            <Cookie className="w-3.5 h-3.5" />
-          </motion.button>
-          <motion.button 
-
             whileTap={{ scale: 0.95 }}
             onClick={() => router.push('/settings')}
             className="w-8 h-8 flex items-center justify-center rounded-xl bg-canvas border border-muted/50 text-ink-secondary hover:text-accent-teal hover:border-accent-teal/30 hover:bg-surface hover:shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] transition-all duration-300 select-none cursor-pointer focus:outline-none"
@@ -387,10 +377,17 @@ function Dashboard() {
                   </div>
 
                   <div id="tour-pulse-score" className="w-full px-6 mt-4">
-                    <PulseScore 
-                      completedCount={completedCount} 
-                      totalCount={totalCount} 
-                    />
+                    <button 
+                      onClick={() => router.push('/wins')}
+                      className="w-full group focus:outline-none block"
+                    >
+                      <div className="relative transform transition-all duration-300 active:scale-[0.98] group-hover:scale-[1.02]">
+                        <PulseScore 
+                          completedCount={completedCount} 
+                          totalCount={totalCount} 
+                        />
+                      </div>
+                    </button>
                   </div>
 
                   <div className="w-full px-6 mt-3 flex flex-col gap-3">
@@ -408,7 +405,7 @@ function Dashboard() {
 
                  <div className="w-full px-6 flex flex-col gap-6">
                     {/* Standalone Collapsible MECE Six Pillars or All Done Hero Card */}
-                    {allCompleted ? (
+                    {allCompleted && (
                       <motion.div
                         initial={{ opacity: 0, y: 15 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -453,7 +450,7 @@ function Dashboard() {
                             Today is Complete
                           </h3>
                           <p className="text-sm text-ink-secondary leading-relaxed font-normal">
-                            All {activeTodayPlaylists.length} check-ins completed.<br/>
+                            All check-ins completed.<br/>
                             Your daily protocol is fully achieved.
                           </p>
                         </div>
@@ -468,25 +465,6 @@ function Dashboard() {
                           Tomorrow starts at 00:00
                         </button>
                       </motion.div>
-                    ) : (
-                      <div className="flex flex-col gap-3">
-
-                        <div id="tour-anchors-list" className="flex flex-col gap-3">
-                          {activeTodayPlaylists.map((playlist: any) => (
-                            <PlaylistCard 
-                              key={playlist.id} 
-                              playlist={playlist} 
-                              metadata={playlistMetadata[playlist.id]} 
-                            />
-                          ))}
-                          <button
-                            onClick={() => setIsManagingPlaylists(true)}
-                            className="w-full bg-canvas hover:bg-muted border border-dashed border-muted hover:border-ink-secondary/30 rounded-xl py-3 text-xs font-semibold tracking-widest uppercase text-ink-secondary transition-all flex items-center justify-center gap-2"
-                          >
-                            + Add New Playlist
-                          </button>
-                        </div>
-                      </div>
                     )}
 
 

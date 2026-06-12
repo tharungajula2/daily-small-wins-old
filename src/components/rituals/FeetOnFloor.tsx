@@ -79,17 +79,11 @@ export default function FeetOnFloor() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0, y: 4 }}
-              onClick={(e) => {
-                e.stopPropagation();
-                const currentIdx = MORNING_TAP_LINES.indexOf(morningTapText);
-                const nextIdx = (currentIdx === -1 ? 0 : currentIdx + 1) % MORNING_TAP_LINES.length;
-                setMorningTapText(MORNING_TAP_LINES[nextIdx]);
-              }}
-              className="text-ink-primary text-sm font-semibold px-4 text-center leading-snug hover:opacity-80 transition-opacity select-none"
+              className="text-ink-primary text-sm font-semibold px-4 text-center leading-snug select-none pointer-events-none flex flex-col items-center gap-1"
             >
-              {morningTapText}
-              <span className="block text-[8px] text-ink-tertiary mt-2 uppercase tracking-widest font-normal">
-                (Tap text to cycle)
+              <span>{morningTapText}</span>
+              <span className="block text-[8px] text-ink-tertiary mt-2 uppercase tracking-widest font-bold">
+                Tap to begin
               </span>
             </motion.span>
           ) : (
