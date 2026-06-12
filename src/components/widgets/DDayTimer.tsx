@@ -35,7 +35,6 @@ export default function DDayTimer() {
   if (!timeLeft) return null;
 
   return (
-  return (
     <div className="w-full p-5 mt-4 rounded-2xl bg-canvas border border-muted shadow-sm">
       <div className="flex items-center justify-between mb-3 border-b border-muted/30 pb-3">
         <h3 className="text-ink-secondary text-xs uppercase tracking-widest ml-1 flex items-center gap-2">
