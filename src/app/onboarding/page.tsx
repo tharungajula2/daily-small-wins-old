@@ -63,34 +63,44 @@ const TimeSelector = ({
         {label}
       </span>
       <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-1.5 flex-1 relative bg-canvas border border-muted/50 rounded-xl px-2">
-          <select
-            value={hour12.toString()}
-            onChange={handleHourChange}
-            className="w-1/2 bg-transparent text-ink-primary font-semibold text-center py-2.5 outline-none appearance-none cursor-pointer text-lg z-10 pl-2"
-          >
-            {Array.from({ length: 12 }, (_, i) => i + 1).map((num) => (
-              <option key={num} value={num}>
-                {num}
-              </option>
-            ))}
-          </select>
-          <ChevronDown className="w-3 h-3 text-ink-tertiary absolute left-1/4 transform -translate-x-1/2 pointer-events-none" />
-          <span className="text-ink-primary font-bold text-lg opacity-40">
+        <div className="flex items-center flex-1 bg-canvas border border-muted/50 rounded-xl">
+          <div className="relative flex-1">
+            <select
+              value={hour12.toString()}
+              onChange={handleHourChange}
+              className="w-full bg-transparent text-ink-primary font-semibold text-center py-2.5 outline-none appearance-none cursor-pointer text-lg z-10"
+            >
+              {Array.from({ length: 12 }, (_, i) => i + 1).map((num) => (
+                <option
+                  key={num}
+                  value={num}
+                  className="bg-surface text-ink-primary"
+                >
+                  {num}
+                </option>
+              ))}
+            </select>
+          </div>
+          <span className="text-ink-primary font-bold text-lg opacity-40 pb-0.5">
             :
           </span>
-          <select
-            value={m}
-            onChange={handleMinuteChange}
-            className="w-1/2 bg-transparent text-ink-primary font-semibold text-center py-2.5 outline-none appearance-none cursor-pointer text-lg z-10 pr-2"
-          >
-            {["00", "15", "30", "45"].map((num) => (
-              <option key={num} value={num}>
-                {num}
-              </option>
-            ))}
-          </select>
-          <ChevronDown className="w-3 h-3 text-ink-tertiary absolute right-1/4 transform translate-x-1/2 pointer-events-none" />
+          <div className="relative flex-1">
+            <select
+              value={m}
+              onChange={handleMinuteChange}
+              className="w-full bg-transparent text-ink-primary font-semibold text-center py-2.5 outline-none appearance-none cursor-pointer text-lg z-10"
+            >
+              {["00", "15", "30", "45"].map((num) => (
+                <option
+                  key={num}
+                  value={num}
+                  className="bg-surface text-ink-primary"
+                >
+                  {num}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
         <button
           type="button"
@@ -345,26 +355,26 @@ export default function OnboardingPage() {
               <div className="flex flex-col gap-5 text-left">
                 <div>
                   <h2 className="text-xl font-semibold tracking-tight text-ink-primary">
-                    Establish your target windows
+                    Design your day
                   </h2>
                   <p className="text-[10px] text-ink-secondary tracking-widest uppercase mt-0.5 font-semibold">
                     Set your daily boundaries
                   </p>
                 </div>
                 <p className="text-xs text-ink-secondary leading-relaxed font-normal">
-                  Your daily Arc is built around these targets. We use them to
-                  structure your wake window and evening wind-down window.
+                  Your Daily Arc is built around these times. We use them to
+                  structure your morning check-in and evening wind-down.
                 </p>
 
                 <div className="flex flex-col gap-3 mt-1">
                   <TimeSelector
-                    label="Wake Window Target"
+                    label="Wake Target"
                     time={wakeTime}
                     setTime={setWakeTime}
                   />
 
                   <TimeSelector
-                    label="Sleep Window Target"
+                    label="Sleep Target"
                     time={sleepTime}
                     setTime={setSleepTime}
                   />
@@ -392,12 +402,13 @@ export default function OnboardingPage() {
                     </span>
                   </div>
                   <p className="text-xs text-ink-primary leading-relaxed font-normal">
-                    The Arc opens when you wake up and closes when you sleep. It
-                    brings simple structure to your day.
+                    Your Arc opens when you wake up and closes when you sleep.
+                    It is a simple promise to check in with yourself twice a
+                    day.
                   </p>
                   <p className="text-[10px] text-ink-secondary leading-relaxed border-t border-muted/50 pt-2">
-                    This playlist is permanent. It ensures you check in with
-                    yourself twice every day.
+                    This foundational playlist is permanent and built into your
+                    daily routine.
                   </p>
                 </div>
               </div>
@@ -408,11 +419,11 @@ export default function OnboardingPage() {
               <div className="flex flex-col gap-4 text-left">
                 <div>
                   <span className="text-[9px] font-bold text-accent-teal uppercase tracking-widest">
-                    Question 01
+                    Playlist 01
                   </span>
                   <h2 className="text-lg font-semibold tracking-tight text-ink-primary mt-0.5">
-                    Success is built on small, uncomfortable actions. What is
-                    one small win you can commit to?
+                    Success is built on small wins. What is one simple habit you
+                    want to commit to every day?
                   </h2>
                 </div>
 
@@ -466,11 +477,11 @@ export default function OnboardingPage() {
               <div className="flex flex-col gap-4 text-left">
                 <div>
                   <span className="text-[9px] font-bold text-accent-teal uppercase tracking-widest">
-                    Question 02
+                    Playlist 02
                   </span>
                   <h2 className="text-lg font-semibold tracking-tight text-ink-primary mt-0.5">
-                    Do you want to track your physical or mental health? (e.g.
-                    Body & Mind)
+                    How do you want to take care of yourself? (e.g., Physical
+                    Health, Mental Clarity, or Body & Mind)
                   </h2>
                 </div>
 
@@ -519,11 +530,11 @@ export default function OnboardingPage() {
               <div className="flex flex-col gap-4 text-left">
                 <div>
                   <span className="text-[9px] font-bold text-accent-teal uppercase tracking-widest">
-                    Question 03
+                    Playlist 03
                   </span>
                   <h2 className="text-lg font-semibold tracking-tight text-ink-primary mt-0.5">
-                    When your head gets loud or restless, what helps — going
-                    still, or burning it off?
+                    When your mind gets loud or restless, what helps you
+                    reset—finding stillness or burning off the energy?
                   </h2>
                 </div>
 
@@ -538,7 +549,9 @@ export default function OnboardingPage() {
                     }`}
                   >
                     <Compass className="w-5 h-5 text-accent-teal" />
-                    <span className="text-xs font-semibold">Going Still</span>
+                    <span className="text-xs font-semibold">
+                      Finding Stillness
+                    </span>
                   </button>
 
                   <button
@@ -552,7 +565,7 @@ export default function OnboardingPage() {
                   >
                     <Shield className="w-5 h-5 text-accent-teal" />
                     <span className="text-xs font-semibold">
-                      Burning it off
+                      Burning Energy
                     </span>
                   </button>
                 </div>
@@ -566,9 +579,7 @@ export default function OnboardingPage() {
                     <div className="flex items-center justify-between border-b border-muted/50 pb-2">
                       <span className="text-xs font-semibold text-ink-primary">
                         Recommended:{" "}
-                        {q3Preference === "still"
-                          ? "Stillness"
-                          : "Reset / The Forge"}
+                        {q3Preference === "still" ? "Stillness" : "Reset"}
                       </span>
                       <button
                         onClick={() => setIncludeQ3(!includeQ3)}
@@ -607,10 +618,10 @@ export default function OnboardingPage() {
               <div className="flex flex-col gap-4 text-left">
                 <div>
                   <h2 className="text-xl font-semibold tracking-tight text-ink-primary">
-                    Your Daily Trellis
+                    Your Daily Structure
                   </h2>
                   <p className="text-[10px] text-ink-secondary tracking-widest uppercase mt-0.5 font-semibold">
-                    Review your initial structure
+                    Review your initial setup
                   </p>
                 </div>
                 <p className="text-xs text-ink-secondary leading-relaxed font-normal">
