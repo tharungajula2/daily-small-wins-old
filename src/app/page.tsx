@@ -363,36 +363,29 @@ function Dashboard() {
                     </div>
                   </div>
 
-                  <div id="tour-pulse-score" className="w-full mt-4 flex items-center justify-center gap-6 px-4">
-                    
-                    <motion.button 
-                      whileTap={{ scale: 0.9 }}
-                      onClick={() => setIsManagingPlaylists(true)}
-                      className="w-14 h-14 rounded-full bg-surface shadow-[0_2px_10px_-4px_rgba(0,0,0,0.1)] border border-muted/80 flex items-center justify-center text-ink-tertiary hover:text-ink-primary hover:border-muted transition-all active:scale-95 flex-shrink-0"
-                    >
-                      <Minus className="w-5 h-5" />
-                    </motion.button>
-
+                  <div id="tour-pulse-score" className="w-full mt-4 flex items-center justify-center">
                     <button 
                       onClick={() => router.push('/wins')}
-                      className="group focus:outline-none block"
+                      className="group focus:outline-none block w-full max-w-[340px]"
                     >
                       <div className="relative transform transition-all duration-300 active:scale-[0.98] group-hover:scale-[1.02]">
                         <PulseScore 
                           completedCount={completedCount} 
                           totalCount={totalCount} 
                           totalWins={totalWins}
+                          onQuickLog={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setIsQuickLogOpen(true);
+                          }}
+                          onManagePlaylists={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setIsManagingPlaylists(true);
+                          }}
                         />
                       </div>
                     </button>
-
-                    <motion.button 
-                      whileTap={{ scale: 0.9 }}
-                      onClick={() => setIsQuickLogOpen(true)}
-                      className="w-14 h-14 rounded-full bg-gradient-to-br from-accent-teal to-[#1e5c5c] shadow-[0_0_15px_rgba(42,127,127,0.3)] hover:shadow-[0_0_25px_rgba(42,127,127,0.5)] border border-accent-teal/20 flex items-center justify-center text-white transition-all active:scale-95 flex-shrink-0"
-                    >
-                      <Plus className="w-6 h-6" />
-                    </motion.button>
                   </div>
 
                   <div className="w-full px-6 mt-3 flex flex-col gap-3">

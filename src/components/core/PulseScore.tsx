@@ -3,14 +3,17 @@
 import { motion, useInView } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
+import { Plus, Minus } from 'lucide-react';
 
 interface PulseScoreProps {
   completedCount: number;
   totalCount: number;
   totalWins?: number;
+  onQuickLog?: (e: React.MouseEvent) => void;
+  onManagePlaylists?: (e: React.MouseEvent) => void;
 }
 
-export default function PulseScore({ completedCount, totalCount, totalWins = 0 }: PulseScoreProps) {
+export default function PulseScore({ completedCount, totalCount, totalWins = 0, onQuickLog, onManagePlaylists }: PulseScoreProps) {
   const containerRef = useRef(null);
   const isInView = useInView(containerRef, { once: true });
 
@@ -92,8 +95,21 @@ export default function PulseScore({ completedCount, totalCount, totalWins = 0 }
 
   return (
     <div ref={containerRef} className="flex flex-col items-center justify-center my-6">
-      <div className="relative w-48 h-48 flex items-center justify-center">
-        {/* Seam-and-Arc Progress Ring */}
+      <div className="relative flex items-center justify-center gap-6 w-full max-w-[340px] mx-auto">
+        
+        {/* Left: Manage Playlists */}
+        {onManagePlaylists && (
+          <motion.button 
+            whileTap={{ scale: 0.9 }}
+            onClick={onManagePlaylists}
+            className="w-14 h-14 rounded-full bg-surface shadow-[0_2px_10px_-4px_rgba(0,0,0,0.1)] border border-muted/80 flex items-center justify-center text-ink-tertiary hover:text-ink-primary hover:border-muted transition-all active:scale-95 flex-shrink-0"
+          >
+            <Minus className="w-5 h-5" />
+          </motion.button>
+        )}
+
+        <div className="relative w-48 h-48 flex items-center justify-center flex-shrink-0">
+          {/* Seam-and-Arc Progress Ring */}
         <motion.svg 
           className="absolute inset-0 w-full h-full select-none" 
           style={{ transformOrigin: '96px 96px' }}
@@ -144,6 +160,17 @@ export default function PulseScore({ completedCount, totalCount, totalWins = 0 }
             </span>
           </div>
         </div>
+        
+        {/* Right: Quick Log */}
+        {onQuickLog && (
+          <motion.button 
+            whileTap={{ scale: 0.9 }}
+            onClick={onQuickLog}
+            className="w-14 h-14 rounded-full bg-gradient-to-br from-accent-teal to-[#1e5c5c] shadow-[0_0_15px_rgba(42,127,127,0.3)] hover:shadow-[0_0_25px_rgba(42,127,127,0.5)] border border-accent-teal/20 flex items-center justify-center text-white transition-all active:scale-95 flex-shrink-0 z-20"
+          >
+            <Plus className="w-6 h-6" />
+          </motion.button>
+        )}
       </div>
 
       {/* Dynamic Status Badge */}
