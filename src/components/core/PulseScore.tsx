@@ -7,9 +7,10 @@ import { Haptics, ImpactStyle } from '@capacitor/haptics';
 interface PulseScoreProps {
   completedCount: number;
   totalCount: number;
+  totalWins?: number;
 }
 
-export default function PulseScore({ completedCount, totalCount }: PulseScoreProps) {
+export default function PulseScore({ completedCount, totalCount, totalWins = 0 }: PulseScoreProps) {
   const containerRef = useRef(null);
   const isInView = useInView(containerRef, { once: true });
 
@@ -132,20 +133,19 @@ export default function PulseScore({ completedCount, totalCount }: PulseScorePro
           />
         </motion.svg>
 
-        {/* Inner Content - Mathematically Centered */}
-        <div className="absolute inset-0 flex flex-col items-center justify-center text-center select-none z-10 w-full h-full">
-          <div className="flex flex-col items-center justify-center max-w-[120px] px-2 overflow-hidden">
-            <span className="text-2xl font-mono font-semibold leading-none tracking-tight text-ink-primary">
-              {completedCount}/{totalCount}
+        {/* Inner Content - Massive Button Wrapper */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center text-center select-none z-10 w-full h-full p-6">
+          <div className="w-full h-full rounded-full bg-canvas/40 backdrop-blur-sm border border-muted/30 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)] flex flex-col items-center justify-center transition-all group-hover:bg-surface group-hover:shadow-[0_8px_30px_-4px_rgba(42,127,127,0.2)] group-hover:border-accent-teal/30">
+            <span className="text-4xl font-light leading-none tracking-tight text-ink-primary">
+              {totalWins}
             </span>
-            <span className="text-ink-secondary text-[10px] uppercase tracking-[0.2em] mt-1.5 font-bold leading-none">
-              Daily Arc
+            <span className="text-ink-secondary text-[10px] uppercase tracking-[0.2em] mt-2 font-bold leading-none group-hover:text-accent-teal transition-colors">
+              Total Wins
             </span>
-            {completedCount === totalCount && totalCount > 0 && (
-              <span className="text-xs mt-1 text-accent-teal font-semibold leading-none animate-pulse">
-                Kept today
-              </span>
-            )}
+            <div className="mt-3 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 text-[8px] uppercase tracking-widest text-accent-teal font-bold">
+              <span>Enter Arena</span>
+              <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </div>
           </div>
         </div>
       </div>

@@ -283,28 +283,13 @@ function Dashboard() {
             <div className="animate-in slide-in-from-bottom-2 fade-in duration-500 flex flex-col items-center gap-6 py-6 w-full">
                   {/* Premium HUD Bar */}
                   <div className="w-full px-6">
-                    <div className="w-full bg-surface rounded-3xl p-5 border border-muted/80 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05),0_1px_3px_rgba(0,0,0,0.02)] grid grid-cols-3 hover:shadow-[0_6px_24px_-4px_rgba(0,0,0,0.08)] transition-all">
-                      {/* Left: Total Wins */}
-                      <div id="tour-promises-kept" className="flex flex-col items-center justify-center text-center border-r border-muted/30 pr-1">
-                        <div className="w-9 h-9 rounded-xl bg-accent-teal/10 flex items-center justify-center shadow-sm mb-1.5 select-none">
-                          <svg className="w-4 h-4 text-accent-teal" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-                          </svg>
-                        </div>
-                        <span className="text-sm font-semibold text-accent-teal select-none leading-none">
-                          {totalWins}
-                        </span>
-                        <span className="text-[8px] tracking-wider text-ink-secondary uppercase font-semibold select-none mt-1.5 leading-none">
-                          Total Wins
-                        </span>
-                      </div>
-
-                      {/* Middle: Streak */}
+                    <div className="w-full bg-surface rounded-3xl p-5 border border-muted/80 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05),0_1px_3px_rgba(0,0,0,0.02)] grid grid-cols-2 hover:shadow-[0_6px_24px_-4px_rgba(0,0,0,0.08)] transition-all">
+                      {/* Left: Streak */}
                       {(() => {
                         const streakVal = userState?.current_streak ?? currentStreak ?? 0;
                         const isPaused = isRestDay;
                         return (
-                          <div id="tour-streak-hud" className="flex flex-col items-center justify-center text-center border-r border-muted/30 px-1">
+                          <div id="tour-streak-hud" className="flex flex-col items-center justify-center text-center border-r border-muted/30 pr-1">
                             <div className={`w-9 h-9 rounded-xl flex items-center justify-center shadow-sm mb-1.5 select-none transition-colors ${
                               isPaused 
                                 ? 'bg-muted/30 text-ink-secondary' 
@@ -385,6 +370,7 @@ function Dashboard() {
                         <PulseScore 
                           completedCount={completedCount} 
                           totalCount={totalCount} 
+                          totalWins={totalWins}
                         />
                       </div>
                     </button>
