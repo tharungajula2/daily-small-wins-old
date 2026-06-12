@@ -367,7 +367,7 @@ function Dashboard() {
                     
                     <motion.button 
                       whileTap={{ scale: 0.9 }}
-                      onClick={() => setIsPlaylistManagerOpen(true)}
+                      onClick={() => setIsManagingPlaylists(true)}
                       className="w-12 h-12 rounded-full bg-surface shadow-[0_2px_10px_-4px_rgba(0,0,0,0.1)] border border-muted/80 flex items-center justify-center text-ink-tertiary hover:text-ink-primary hover:border-muted transition-all active:scale-95"
                     >
                       <Minus className="w-5 h-5" />
