@@ -104,7 +104,7 @@ export default function SettingsPage() {
   };
 
   const handleEraseData = async () => {
-    const confirmed = window.confirm("WARNING: This will permanently delete ALL your wins, gems, and history. You cannot undo this. Are you sure?");
+    const confirmed = window.confirm("WARNING: This will permanently delete ALL your lifetime wins, streaks, and history. You cannot undo this. Are you sure?");
     if (!confirmed) return;
     
     setIsClearing(true);
