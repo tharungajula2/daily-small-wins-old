@@ -15,12 +15,30 @@ export default function PlaylistCard({
 }) {
   const addGem = useRitualStore((state) => state.addGem);
   const deleteGem = useRitualStore((state) => state.deleteGem);
+  const editGem = useRitualStore((state) => state.editGem);
   
   const [isTooltipOpen, setIsTooltipOpen] = useState(false);
   const [isGemDrawerOpen, setIsGemDrawerOpen] = useState(false);
+  const [editingGemId, setEditingGemId] = useState<string | null>(null);
   const [gemLabel, setGemLabel] = useState('');
   const [gemTagsInput, setGemTagsInput] = useState('');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+
+  const handleCloseDrawer = () => {
+    setIsGemDrawerOpen(false);
+    setEditingGemId(null);
+    setGemLabel('');
+    setGemTagsInput('');
+    setSelectedTags([]);
+  };
+
+  const handleOpenEdit = (g: any) => {
+    setEditingGemId(g.id);
+    setGemLabel(g.label || '');
+    setGemTagsInput('');
+    setSelectedTags(g.tags || []);
+    setIsGemDrawerOpen(true);
+  };
   
   const getTooltipText = (title: string) => {
     const normalized = title.toLowerCase().trim();
@@ -37,7 +55,7 @@ export default function PlaylistCard({
 
   const tooltipText = getTooltipText(playlist.title);
 
-  const handleAddGem = async () => {
+  const handleSaveGem = async () => {
     if (!gemLabel.trim() && selectedTags.length === 0 && !gemTagsInput.trim()) return;
     try { await Haptics.impact({ style: ImpactStyle.Light }); } catch (e) {}
     
@@ -48,10 +66,19 @@ export default function PlaylistCard({
       
     const allTags = Array.from(new Set([...selectedTags, ...manualTags]));
       
-    addGem(playlist.id, gemLabel.trim() || undefined, allTags);
-    setGemLabel('');
-    setGemTagsInput('');
-    setSelectedTags([]);
+    if (editingGemId) {
+      editGem(playlist.id, editingGemId, gemLabel.trim() || undefined, allTags);
+    } else {
+      addGem(playlist.id, gemLabel.trim() || undefined, allTags);
+    }
+    handleCloseDrawer();
+  };
+
+  const handleDeleteGem = async () => {
+    if (!editingGemId) return;
+    try { await Haptics.impact({ style: ImpactStyle.Medium }); } catch (e) {}
+    deleteGem(playlist.id, editingGemId);
+    handleCloseDrawer();
   };
 
   const getSuggestedTags = (title: string) => {
@@ -144,7 +171,11 @@ export default function PlaylistCard({
         {todayGems.length > 0 && (
           <div className="mt-5 pt-4 border-t border-muted/30 flex flex-col gap-2">
             {todayGems.map(g => (
-              <div key={g.id} className="flex items-start gap-3 bg-gradient-to-r from-accent-teal/10 to-transparent border-l-[2px] border-accent-teal/40 rounded-r-xl px-3 py-2.5">
+              <div 
+                key={g.id} 
+                onClick={() => handleOpenEdit(g)}
+                className="flex items-start gap-3 bg-gradient-to-r from-accent-teal/10 to-transparent border-l-[2px] border-accent-teal/40 rounded-r-xl px-3 py-2.5 cursor-pointer hover:from-accent-teal/15 transition-colors"
+              >
                 <div className="flex flex-col min-w-0 flex-1">
                   <div className="flex items-start justify-between gap-3">
                     <span className="text-xs font-semibold text-ink-primary leading-snug flex-1 break-words">{g.label || 'Win Captured'}</span>
@@ -172,7 +203,7 @@ export default function PlaylistCard({
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.3 }}
-              onClick={() => setIsGemDrawerOpen(false)}
+              onClick={handleCloseDrawer}
               className="absolute inset-0 bg-black/40 backdrop-blur-md"
             />
 
@@ -187,8 +218,9 @@ export default function PlaylistCard({
               <div className="w-12 h-1 bg-muted rounded-full self-center -mt-2 mb-2" />
 
               <div>
-                <p className="text-[10px] tracking-widest font-bold text-accent-teal uppercase mb-1">
-                  Log a Win
+                <p className="text-[10px] tracking-widest font-bold text-accent-teal uppercase mb-1 flex justify-between items-center">
+                  <span>{editingGemId ? 'Edit Win' : 'Log a Win'}</span>
+                  <button onClick={handleCloseDrawer} className="text-ink-tertiary hover:text-ink-primary p-1 bg-canvas rounded-full"><X className="w-4 h-4" /></button>
                 </p>
                 <h3 className="text-xl font-light text-ink-primary tracking-tight">
                   {playlist.title}
@@ -257,17 +289,28 @@ export default function PlaylistCard({
               </div>
 
               {/* Log Button */}
-              <button
-                onClick={handleAddGem}
-                disabled={!gemLabel.trim() && selectedTags.length === 0 && !gemTagsInput.trim()}
-                className={`w-full py-4 rounded-2xl text-xs uppercase tracking-widest font-bold transition-all active:scale-98 flex items-center justify-center gap-2 mt-2 ${
-                  gemLabel.trim() || selectedTags.length > 0 || gemTagsInput.trim()
-                    ? 'bg-accent-teal text-white hover:bg-[#349e9e] shadow-[0_4px_14px_0_rgba(42,127,127,0.39)]'
-                    : 'bg-muted text-ink-tertiary cursor-not-allowed'
-                }`}
-              >
-                RECORD WIN
-              </button>
+              <div className="flex flex-col gap-3 mt-2">
+                <button
+                  onClick={handleSaveGem}
+                  disabled={!gemLabel.trim() && selectedTags.length === 0 && !gemTagsInput.trim()}
+                  className={`w-full py-4 rounded-2xl text-xs uppercase tracking-widest font-bold transition-all active:scale-98 flex items-center justify-center gap-2 ${
+                    gemLabel.trim() || selectedTags.length > 0 || gemTagsInput.trim()
+                      ? 'bg-accent-teal text-white hover:bg-[#349e9e] shadow-[0_4px_14px_0_rgba(42,127,127,0.39)]'
+                      : 'bg-muted text-ink-tertiary cursor-not-allowed'
+                  }`}
+                >
+                  {editingGemId ? 'SAVE CHANGES' : 'RECORD WIN'}
+                  <Sparkles className="w-4 h-4 ml-1" />
+                </button>
+                {editingGemId && (
+                  <button
+                    onClick={handleDeleteGem}
+                    className="w-full py-4 rounded-2xl text-xs uppercase tracking-widest font-bold transition-all active:scale-98 text-red-500 bg-red-500/10 hover:bg-red-500/20"
+                  >
+                    DELETE WIN
+                  </button>
+                )}
+              </div>
 
               {/* Today's Gathers List */}
               <div className="flex flex-col gap-3 pt-4 border-t border-muted/50">
@@ -277,13 +320,17 @@ export default function PlaylistCard({
                 {todayGems.length > 0 ? (
                   <div className="space-y-2 max-h-36 overflow-y-auto pr-1">
                     {todayGems.map((g) => (
-                      <div key={g.id} className="flex items-center justify-between p-3 bg-canvas border border-muted/65 rounded-xl">
+                      <div 
+                        key={g.id} 
+                        onClick={() => handleOpenEdit(g)}
+                        className="flex items-center justify-between p-3 bg-canvas border border-muted/65 rounded-xl cursor-pointer hover:border-accent-teal/50 transition-colors"
+                      >
                         <div className="flex flex-col gap-1 min-w-0">
                           <div className="flex items-center gap-2">
                             <span className="text-xs text-ink-primary font-medium break-words">
                               {g.label || 'Logged'}
                             </span>
-                            <span className="text-[9px] text-ink-tertiary">
+                            <span className="text-[9px] text-ink-tertiary shrink-0">
                               {g.createdAt ? new Date(g.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
                             </span>
                           </div>

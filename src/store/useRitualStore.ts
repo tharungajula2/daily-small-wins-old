@@ -66,6 +66,7 @@ interface RitualState {
   togglePlaylistActive: (id: string) => void;
   reorderPlaylists: (startIndex: number, endIndex: number) => void;
   addGem: (playlistId: string, label?: string, tags?: string[]) => void;
+  editGem: (playlistId: string, gemId: string, label?: string, tags?: string[]) => void;
   deleteGem: (playlistId: string, gemId: string) => void;
   completeEveningCheckIn: (win: string, parkingLot: string) => Promise<void>;
   reverseEveningCheckIn: () => Promise<void>;
@@ -222,6 +223,30 @@ export const useRitualStore = create<RitualState>()(
           } : a)
         }));
         syncPushGem(newGem);
+      },
+
+      editGem: (playlistId: string, gemId: string, label?: string, tags?: string[]) => {
+        let updatedGem: Gem | null = null;
+        set((state) => ({
+          playlists: state.playlists.map(a => {
+            if (a.id === playlistId) {
+              return {
+                ...a,
+                gems: (a.gems || []).map(g => {
+                  if (g.id === gemId) {
+                    updatedGem = { ...g, label, tags: tags || [] };
+                    return updatedGem;
+                  }
+                  return g;
+                })
+              };
+            }
+            return a;
+          })
+        }));
+        if (updatedGem) {
+          syncPushGem(updatedGem);
+        }
       },
 
       deleteGem: (playlistId: string, gemId: string) => {
