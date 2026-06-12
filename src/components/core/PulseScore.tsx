@@ -9,11 +9,12 @@ interface PulseScoreProps {
   completedCount: number;
   totalCount: number;
   totalWins?: number;
+  onCenterClick?: () => void;
   onQuickLog?: (e: React.MouseEvent) => void;
   onManagePlaylists?: (e: React.MouseEvent) => void;
 }
 
-export default function PulseScore({ completedCount, totalCount, totalWins = 0, onQuickLog, onManagePlaylists }: PulseScoreProps) {
+export default function PulseScore({ completedCount, totalCount, totalWins = 0, onCenterClick, onQuickLog, onManagePlaylists }: PulseScoreProps) {
   const containerRef = useRef(null);
   const isInView = useInView(containerRef, { once: true });
 
@@ -150,7 +151,11 @@ export default function PulseScore({ completedCount, totalCount, totalWins = 0, 
         </motion.svg>
 
         {/* Inner Content - Massive Button Wrapper */}
-        <div className="absolute inset-0 flex flex-col items-center justify-center text-center select-none z-10 w-full h-full p-6">
+        <button 
+          type="button"
+          onClick={onCenterClick}
+          className="absolute inset-0 flex flex-col items-center justify-center text-center select-none z-10 w-full h-full p-6 outline-none focus:outline-none active:scale-[0.98] group-hover:scale-[1.02] transition-transform duration-300"
+        >
           <div className="w-full h-full rounded-full bg-canvas/40 backdrop-blur-sm border border-muted/30 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)] flex flex-col items-center justify-center transition-all group-hover:bg-surface group-hover:shadow-[0_8px_30px_-4px_rgba(42,127,127,0.2)] group-hover:border-accent-teal/30">
             <span className="text-4xl font-light leading-none tracking-tight text-ink-primary">
               {totalWins}
@@ -159,7 +164,7 @@ export default function PulseScore({ completedCount, totalCount, totalWins = 0, 
               Total Wins
             </span>
           </div>
-        </div>
+        </button>
         
         {/* Right: Quick Log */}
         {onQuickLog && (

@@ -364,15 +364,13 @@ function Dashboard() {
                   </div>
 
                   <div id="tour-pulse-score" className="w-full mt-4 flex items-center justify-center">
-                    <button 
-                      onClick={() => router.push('/wins')}
-                      className="group focus:outline-none block w-full max-w-[340px]"
-                    >
-                      <div className="relative transform transition-all duration-300 active:scale-[0.98] group-hover:scale-[1.02]">
+                    <div className="w-full max-w-[340px] group">
+                      <div className="relative transform transition-all duration-300">
                         <PulseScore 
                           completedCount={completedCount} 
                           totalCount={totalCount} 
                           totalWins={totalWins}
+                          onCenterClick={() => router.push('/wins')}
                           onQuickLog={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
@@ -385,7 +383,7 @@ function Dashboard() {
                           }}
                         />
                       </div>
-                    </button>
+                    </div>
                   </div>
 
                   <div className="w-full px-6 mt-3 flex flex-col gap-3">
