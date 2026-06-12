@@ -142,10 +142,6 @@ export default function PulseScore({ completedCount, totalCount, totalWins = 0 }
             <span className="text-ink-secondary text-[10px] uppercase tracking-[0.2em] mt-2 font-bold leading-none group-hover:text-accent-teal transition-colors">
               Total Wins
             </span>
-            <div className="mt-3 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 text-[8px] uppercase tracking-widest text-accent-teal font-bold">
-              <span>Enter Arena</span>
-              <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
-            </div>
           </div>
         </div>
       </div>
