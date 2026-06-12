@@ -14,7 +14,7 @@ interface TourStep {
 const TOUR_STEPS: TourStep[] = [
   {
     title: 'Welcome to Trelis Life',
-    description: 'Not a health app. A Life Operating System. A quiet space designed to bring premium structure, clarity, and calm to your daily commitments.',
+    description: 'Not a health app. A Life Operating System. A quiet space designed to bring structure, clarity, and calm to your day.',
   },
   {
     title: 'Total Wins',
@@ -22,43 +22,43 @@ const TOUR_STEPS: TourStep[] = [
     targetId: 'tour-promises-kept',
   },
   {
-    title: 'Momentum & Streaks',
-    description: 'Your daily momentum. It tracks consecutive days, encouraging you to keep the arc alive. We focus on showing your progress in a clean, non-judgmental way.',
+    title: 'Momentum',
+    description: 'Your daily momentum. It tracks consecutive days, encouraging you to keep the Arc alive. Progress is shown cleanly, without judgment.',
     targetId: 'tour-streak-hud',
   },
   {
-    title: 'Pause & Rest Days',
-    description: 'Life happens. You start with 2 Rest tokens per month. Tap "Pause today" to rest without breaking your streak—momentum with zero guilt.',
+    title: 'Rest Days',
+    description: 'Life happens. You receive 2 Rest tokens per month. Tap "Pause today" to rest without breaking your momentum. Consistency with zero guilt.',
     targetId: 'tour-pause-hud',
   },
   {
-    title: 'The Daily Arc Ring',
-    description: 'This is your daily pulse. It tracks the bookends of your day: Morning Check-In and Evening Wind-Down.',
+    title: 'The Daily Arc',
+    description: 'This is your daily pulse. It tracks the foundation of your day: your morning wake-up and evening wind-down.',
     targetId: 'tour-pulse-score',
   },
   {
     title: 'The Bookends',
-    description: 'The keystone of your day. By connecting your evening wind-down directly to your morning wake-up (Feet on Floor), you align your circadian rhythm naturally.',
+    description: 'The keystone of your routine. By connecting your evening wind-down to your morning wake-up, you naturally align your circadian rhythm.',
     targetId: 'tour-the-arc',
   },
   {
-    title: 'Vision Priming',
+    title: 'Your Vision',
     description: 'A dedicated space to keep your core "Why" front and center. Because structure without purpose is just a cage.',
     targetId: 'tour-vision-card',
   },
   {
-    title: 'The D-Day Timer',
-    description: 'Focus on a single, long-term horizon. Set your target date to stay grounded in the reality of your timeline.',
+    title: 'The Horizon',
+    description: 'Focus on a single, long-term goal. Set your target date to stay grounded in the reality of your timeline.',
     targetId: 'tour-dday-timer',
   },
   {
-    title: 'Playlists (Anchors)',
-    description: 'These are your daily categories. Rather than stressful checklists, these are buckets. Tap "+ ✨ GEM" to log a small win into a category anytime.',
+    title: 'Playlists',
+    description: 'These are your daily focus areas. Rather than stressful checklists, they are simple buckets. Tap "+ ✨ GEM" to log a small win anytime.',
     targetId: 'tour-anchors-list',
   },
   {
-    title: 'The Lifetime Vault',
-    description: 'Your chronological ledger. Every single Gem you capture and Reflection you write is stored here permanently. Tap the vault icon to view your history.',
+    title: 'The Vault',
+    description: 'Your chronological history. Every Gem you capture and reflection you write is stored here permanently. Tap the vault icon to look back.',
     targetId: 'tour-lifetime-vault',
   },
 ];
