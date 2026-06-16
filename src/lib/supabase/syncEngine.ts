@@ -85,6 +85,13 @@ export async function syncPullInitialState(userId: string, localState: any, setL
       .eq('user_id', userId)
       .order('created_at', { ascending: false });
 
+    // 10. Pull Vault Notes
+    const { data: vaultNotes } = await supabase
+      .from('vault_notes')
+      .select('*')
+      .eq('user_id', userId)
+      .order('updated_at', { ascending: false });
+
     // Conflict Resolution: Local wins.
     const updates: any = {};
 
@@ -103,6 +110,10 @@ export async function syncPullInitialState(userId: string, localState: any, setL
 
     if (todos) {
       updates.todos = todos;
+    }
+
+    if (vaultNotes) {
+      updates.vaultNotes = vaultNotes;
     }
 
     if (dailyRitual) {
@@ -524,5 +535,62 @@ export async function syncDeleteTodo(todoId: string) {
     console.log(`Sync Engine: Delete Todo (${todoId}) Successful`);
   } catch (error: any) {
     console.error("Sync Engine: Delete Todo Error", error.message || error);
+  }
+}
+
+/**
+ * Pushes a single vault note to Supabase.
+ */
+export async function syncPushVaultNote(note: any) {
+  const supabase = createClient();
+  try {
+    const { data: { session }, error: sessionError } = await getSessionWithTimeout(supabase);
+    if (sessionError) throw sessionError;
+    if (!session?.user) return;
+    
+    if (!isValidUUID(note.id)) return;
+    
+    const payload = {
+      id: note.id,
+      user_id: session.user.id,
+      title: note.title || null,
+      content: note.content,
+      created_at: note.created_at || new Date().toISOString(),
+      updated_at: note.updated_at || new Date().toISOString()
+    };
+    
+    const { error } = await supabase
+      .from('vault_notes')
+      .upsert(payload, { onConflict: 'id' });
+      
+    if (error) throw error;
+    console.log(`Sync Engine: Push Vault Note (${note.id}) Successful`);
+  } catch (error: any) {
+    console.error("Sync Engine: Push Vault Note Error", error.message || error);
+  }
+}
+
+/**
+ * Deletes an individual Vault Note record from Supabase.
+ */
+export async function syncDeleteVaultNote(noteId: string) {
+  const supabase = createClient();
+  try {
+    const { data: { session }, error: sessionError } = await getSessionWithTimeout(supabase);
+    if (sessionError) throw sessionError;
+    if (!session?.user) return;
+    
+    if (!isValidUUID(noteId)) return;
+    
+    const { error } = await supabase
+      .from('vault_notes')
+      .delete()
+      .eq('id', noteId)
+      .eq('user_id', session.user.id);
+      
+    if (error) throw error;
+    console.log(`Sync Engine: Delete Vault Note (${noteId}) Successful`);
+  } catch (error: any) {
+    console.error("Sync Engine: Delete Vault Note Error", error.message || error);
   }
 }

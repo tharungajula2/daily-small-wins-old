@@ -3,7 +3,8 @@ import { persist } from 'zustand/middleware';
 import { 
   syncPushDailyRitual, syncPushPlaylists,
   syncPushVision, syncPushGem, syncDeleteGem, syncPushModuleStates,
-  syncPushJournalEntry, syncPushTodo, syncDeleteTodo
+  syncPushJournalEntry, syncPushTodo, syncDeleteTodo,
+  syncPushVaultNote, syncDeleteVaultNote
 } from '@/lib/supabase/syncEngine';
 
 export interface JournalEntry {
@@ -21,6 +22,15 @@ export interface Todo {
   is_completed: boolean;
   created_at: string;
   completed_at: string | null;
+}
+
+export interface VaultNote {
+  id: string;
+  user_id: string;
+  title: string | null;
+  content: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface Gem {
@@ -123,6 +133,12 @@ interface RitualState {
   addTodo: (todo: Todo) => void;
   toggleTodo: (id: string) => void;
   deleteTodo: (id: string) => void;
+
+  vaultNotes: VaultNote[];
+  setVaultNotes: (notes: VaultNote[]) => void;
+  addVaultNote: (note: VaultNote) => void;
+  updateVaultNote: (id: string, updates: Partial<VaultNote>) => void;
+  deleteVaultNote: (id: string) => void;
 }
 
 export const useRitualStore = create<RitualState>()(
@@ -138,6 +154,7 @@ export const useRitualStore = create<RitualState>()(
       isRestDay: false,
       journalEntries: [],
       todos: [],
+      vaultNotes: [],
       onboardingCompleted: false,
       onboardingTourCompleted: false,
       feetOnFloorLogged: false,
@@ -418,6 +435,35 @@ export const useRitualStore = create<RitualState>()(
           todos: state.todos.filter(t => t.id !== id)
         }));
         syncDeleteTodo(id);
+      },
+
+      setVaultNotes: (notes: VaultNote[]) => set({ vaultNotes: notes }),
+      addVaultNote: (note: VaultNote) => {
+        set((state) => ({
+          vaultNotes: [note, ...state.vaultNotes]
+        }));
+        syncPushVaultNote(note);
+      },
+      updateVaultNote: (id: string, updates: Partial<VaultNote>) => {
+        let updatedNote: VaultNote | null = null;
+        set((state) => ({
+          vaultNotes: state.vaultNotes.map(n => {
+            if (n.id === id) {
+              updatedNote = { ...n, ...updates, updated_at: new Date().toISOString() };
+              return updatedNote;
+            }
+            return n;
+          })
+        }));
+        if (updatedNote) {
+          syncPushVaultNote(updatedNote);
+        }
+      },
+      deleteVaultNote: (id: string) => {
+        set((state) => ({
+          vaultNotes: state.vaultNotes.filter(n => n.id !== id)
+        }));
+        syncDeleteVaultNote(id);
       }
     }),
     {
