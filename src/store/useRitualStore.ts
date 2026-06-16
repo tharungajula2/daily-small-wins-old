@@ -3,7 +3,7 @@ import { persist } from 'zustand/middleware';
 import { 
   syncPushDailyRitual, syncPushPlaylists,
   syncPushVision, syncPushGem, syncDeleteGem, syncPushModuleStates,
-  syncPushJournalEntry
+  syncPushJournalEntry, syncPushTodo, syncDeleteTodo
 } from '@/lib/supabase/syncEngine';
 
 export interface JournalEntry {
@@ -12,6 +12,15 @@ export interface JournalEntry {
   content: string;
   word_count: number;
   created_at: string;
+}
+
+export interface Todo {
+  id: string;
+  user_id: string;
+  task: string;
+  is_completed: boolean;
+  created_at: string;
+  completed_at: string | null;
 }
 
 export interface Gem {
@@ -108,6 +117,12 @@ interface RitualState {
   journalEntries: JournalEntry[];
   setJournalEntries: (entries: JournalEntry[]) => void;
   addJournalEntry: (entry: JournalEntry) => void;
+
+  todos: Todo[];
+  setTodos: (todos: Todo[]) => void;
+  addTodo: (todo: Todo) => void;
+  toggleTodo: (id: string) => void;
+  deleteTodo: (id: string) => void;
 }
 
 export const useRitualStore = create<RitualState>()(
@@ -122,6 +137,7 @@ export const useRitualStore = create<RitualState>()(
       isPremium: false,
       isRestDay: false,
       journalEntries: [],
+      todos: [],
       onboardingCompleted: false,
       onboardingTourCompleted: false,
       feetOnFloorLogged: false,
@@ -368,6 +384,40 @@ export const useRitualStore = create<RitualState>()(
           journalEntries: [entry, ...state.journalEntries]
         }));
         syncPushJournalEntry(entry);
+      },
+
+      setTodos: (todos: Todo[]) => set({ todos }),
+      addTodo: (todo: Todo) => {
+        set((state) => ({
+          todos: [todo, ...state.todos]
+        }));
+        syncPushTodo(todo);
+      },
+      toggleTodo: (id: string) => {
+        let updatedTodo: Todo | null = null;
+        set((state) => ({
+          todos: state.todos.map(t => {
+            if (t.id === id) {
+              const completed = !t.is_completed;
+              updatedTodo = { 
+                ...t, 
+                is_completed: completed,
+                completed_at: completed ? new Date().toISOString() : null
+              };
+              return updatedTodo;
+            }
+            return t;
+          })
+        }));
+        if (updatedTodo) {
+          syncPushTodo(updatedTodo);
+        }
+      },
+      deleteTodo: (id: string) => {
+        set((state) => ({
+          todos: state.todos.filter(t => t.id !== id)
+        }));
+        syncDeleteTodo(id);
       }
     }),
     {

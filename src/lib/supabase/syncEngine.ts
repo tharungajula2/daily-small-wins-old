@@ -78,6 +78,13 @@ export async function syncPullInitialState(userId: string, localState: any, setL
       .eq('user_id', userId)
       .order('created_at', { ascending: false });
 
+    // 9. Pull Todos
+    const { data: todos } = await supabase
+      .from('todos')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+
     // Conflict Resolution: Local wins.
     const updates: any = {};
 
@@ -92,6 +99,10 @@ export async function syncPullInitialState(userId: string, localState: any, setL
 
     if (journalEntries) {
       updates.journalEntries = journalEntries;
+    }
+
+    if (todos) {
+      updates.todos = todos;
     }
 
     if (dailyRitual) {
@@ -456,5 +467,62 @@ export async function syncPushJournalEntry(entry: any) {
     console.log(`Sync Engine: Push Journal Entry (${entry.id}) Successful`);
   } catch (error: any) {
     console.error("Sync Engine: Push Journal Entry Error", error.message || error);
+  }
+}
+
+/**
+ * Pushes a single todo to Supabase.
+ */
+export async function syncPushTodo(todo: any) {
+  const supabase = createClient();
+  try {
+    const { data: { session }, error: sessionError } = await getSessionWithTimeout(supabase);
+    if (sessionError) throw sessionError;
+    if (!session?.user) return;
+    
+    if (!isValidUUID(todo.id)) return;
+    
+    const payload = {
+      id: todo.id,
+      user_id: session.user.id,
+      task: todo.task,
+      is_completed: todo.is_completed,
+      created_at: todo.created_at || new Date().toISOString(),
+      completed_at: todo.completed_at || null
+    };
+    
+    const { error } = await supabase
+      .from('todos')
+      .upsert(payload, { onConflict: 'id' });
+      
+    if (error) throw error;
+    console.log(`Sync Engine: Push Todo (${todo.id}) Successful`);
+  } catch (error: any) {
+    console.error("Sync Engine: Push Todo Error", error.message || error);
+  }
+}
+
+/**
+ * Deletes an individual Todo record from Supabase.
+ */
+export async function syncDeleteTodo(todoId: string) {
+  const supabase = createClient();
+  try {
+    const { data: { session }, error: sessionError } = await getSessionWithTimeout(supabase);
+    if (sessionError) throw sessionError;
+    if (!session?.user) return;
+    
+    if (!isValidUUID(todoId)) return;
+    
+    const { error } = await supabase
+      .from('todos')
+      .delete()
+      .eq('id', todoId)
+      .eq('user_id', session.user.id);
+      
+    if (error) throw error;
+    console.log(`Sync Engine: Delete Todo (${todoId}) Successful`);
+  } catch (error: any) {
+    console.error("Sync Engine: Delete Todo Error", error.message || error);
   }
 }
