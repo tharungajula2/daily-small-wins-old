@@ -78,7 +78,9 @@ export async function syncPullInitialState(userId: string, localState: any, setL
       updates.onboardingCompleted = !!userStateData.onboarding_completed;
       updates.onboardingTourCompleted = !!userStateData.onboarding_tour_completed;
 
-
+      if (userStateData.is_journal_enabled !== null) updates.isJournalEnabled = userStateData.is_journal_enabled;
+      if (userStateData.is_todo_enabled !== null) updates.isTodoEnabled = userStateData.is_todo_enabled;
+      if (userStateData.is_vault_notes_enabled !== null) updates.isVaultNotesEnabled = userStateData.is_vault_notes_enabled;
     }
 
     if (dailyRitual) {
@@ -329,6 +331,28 @@ export async function syncPushOnboardingTourState(completed: boolean) {
     console.log("Sync Engine: Push Onboarding Tour State Successful");
   } catch (error: any) {
     console.error("Sync Engine: Push Onboarding Tour State Error", error.message || error);
+  }
+}
+export async function syncPushModuleStates(journal: boolean, todo: boolean, vaultNotes: boolean) {
+  const supabase = createClient();
+  try {
+    const { data: { session }, error: sessionError } = await getSessionWithTimeout(supabase);
+    if (sessionError) throw sessionError;
+    if (!session?.user) return;
+
+    const { error } = await supabase
+      .from('user_state')
+      .upsert({
+        user_id: session.user.id,
+        is_journal_enabled: journal,
+        is_todo_enabled: todo,
+        is_vault_notes_enabled: vaultNotes
+      }, { onConflict: 'user_id' });
+
+    if (error) throw error;
+    console.log("Sync Engine: Push Module States Successful");
+  } catch (error: any) {
+    console.error("Sync Engine: Push Module States Error", error.message || error);
   }
 }
 

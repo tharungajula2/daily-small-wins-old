@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { 
   syncPushDailyRitual, syncPushPlaylists,
-  syncPushVision, syncPushGem, syncDeleteGem
+  syncPushVision, syncPushGem, syncDeleteGem, syncPushModuleStates
 } from '@/lib/supabase/syncEngine';
 
 export interface Gem {
@@ -89,14 +89,22 @@ interface RitualState {
   onboardingTourCompleted: boolean;
   setOnboardingCompleted: (completed: boolean) => void;
   setOnboardingTourCompleted: (completed: boolean) => void;
-
-
+  isJournalEnabled: boolean;
+  isTodoEnabled: boolean;
+  isVaultNotesEnabled: boolean;
+  setJournalEnabled: (enabled: boolean) => void;
+  setTodoEnabled: (enabled: boolean) => void;
+  setVaultNotesEnabled: (enabled: boolean) => void;
 }
 
 export const useRitualStore = create<RitualState>()(
   persist(
     (set, get) => ({
       focusThreeIds: [],
+
+      isJournalEnabled: false,
+      isTodoEnabled: false,
+      isVaultNotesEnabled: false,
 
       isPremium: false,
       isRestDay: false,
@@ -323,6 +331,21 @@ export const useRitualStore = create<RitualState>()(
       },
       setOnboardingTourCompleted: (completed: boolean) => {
         set({ onboardingTourCompleted: completed });
+      },
+      setJournalEnabled: (enabled: boolean) => {
+        set({ isJournalEnabled: enabled });
+        const state = get();
+        syncPushModuleStates(state.isJournalEnabled, state.isTodoEnabled, state.isVaultNotesEnabled);
+      },
+      setTodoEnabled: (enabled: boolean) => {
+        set({ isTodoEnabled: enabled });
+        const state = get();
+        syncPushModuleStates(state.isJournalEnabled, state.isTodoEnabled, state.isVaultNotesEnabled);
+      },
+      setVaultNotesEnabled: (enabled: boolean) => {
+        set({ isVaultNotesEnabled: enabled });
+        const state = get();
+        syncPushModuleStates(state.isJournalEnabled, state.isTodoEnabled, state.isVaultNotesEnabled);
       },
 
     }),
