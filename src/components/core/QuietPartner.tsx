@@ -58,14 +58,14 @@ export default function QuietPartner() {
           // 3. Fetch partner's today's completed logs
           const todayStr = new Date().toLocaleDateString('en-CA');
           const { data: logs } = await supabase
-            .from('anchor_logs')
-            .select('anchor_id, completed')
+            .from('anchor_gathers')
+            .select('anchor_id')
             .eq('user_id', pUserId)
-            .eq('date', todayStr);
+            .eq('log_date', todayStr);
 
           const dotStates = (anchors || []).map(anchor => {
             const log = logs?.find(l => l.anchor_id === anchor.id);
-            return log ? !!log.completed : false;
+            return !!log;
           });
 
           // Pad to exactly 6 dots

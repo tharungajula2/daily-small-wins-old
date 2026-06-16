@@ -46,11 +46,7 @@ const TOUR_STEPS: TourStep[] = [
     description: 'A dedicated space to keep your core "Why" front and center. Because structure without purpose is just a cage.',
     targetId: 'tour-vision-card',
   },
-  {
-    title: 'The Horizon',
-    description: 'Focus on a single, long-term goal. Set your target date to stay grounded in the reality of your timeline.',
-    targetId: 'tour-dday-timer',
-  },
+
   {
     title: 'Playlists',
     description: 'These are your daily focus areas. Rather than stressful checklists, they are simple buckets. Tap "+ ✨ GEM" to log a small win anytime.',

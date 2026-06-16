@@ -115,7 +115,7 @@ export default function SettingsPage() {
 
       // Delete from all tables directly since user owns their data
       await supabase.from('anchor_gathers').delete().eq('user_id', uid);
-      await supabase.from('anchor_logs').delete().eq('user_id', uid);
+
       await supabase.from('daily_rituals').delete().eq('user_id', uid);
       await supabase.from('user_anchors').delete().eq('user_id', uid);
       await supabase.from('user_state').delete().eq('user_id', uid);

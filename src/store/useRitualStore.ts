@@ -2,8 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { 
   syncPushDailyRitual, syncPushPlaylists,
-  syncPushVision, syncPushGem, syncDeleteGem,
-  syncPushDDayTarget
+  syncPushVision, syncPushGem, syncDeleteGem
 } from '@/lib/supabase/syncEngine';
 
 export interface Gem {
@@ -91,10 +90,7 @@ interface RitualState {
   setOnboardingCompleted: (completed: boolean) => void;
   setOnboardingTourCompleted: (completed: boolean) => void;
 
-  dDayTargetDate: string | null;
-  dDayTitle: string | null;
-  setDDayTargetDate: (date: string | null) => void;
-  setDDayTitle: (title: string | null) => void;
+
 }
 
 export const useRitualStore = create<RitualState>()(
@@ -122,8 +118,7 @@ export const useRitualStore = create<RitualState>()(
       visionText: "I am building the structure for a better life.",
       morningTapText: "I'm here. Let's begin.",
 
-      dDayTargetDate: "2027-01-01",
-      dDayTitle: "Jan 1, 2027",
+
 
       hasSeenVisionTooltip: false,
 
@@ -329,20 +324,7 @@ export const useRitualStore = create<RitualState>()(
       setOnboardingTourCompleted: (completed: boolean) => {
         set({ onboardingTourCompleted: completed });
       },
-      setDDayTargetDate: (date: string | null) => {
-        set({ dDayTargetDate: date });
-        const state = get();
-        if (state.dDayTargetDate && state.dDayTitle) {
-          syncPushDDayTarget(state.dDayTargetDate, state.dDayTitle);
-        }
-      },
-      setDDayTitle: (title: string | null) => {
-        set({ dDayTitle: title });
-        const state = get();
-        if (state.dDayTargetDate && state.dDayTitle) {
-          syncPushDDayTarget(state.dDayTargetDate, state.dDayTitle);
-        }
-      },
+
     }),
     {
       name: 'trelis-life-ritual-storage',

@@ -78,16 +78,7 @@ export async function syncPullInitialState(userId: string, localState: any, setL
       updates.onboardingCompleted = !!userStateData.onboarding_completed;
       updates.onboardingTourCompleted = !!userStateData.onboarding_tour_completed;
 
-      if (userStateData.d_day_target_date) {
-        if (!localState.dDayTargetDate || localState.dDayTargetDate === "2026-01-01" || localState.dDayTargetDate === "2027-01-01") {
-          updates.dDayTargetDate = userStateData.d_day_target_date;
-        }
-      }
-      if (userStateData.d_day_title) {
-        if (!localState.dDayTitle || localState.dDayTitle === "Jan 1, 2026" || localState.dDayTitle === "Jan 1, 2027") {
-          updates.dDayTitle = userStateData.d_day_title;
-        }
-      }
+
     }
 
     if (dailyRitual) {
@@ -341,30 +332,7 @@ export async function syncPushOnboardingTourState(completed: boolean) {
   }
 }
 
-/**
- * Pushes D-Day target date to user_state.
- */
-export async function syncPushDDayTarget(targetDate: string, title: string) {
-  const supabase = createClient();
-  try {
-    const { data: { session }, error: sessionError } = await getSessionWithTimeout(supabase);
-    if (sessionError) throw sessionError;
-    if (!session?.user) return;
 
-    const { error } = await supabase
-      .from('user_state')
-      .upsert({
-        user_id: session.user.id,
-        d_day_target_date: targetDate,
-        d_day_title: title
-      }, { onConflict: 'user_id' });
-
-    if (error) throw error;
-    console.log("Sync Engine: Push D-Day Target Successful");
-  } catch (error: any) {
-    console.error("Sync Engine: Push D-Day Target Error", error.message || error);
-  }
-}
 
 /**
  * Pushes an individual Gem record to anchor_gathers.

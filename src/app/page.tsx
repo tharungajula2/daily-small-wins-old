@@ -13,7 +13,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Settings, Sunrise, Sun, Sunset, Moon, Plus, Minus } from 'lucide-react';
 import PlaylistManager from '@/components/widgets/PlaylistManager';
 import VisionPriming from '@/components/widgets/VisionPriming';
-import DDayTimer from '@/components/widgets/DDayTimer';
+
 import QuietPartner from '@/components/core/QuietPartner';
 import QuickLogDrawer from '@/components/widgets/QuickLogDrawer';
 import { createClient } from '@/lib/supabase/client';
@@ -393,9 +393,7 @@ function Dashboard() {
                     <div id="tour-vision-card">
                       <VisionPriming />
                     </div>
-                    <div id="tour-dday-timer">
-                      <DDayTimer />
-                    </div>
+
                   </div>
 
 
