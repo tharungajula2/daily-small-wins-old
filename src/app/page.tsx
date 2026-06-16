@@ -32,7 +32,8 @@ function Dashboard() {
   const { 
     feetOnFloorLogged, morningCheckInDone, sleepScore, moodScore, playlists, eveningCheckInDone,
     isVisionEnabled, currentStreak, lastActiveDate, setLastActiveDate,
-    isRestDay, toggleRestDay
+    isRestDay, toggleRestDay,
+    isJournalEnabled, isTodoEnabled, isVaultNotesEnabled
   } = useRitualStore();
   
   const totalWins = useRitualStore(state => getTotalWins(state));
@@ -393,6 +394,38 @@ function Dashboard() {
                     <div id="tour-vision-card">
                       <VisionPriming />
                     </div>
+
+                    {/* Optional Modules Placements */}
+                    {(isJournalEnabled || isTodoEnabled || isVaultNotesEnabled) && (
+                      <div className="flex flex-col gap-3">
+                        <div className="flex items-center justify-between px-1">
+                           <span className="text-[10px] tracking-widest text-ink-secondary uppercase font-semibold select-none">
+                             Active Modules
+                           </span>
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-3">
+                          {isJournalEnabled && (
+                            <button className="flex flex-col items-center justify-center p-4 bg-surface border border-muted/80 rounded-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05),0_1px_3px_rgba(0,0,0,0.02)] transition-all hover:border-accent-teal/30 active:scale-98">
+                              <span className="text-sm font-semibold text-ink-primary tracking-tight">Journal</span>
+                              <span className="text-[10px] text-ink-secondary mt-1 uppercase tracking-wider font-semibold opacity-60">Locked</span>
+                            </button>
+                          )}
+                          {isTodoEnabled && (
+                            <button className="flex flex-col items-center justify-center p-4 bg-surface border border-muted/80 rounded-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05),0_1px_3px_rgba(0,0,0,0.02)] transition-all hover:border-accent-teal/30 active:scale-98">
+                              <span className="text-sm font-semibold text-ink-primary tracking-tight">To-Do</span>
+                              <span className="text-[10px] text-ink-secondary mt-1 uppercase tracking-wider font-semibold opacity-60">Locked</span>
+                            </button>
+                          )}
+                          {isVaultNotesEnabled && (
+                            <button className={`flex flex-col items-center justify-center p-4 bg-surface border border-muted/80 rounded-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05),0_1px_3px_rgba(0,0,0,0.02)] transition-all hover:border-accent-teal/30 active:scale-98 ${(!isJournalEnabled && !isTodoEnabled) || (isJournalEnabled && isTodoEnabled) ? 'col-span-2' : 'col-span-1'}`}>
+                              <span className="text-sm font-semibold text-ink-primary tracking-tight">Notes Vault</span>
+                              <span className="text-[10px] text-ink-secondary mt-1 uppercase tracking-wider font-semibold opacity-60">Locked</span>
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    )}
 
                   </div>
 

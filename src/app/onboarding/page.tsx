@@ -125,7 +125,8 @@ export default function OnboardingPage() {
   // 3: Q1 (Breaking Loops)
   // 4: Q2 (Body-Mind)
   // 5: Q3 (Stillness or Reset)
-  // 6: Preview & Seed
+  // 6: Optional Modules
+  // 7: Preview & Seed
   const [step, setStep] = useState(1);
   const [direction, setDirection] = useState(1);
   const [wakeTime, setWakeTime] = useState("07:00");
@@ -145,6 +146,11 @@ export default function OnboardingPage() {
   );
   const [includeQ3, setIncludeQ3] = useState(false);
   const [q3Title, setQ3Title] = useState("Stillness");
+
+  // Optional Modules
+  const [enableJournal, setEnableJournal] = useState(false);
+  const [enableTodo, setEnableTodo] = useState(false);
+  const [enableVaultNotes, setEnableVaultNotes] = useState(false);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -271,6 +277,11 @@ export default function OnboardingPage() {
 
       // Update local store state
       store.setOnboardingCompleted(true);
+      
+      // Set Module Flags
+      store.setJournalEnabled(enableJournal);
+      store.setTodoEnabled(enableTodo);
+      store.setVaultNotesEnabled(enableVaultNotes);
 
       // 5. Enter application
       router.push("/");
@@ -312,7 +323,7 @@ export default function OnboardingPage() {
           )}
 
           <span className="text-[10px] font-bold tracking-widest text-ink-secondary uppercase">
-            Step {step} of 6
+            Step {step} of 7
           </span>
 
           <button
@@ -326,7 +337,7 @@ export default function OnboardingPage() {
 
         {/* Dots progress indicator */}
         <div className="flex justify-center gap-2 mt-2">
-          {[1, 2, 3, 4, 5, 6].map((num) => (
+          {[1, 2, 3, 4, 5, 6, 7].map((num) => (
             <div
               key={num}
               className={`h-1.5 rounded-full transition-all duration-300 ${
@@ -613,8 +624,84 @@ export default function OnboardingPage() {
               </div>
             )}
 
-            {/* SCREEN 6: Review & Seed */}
+            {/* SCREEN 6: Optional Modules */}
             {step === 6 && (
+              <div className="flex flex-col gap-4 text-left">
+                <div>
+                  <h2 className="text-xl font-semibold tracking-tight text-ink-primary">
+                    Optional Modules
+                  </h2>
+                  <p className="text-[10px] text-ink-secondary tracking-widest uppercase mt-0.5 font-semibold">
+                    Customize your Trelis experience
+                  </p>
+                </div>
+                <p className="text-xs text-ink-secondary leading-relaxed font-normal">
+                  Turn on additional tools to manage your day. You can change these anytime in Settings.
+                </p>
+
+                <div className="flex flex-col gap-3 mt-2">
+                  <div className="flex items-center justify-between p-4 rounded-xl border bg-surface border-muted shadow-xs">
+                    <div className="flex flex-col gap-1">
+                      <span className="text-sm font-semibold text-ink-primary">Journal</span>
+                      <span className="text-[10px] text-ink-secondary">Deep daily reflection</span>
+                    </div>
+                    <button
+                      onClick={() => setEnableJournal(!enableJournal)}
+                      className={`w-11 h-6 rounded-full transition-colors flex items-center px-1 ${
+                        enableJournal ? "bg-accent-teal" : "bg-muted"
+                      }`}
+                    >
+                      <motion.div
+                        className="w-4 h-4 bg-white rounded-full shadow-sm"
+                        animate={{ x: enableJournal ? 20 : 0 }}
+                        transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                      />
+                    </button>
+                  </div>
+
+                  <div className="flex items-center justify-between p-4 rounded-xl border bg-surface border-muted shadow-xs">
+                    <div className="flex flex-col gap-1">
+                      <span className="text-sm font-semibold text-ink-primary">To-Do</span>
+                      <span className="text-[10px] text-ink-secondary">Task management</span>
+                    </div>
+                    <button
+                      onClick={() => setEnableTodo(!enableTodo)}
+                      className={`w-11 h-6 rounded-full transition-colors flex items-center px-1 ${
+                        enableTodo ? "bg-accent-teal" : "bg-muted"
+                      }`}
+                    >
+                      <motion.div
+                        className="w-4 h-4 bg-white rounded-full shadow-sm"
+                        animate={{ x: enableTodo ? 20 : 0 }}
+                        transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                      />
+                    </button>
+                  </div>
+
+                  <div className="flex items-center justify-between p-4 rounded-xl border bg-surface border-muted shadow-xs">
+                    <div className="flex flex-col gap-1">
+                      <span className="text-sm font-semibold text-ink-primary">Notes Vault</span>
+                      <span className="text-[10px] text-ink-secondary">Secure scratchpad</span>
+                    </div>
+                    <button
+                      onClick={() => setEnableVaultNotes(!enableVaultNotes)}
+                      className={`w-11 h-6 rounded-full transition-colors flex items-center px-1 ${
+                        enableVaultNotes ? "bg-accent-teal" : "bg-muted"
+                      }`}
+                    >
+                      <motion.div
+                        className="w-4 h-4 bg-white rounded-full shadow-sm"
+                        animate={{ x: enableVaultNotes ? 20 : 0 }}
+                        transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                      />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* SCREEN 7: Review & Seed */}
+            {step === 7 && (
               <div className="flex flex-col gap-4 text-left">
                 <div>
                   <h2 className="text-xl font-semibold tracking-tight text-ink-primary">
@@ -709,7 +796,7 @@ export default function OnboardingPage() {
 
       {/* 3. Footer Action Button */}
       <div className="mt-4">
-        {step < 6 ? (
+        {step < 7 ? (
           <button
             onClick={handleNext}
             className="w-full py-3.5 rounded-xl font-semibold text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2 active:scale-98 shadow-xs bg-accent-teal text-surface hover:bg-accent-teal/95"

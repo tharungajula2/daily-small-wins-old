@@ -23,6 +23,12 @@ export default function SettingsPage() {
     setVisionText, 
     isVisionEnabled, 
     toggleVision,
+    isJournalEnabled,
+    isTodoEnabled,
+    isVaultNotesEnabled,
+    setJournalEnabled,
+    setTodoEnabled,
+    setVaultNotesEnabled,
     playlists,
     renamePlaylist,
     togglePlaylistActive,
@@ -360,6 +366,51 @@ export default function SettingsPage() {
                     {line}
                   </button>
                 ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Optional Modules Config */}
+          <div className="p-4 rounded-xl bg-surface border border-muted/80 flex flex-col gap-3 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05),0_1px_3px_rgba(0,0,0,0.02)]">
+            <h3 className="text-xs font-semibold text-ink-secondary uppercase tracking-wider mb-1">Optional Modules</h3>
+            <div className="flex flex-col gap-4">
+              <div className="flex items-center justify-between">
+                <div className="flex flex-col gap-1">
+                  <span className="text-sm font-semibold text-ink-primary">Journal</span>
+                  <span className="text-[10px] text-ink-secondary">Deep daily reflection</span>
+                </div>
+                <button
+                  onClick={() => { try { void 0; } catch {}; setJournalEnabled(!isJournalEnabled); }}
+                  className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none ${isJournalEnabled ? 'bg-accent-teal' : 'bg-muted'}`}
+                >
+                  <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-surface transition duration-200 ease-in-out shadow-sm ${isJournalEnabled ? 'translate-x-4.5' : 'translate-x-1'}`} />
+                </button>
+              </div>
+
+              <div className="flex items-center justify-between border-t border-muted/40 pt-3">
+                <div className="flex flex-col gap-1">
+                  <span className="text-sm font-semibold text-ink-primary">To-Do</span>
+                  <span className="text-[10px] text-ink-secondary">Task management</span>
+                </div>
+                <button
+                  onClick={() => { try { void 0; } catch {}; setTodoEnabled(!isTodoEnabled); }}
+                  className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none ${isTodoEnabled ? 'bg-accent-teal' : 'bg-muted'}`}
+                >
+                  <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-surface transition duration-200 ease-in-out shadow-sm ${isTodoEnabled ? 'translate-x-4.5' : 'translate-x-1'}`} />
+                </button>
+              </div>
+
+              <div className="flex items-center justify-between border-t border-muted/40 pt-3">
+                <div className="flex flex-col gap-1">
+                  <span className="text-sm font-semibold text-ink-primary">Notes Vault</span>
+                  <span className="text-[10px] text-ink-secondary">Secure scratchpad</span>
+                </div>
+                <button
+                  onClick={() => { try { void 0; } catch {}; setVaultNotesEnabled(!isVaultNotesEnabled); }}
+                  className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none ${isVaultNotesEnabled ? 'bg-accent-teal' : 'bg-muted'}`}
+                >
+                  <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-surface transition duration-200 ease-in-out shadow-sm ${isVaultNotesEnabled ? 'translate-x-4.5' : 'translate-x-1'}`} />
+                </button>
               </div>
             </div>
           </div>
