@@ -10,6 +10,8 @@
 
 Trelis Life is a premium daily routine companion designed to instill structural clarity into a chaotic existence. It rejects standard quantified-self metrics, gamified pressure, and alarmist notifications in favor of a clinical, calm, and structured habit check-in flow.
 
+**Architectural Pivot (v2.0.0):** The application is now a **100% Progressive Web App (PWA)**. All `@capacitor` and native Android wrappers have been eradicated. The app runs optimally when added to the user's home screen via mobile Safari/Chrome, functioning as a standalone native-like experience.
+
 ### Core Philosophy: "The Calm-Game Law"
 1. **Subtraction over Addition**: Features are kept minimal, self-evident, and focused. There are no waitlists, monetization hooks, or commercial tiers.
 2. **Anti-Quantified-Self Metrics**: The system forbids displaying raw, anxious counts (such as "7,432 steps") on primary dashboards. Metrics are mapped to simple binary progress indicators or concentric progress arcs.
@@ -51,18 +53,11 @@ Extracted exactly from `package.json`:
     - `lucide-react`: `^1.16.0`
     - `@supabase/ssr`: `^0.10.3`
     - `@supabase/supabase-js`: `^2.105.4`
-    - `@capacitor/core`: `^8.3.4`
-    - `@capacitor/android`: `^8.3.4`
-    - `@capacitor/app`: `^8.1.0`
-    - `@capacitor/haptics`: `^8.0.2`
-    - `@capacitor/preferences`: `^8.0.1`
     - `date-fns`: `^4.1.0`
 *   **Development Dependencies:**
     - `typescript`: `^5`
     - `@tailwindcss/postcss`: `^4`
     - `tailwindcss`: `^4`
-    - `@capacitor/cli`: `^8.3.4`
-    - `@capacitor/assets`: `^3.0.5`
     - `eslint`: `^9`
     - `eslint-config-next`: `16.2.6`
 
@@ -150,7 +145,10 @@ CREATE TABLE public.user_state (
     longest_streak integer DEFAULT 0,
     lifetime_anchor_count bigint DEFAULT 0, -- Deprecated/Purged in v2.0.0 (dynamically selected from aggregate keep counts)
     hardest_pillar text, -- Deprecated/Ignored in 2.0.0
-    hardest_pillar_until date -- Deprecated/Ignored in 2.0.0
+    hardest_pillar_until date, -- Deprecated/Ignored in 2.0.0
+    is_journal_enabled boolean DEFAULT false,
+    is_todo_enabled boolean DEFAULT false,
+    is_vault_notes_enabled boolean DEFAULT false
 );
 ```
 
@@ -195,6 +193,44 @@ CREATE TABLE public.daily_rituals (
     sleep_duration numeric,
     pulse_score integer,
     PRIMARY KEY (user_id, date)
+);
+```
+
+#### Table 7: `public.journal_entries`
+Stores ultra-premium Apple-grade journal entries.
+```sql
+CREATE TABLE public.journal_entries (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    content text NOT NULL,
+    word_count integer DEFAULT 0,
+    created_at timestamp with time zone DEFAULT now()
+);
+```
+
+#### Table 8: `public.todos`
+Tracks frictionless tasks utilizing visual muting upon completion.
+```sql
+CREATE TABLE public.todos (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    task text NOT NULL,
+    is_completed boolean DEFAULT false,
+    created_at timestamp with time zone DEFAULT now(),
+    completed_at timestamp with time zone
+);
+```
+
+#### Table 9: `public.vault_notes`
+Secure ledger for long-form thoughts and structure.
+```sql
+CREATE TABLE public.vault_notes (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    title text,
+    content text NOT NULL,
+    created_at timestamp with time zone DEFAULT now(),
+    updated_at timestamp with time zone DEFAULT now()
 );
 ```
 

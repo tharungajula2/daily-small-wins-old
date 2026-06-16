@@ -67,13 +67,6 @@ In the center of the screen sits a beautiful, concentric progress ring with an o
 - **How it works:** This ring tracks only two things: Your Morning Check-in and your Evening Wind-down.
 - **The Reasoning:** The bookends of your day dictate the middle of your day. If you control how you wake up and how you go to sleep, the rest of your life falls into structure. The open seam at the bottom is a philosophical reminder that the loop of life is never fully "closed" or "perfect"; it is simply maintained daily.
 
-### The D-Day Timer
-At the top of the dashboard sits the D-Day Target card.
-- **How it works:** It is a hardcoded, unchangeable countdown timer pointing exactly to **January 1, 2027**. It displays the days, hours, and minutes remaining.
-- **The Reasoning:** Humans struggle with abstract time. By anchoring your life to a specific, immovable milestone in the future, it forces perspective. It acts as a silent, urgent reminder to capture your Gems *today*, because time is finite.
-
----
-
 ## 5. The Daily Workflow
 
 Using Trelis Life takes less than 3 minutes a day. Here is the perfect daily flow:
@@ -150,6 +143,28 @@ The `/settings` portal allows you to manage the deep parameters of your Life OS:
 At the very bottom of the Settings page lies a red button labeled **"ERASE ALL MY DATA (START FRESH)"**.
 - **How it works:** Clicking this completely wipes your Supabase database profile, clears your local cache, and resets your entire account to absolute zero.
 - **The Reasoning:** Sometimes, life gets too cluttered. If your Playlists become messy, or you've been inactive for months and the ghosts of old data are bothering you, this button allows you to declare "bankruptcy" and start a fresh Arc immediately. It is the ultimate guarantee of a clean slate.
+
+---
+
+## 10. Optional Modules: The Opt-In Core
+
+Trelis is designed with the philosophy of "Subtraction over Addition." However, for users who need slightly more structure, we offer three Optional Modules that can be toggled on or off independently via the Settings page. If you turn them off, they completely vanish from the UI, keeping your dashboard distraction-free.
+
+### The Journal
+A premium, Apple-grade writing experience.
+- Provides a completely distraction-free, auto-expanding text editor.
+- Automatically tracks your writing streaks, word counts, and visualizes your consistency on a beautiful monthly calendar grid.
+
+### The To-Do Engine
+A frictionless task manager built on the philosophy of "Visual Muting."
+- **Frictionless Capture:** Instantly drop tasks into your timeline.
+- **Visual Muting:** Unlike traditional apps that use harsh neon colors or abruptly delete completed tasks, checking off a Trelis task causes it to gracefully glide into a "Completed" section. The task fades into a satisfying grayscale with a subtle strikethrough, gracefully getting out of your way without the jarring anxiety of disappearing items.
+
+### The Notes Vault
+An ultra-premium ledger for free-form thoughts and structural documents.
+- Displays notes as minimalist, pure white cards on the grid.
+- Features a fluid, auto-expanding editor with a highly tactile save interaction.
+- Syncs instantly to the cloud so your deep thoughts are never lost.
 
 ---
 
