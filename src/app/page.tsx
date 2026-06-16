@@ -406,9 +406,9 @@ function Dashboard() {
                         
                         <div className="grid grid-cols-2 gap-3">
                           {isJournalEnabled && (
-                            <button className="flex flex-col items-center justify-center p-4 bg-surface border border-muted/80 rounded-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05),0_1px_3px_rgba(0,0,0,0.02)] transition-all hover:border-accent-teal/30 active:scale-98">
+                            <button onClick={() => router.push('/journal')} className="flex flex-col items-center justify-center p-4 bg-surface border border-muted/80 rounded-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05),0_1px_3px_rgba(0,0,0,0.02)] transition-all hover:border-accent-teal/30 active:scale-98">
                               <span className="text-sm font-semibold text-ink-primary tracking-tight">Journal</span>
-                              <span className="text-[10px] text-ink-secondary mt-1 uppercase tracking-wider font-semibold opacity-60">Locked</span>
+                              <span className="text-[10px] text-accent-teal mt-1 uppercase tracking-wider font-semibold opacity-90">Open</span>
                             </button>
                           )}
                           {isTodoEnabled && (

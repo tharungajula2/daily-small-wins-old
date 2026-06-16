@@ -2,8 +2,17 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { 
   syncPushDailyRitual, syncPushPlaylists,
-  syncPushVision, syncPushGem, syncDeleteGem, syncPushModuleStates
+  syncPushVision, syncPushGem, syncDeleteGem, syncPushModuleStates,
+  syncPushJournalEntry
 } from '@/lib/supabase/syncEngine';
+
+export interface JournalEntry {
+  id: string;
+  user_id: string;
+  content: string;
+  word_count: number;
+  created_at: string;
+}
 
 export interface Gem {
   id: string;
@@ -95,6 +104,10 @@ interface RitualState {
   setJournalEnabled: (enabled: boolean) => void;
   setTodoEnabled: (enabled: boolean) => void;
   setVaultNotesEnabled: (enabled: boolean) => void;
+
+  journalEntries: JournalEntry[];
+  setJournalEntries: (entries: JournalEntry[]) => void;
+  addJournalEntry: (entry: JournalEntry) => void;
 }
 
 export const useRitualStore = create<RitualState>()(
@@ -108,6 +121,7 @@ export const useRitualStore = create<RitualState>()(
 
       isPremium: false,
       isRestDay: false,
+      journalEntries: [],
       onboardingCompleted: false,
       onboardingTourCompleted: false,
       feetOnFloorLogged: false,
@@ -348,6 +362,13 @@ export const useRitualStore = create<RitualState>()(
         syncPushModuleStates(state.isJournalEnabled, state.isTodoEnabled, state.isVaultNotesEnabled);
       },
 
+      setJournalEntries: (entries: JournalEntry[]) => set({ journalEntries: entries }),
+      addJournalEntry: (entry: JournalEntry) => {
+        set((state) => ({
+          journalEntries: [entry, ...state.journalEntries]
+        }));
+        syncPushJournalEntry(entry);
+      }
     }),
     {
       name: 'trelis-life-ritual-storage',

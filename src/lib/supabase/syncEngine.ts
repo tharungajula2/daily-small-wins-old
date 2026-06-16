@@ -71,6 +71,13 @@ export async function syncPullInitialState(userId: string, localState: any, setL
       .eq('user_id', userId)
       .maybeSingle();
 
+    // 8. Pull Journal Entries
+    const { data: journalEntries } = await supabase
+      .from('journal_entries')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+
     // Conflict Resolution: Local wins.
     const updates: any = {};
 
@@ -81,6 +88,10 @@ export async function syncPullInitialState(userId: string, localState: any, setL
       if (userStateData.is_journal_enabled !== null) updates.isJournalEnabled = userStateData.is_journal_enabled;
       if (userStateData.is_todo_enabled !== null) updates.isTodoEnabled = userStateData.is_todo_enabled;
       if (userStateData.is_vault_notes_enabled !== null) updates.isVaultNotesEnabled = userStateData.is_vault_notes_enabled;
+    }
+
+    if (journalEntries) {
+      updates.journalEntries = journalEntries;
     }
 
     if (dailyRitual) {
@@ -414,5 +425,36 @@ export async function syncDeleteGem(gemId: string) {
     console.log(`Sync Engine: Delete Gem (${gemId}) Successful`);
   } catch (error: any) {
     console.error("Sync Engine: Delete Gem Error", error.message || error);
+  }
+}
+
+/**
+ * Pushes a single journal entry to Supabase.
+ */
+export async function syncPushJournalEntry(entry: any) {
+  const supabase = createClient();
+  try {
+    const { data: { session }, error: sessionError } = await getSessionWithTimeout(supabase);
+    if (sessionError) throw sessionError;
+    if (!session?.user) return;
+    
+    if (!isValidUUID(entry.id)) return;
+    
+    const payload = {
+      id: entry.id,
+      user_id: session.user.id,
+      content: entry.content,
+      word_count: entry.word_count,
+      created_at: entry.created_at || new Date().toISOString()
+    };
+    
+    const { error } = await supabase
+      .from('journal_entries')
+      .upsert(payload, { onConflict: 'id' });
+      
+    if (error) throw error;
+    console.log(`Sync Engine: Push Journal Entry (${entry.id}) Successful`);
+  } catch (error: any) {
+    console.error("Sync Engine: Push Journal Entry Error", error.message || error);
   }
 }
