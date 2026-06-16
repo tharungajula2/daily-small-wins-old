@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Haptics, ImpactStyle } from '@capacitor/haptics';
+
 import { useRitualStore } from '@/store/useRitualStore';
 
 export default function MorningCheckIn() {
@@ -19,7 +19,7 @@ export default function MorningCheckIn() {
   const handleComplete = async () => {
     if (sleep === null || mood === null || !ritualDone || !bedTime || !duration) return;
     
-    try { await Haptics.impact({ style: ImpactStyle.Light }); } catch (e) {}
+    try { await void 0; } catch (e) {}
     
     completeMorningCheckIn(sleep, mood, bedTime, parseFloat(duration));
   };

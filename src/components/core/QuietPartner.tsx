@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Haptics, ImpactStyle } from '@capacitor/haptics';
+
 import { createClient } from '@/lib/supabase/client';
 import { Heart, Activity } from 'lucide-react';
 
@@ -108,7 +108,7 @@ export default function QuietPartner() {
 
   const sendNudge = async (type: 'thinking' | 'proud' | 'walk') => {
     try {
-      await Haptics.impact({ style: ImpactStyle.Light });
+      await void 0;
       if (!partnerUserId) return;
 
       const { data: { session } } = await supabase.auth.getSession();
@@ -134,7 +134,7 @@ export default function QuietPartner() {
 
   const dismissNudge = async (nudgeId: string) => {
     try {
-      await Haptics.impact({ style: ImpactStyle.Light });
+      await void 0;
       await supabase
         .from('partner_nudges')
         .update({ is_read: true })

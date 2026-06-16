@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRitualStore } from '@/store/useRitualStore';
-import { Haptics, ImpactStyle } from '@capacitor/haptics';
+
 import { Plus, X, Sparkles, FolderPlus } from 'lucide-react';
 
 export default function QuickLogDrawer({
@@ -29,7 +29,7 @@ export default function QuickLogDrawer({
     if (!selectedPlaylistId) return;
     if (!label.trim() && !tagsInput.trim()) return;
 
-    try { await Haptics.impact({ style: ImpactStyle.Light }); } catch (e) {}
+    try { await void 0; } catch (e) {}
 
     const tags = tagsInput
       .split(',')

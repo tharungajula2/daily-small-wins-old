@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { App } from '@capacitor/app';
+
 import { useRitualStore } from '@/store/useRitualStore';
 
 export default function AppLifecycleManager() {
@@ -37,12 +37,7 @@ export default function AppLifecycleManager() {
     // 3. Bulletproof 1-second interval to catch exact midnight transitions immediately
     const checkInterval = setInterval(checkReset, 1000);
 
-    // 4. Listen for Capacitor foreground state triggers
-    const listener = App.addListener('appStateChange', (state) => {
-      if (state.isActive) {
-        checkReset();
-      }
-    });
+    // 4. (Capacitor foreground listener removed)
 
     // 5. Listen for web tab visibility changes
     const handleVisibilityChange = () => {
@@ -56,7 +51,6 @@ export default function AppLifecycleManager() {
       unsubHydrate();
       clearInterval(checkInterval);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
-      listener.then((l) => l.remove());
     };
   }, []);
 

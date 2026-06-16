@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Haptics, ImpactStyle } from '@capacitor/haptics';
+
 import { Playlist, useRitualStore } from '@/store/useRitualStore';
 import { Sparkles, X, Info } from 'lucide-react';
 
@@ -57,7 +57,7 @@ export default function PlaylistCard({
 
   const handleSaveGem = async () => {
     if (!gemLabel.trim() && selectedTags.length === 0 && !gemTagsInput.trim()) return;
-    try { await Haptics.impact({ style: ImpactStyle.Light }); } catch (e) {}
+    try { await void 0; } catch (e) {}
     
     const manualTags = gemTagsInput
       .split(',')
@@ -76,7 +76,7 @@ export default function PlaylistCard({
 
   const handleDeleteGem = async () => {
     if (!editingGemId) return;
-    try { await Haptics.impact({ style: ImpactStyle.Medium }); } catch (e) {}
+    try { await void 0; } catch (e) {}
     deleteGem(playlist.id, editingGemId);
     handleCloseDrawer();
   };
@@ -346,7 +346,7 @@ export default function PlaylistCard({
                         </div>
                         <button
                           onClick={async () => {
-                            try { await Haptics.impact({ style: ImpactStyle.Medium }); } catch (e) {}
+                            try { await void 0; } catch (e) {}
                             deleteGem(playlist.id, g.id);
                           }}
                           className="text-ink-tertiary hover:text-error p-2 transition-colors"

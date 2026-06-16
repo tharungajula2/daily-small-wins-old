@@ -10,11 +10,6 @@
     "build:mobile": "npm run build && npx cap sync android"
   },
   "dependencies": {
-    "@capacitor/android": "^8.3.4",
-    "@capacitor/app": "^8.1.0",
-    "@capacitor/core": "^8.3.4",
-    "@capacitor/haptics": "^8.0.2",
-    "@capacitor/preferences": "^8.0.1",
     "@supabase/ssr": "^0.10.3",
     "@supabase/supabase-js": "^2.105.4",
     "date-fns": "^4.1.0",
@@ -26,8 +21,6 @@
     "zustand": "^5.0.13"
   },
   "devDependencies": {
-    "@capacitor/assets": "^3.0.5",
-    "@capacitor/cli": "^8.3.4",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",

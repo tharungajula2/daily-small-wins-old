@@ -106,6 +106,7 @@ Before you go to sleep, complete the loop.
 The Vault (accessible via the cookie icon on the top right) is your permanent historical record. 
 
 - **What it is:** A chronological ledger of every single Gem you have ever captured, every Win of the Day you have logged, and every Sunday Debrief you have written.
+- **Editing & Deleting:** While the Vault is a permanent record of momentum, we understand mistakes happen when logging. You can tap on any historical Gem or entry in the Vault to seamlessly edit its details or delete it entirely if it was logged in error, ensuring your timeline remains perfectly accurate.
 - **The Reasoning:** Because Trelis rejects failure metrics, there is no page that shows "Habits you missed." Instead, the Vault is a beautifully designed timeline of pure positive momentum. When you feel lost or unmotivated, scrolling through the Vault serves as undeniable proof of your capabilities.
 
 ---
@@ -143,6 +144,7 @@ The `/settings` portal allows you to manage the deep parameters of your Life OS:
 - **Manage Playlists:** Add, prioritize, or retire your custom categories.
 - **Vision Priming:** Write a core intention statement ("Your Daily Why") that you can choose to display every morning.
 - **Quiet Partner Setup:** Send or revoke partner invitations.
+- **Replay Onboarding Tour:** Trigger the 10-step spotlight tour again if you need a refresher on the dashboard mechanics.
 
 ### The "Erase All My Data" Button
 At the very bottom of the Settings page lies a red button labeled **"ERASE ALL MY DATA (START FRESH)"**.

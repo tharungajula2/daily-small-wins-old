@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Haptics, ImpactStyle } from '@capacitor/haptics';
+
 import { useRitualStore } from '@/store/useRitualStore';
 import { MORNING_INTENTIONS } from '@/utils/prompts';
 
@@ -13,7 +13,7 @@ export default function VisionPriming() {
 
   const handleSave = async () => {
     if (!inputValue.trim()) return;
-    try { await Haptics.impact({ style: ImpactStyle.Light }); } catch (e) {}
+    try { await void 0; } catch (e) {}
     setVisionText(inputValue.trim());
     setIsEditing(false);
   };

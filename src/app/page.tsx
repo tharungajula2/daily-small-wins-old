@@ -21,7 +21,7 @@ import { useRouter } from 'next/navigation';
 
 import { evaluateYesterdayStreak } from '@/utils/streakEngine';
 import GentleReEntryScreen from '@/components/core/GentleReEntryScreen';
-import { Haptics, ImpactStyle } from '@capacitor/haptics';
+
 import LandingPage from '@/components/core/LandingPage';
 
 import OnboardingTour from '@/components/core/OnboardingTour';

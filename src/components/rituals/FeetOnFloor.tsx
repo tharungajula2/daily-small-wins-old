@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
-import { Haptics, ImpactStyle } from '@capacitor/haptics';
+
 import { useRitualStore } from '@/store/useRitualStore';
 import { MORNING_TAP_LINES } from '@/utils/prompts';
 
@@ -23,7 +23,7 @@ export default function FeetOnFloor() {
     setIsAnimating(true);
 
     try {
-      await Haptics.impact({ style: ImpactStyle.Medium });
+      await void 0;
     } catch (e) {
       console.log('Haptics not available in web context');
     }

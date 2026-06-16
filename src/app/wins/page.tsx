@@ -8,7 +8,7 @@ import { useRitualStore } from '@/store/useRitualStore';
 import { ChevronLeft, Sparkles, Plus, Trophy } from 'lucide-react';
 import PlaylistCard from '@/components/core/PlaylistCard';
 import PlaylistManager from '@/components/widgets/PlaylistManager';
-import { Haptics, ImpactStyle } from '@capacitor/haptics';
+
 
 export default function WinsPage() {
   const router = useRouter();
@@ -59,7 +59,7 @@ export default function WinsPage() {
         <motion.button 
           whileTap={{ scale: 0.95 }}
           onClick={() => {
-            try { Haptics.impact({ style: ImpactStyle.Light }); } catch(e){}
+            try { void 0; } catch(e){}
             router.push('/');
           }}
           className="w-10 h-10 flex items-center justify-start text-ink-secondary hover:text-ink-primary transition-colors focus:outline-none"

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { useRitualStore } from '@/store/useRitualStore';
 import { ArrowLeft, ChevronUp, ChevronDown, Sparkles, LineChart, ChevronRight } from 'lucide-react';
-import { Haptics, ImpactStyle } from '@capacitor/haptics';
+
 import { 
   MORNING_INTENTIONS, 
   MORNING_TAP_LINES, 
@@ -97,7 +97,7 @@ export default function SettingsPage() {
   };
 
   const handleReplayTour = async () => {
-    try { Haptics.vibrate(); } catch {}
+    try { void 0; } catch {}
     setOnboardingTourCompleted(false);
     await syncPushOnboardingTourState(false);
     router.push('/');
@@ -221,7 +221,7 @@ export default function SettingsPage() {
 
   const handleNuclearSignOut = async () => {
     try {
-      await Haptics.impact({ style: ImpactStyle.Heavy });
+      await void 0;
     } catch (e) {
       // safe fallback on browser
     }
@@ -297,7 +297,7 @@ export default function SettingsPage() {
               <h3 className="text-xs font-semibold text-ink-secondary uppercase tracking-wider">Vision</h3>
               <button 
                 onClick={() => {
-                  try { Haptics.vibrate(); } catch {}
+                  try { void 0; } catch {}
                   toggleVision();
                 }}
                 className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none ${isVisionEnabled ? 'bg-accent-teal' : 'bg-muted'}`}
@@ -472,7 +472,7 @@ export default function SettingsPage() {
                           <button
                             type="button"
                             onClick={() => {
-                              try { Haptics.impact({ style: ImpactStyle.Light }); } catch {}
+                              try { void 0; } catch {}
                               togglePlaylistActive(playlist.id);
                             }}
                             className={`px-3 py-1 border rounded text-[10px] uppercase font-semibold transition-colors ${
@@ -509,7 +509,7 @@ export default function SettingsPage() {
               
               <button
                 onClick={async () => {
-                  try { await Haptics.impact({ style: ImpactStyle.Medium }); } catch {}
+                  try { await void 0; } catch {}
                   await reverseEveningCheckIn();
                   alert("Today's sleep log has been reversed.");
                 }}

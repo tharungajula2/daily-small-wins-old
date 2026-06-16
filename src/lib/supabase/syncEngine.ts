@@ -58,12 +58,11 @@ export async function syncPullInitialState(userId: string, localState: any, setL
       .select('*')
       .eq('user_id', userId);
 
-    // 4. Pull Today's Gathers
+    // 4. Pull All Gathers (Historical + Today)
     const { data: anchorGathers } = await supabase
       .from('anchor_gathers')
       .select('*')
-      .eq('user_id', userId)
-      .eq('log_date', today);
+      .eq('user_id', userId);
 
     // 7. Pull User State
     const { data: userStateData } = await supabase

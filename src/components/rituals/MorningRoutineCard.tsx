@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Haptics, ImpactStyle } from '@capacitor/haptics';
+
 import { useRitualStore } from '@/store/useRitualStore';
 import { Sun, Check } from 'lucide-react';
 import { format } from 'date-fns';
@@ -39,7 +39,7 @@ export default function MorningRoutineCard() {
     if (feetOnFloorLogged || isAnimating) return;
     setIsAnimating(true);
     try {
-      await Haptics.impact({ style: ImpactStyle.Medium });
+      await void 0;
     } catch (e) {}
     setTimeout(() => {
       markFeetOnFloor(new Date().toISOString());

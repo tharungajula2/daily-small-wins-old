@@ -2,7 +2,7 @@
 
 import { motion, useInView } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
-import { Haptics, ImpactStyle } from '@capacitor/haptics';
+
 import { Sparkles, Minus } from 'lucide-react';
 
 interface PulseScoreProps {
@@ -55,7 +55,7 @@ export default function PulseScore({ completedCount, totalCount, totalWins = 0, 
     if (isFullyCompleted && !wasFullyCompleted) {
       const playHaptic = async () => {
         try {
-          await Haptics.impact({ style: ImpactStyle.Light });
+          await void 0;
         } catch (e) {
           if (typeof window !== 'undefined' && 'vibrate' in navigator) {
             navigator.vibrate(10);

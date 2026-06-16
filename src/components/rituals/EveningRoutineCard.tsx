@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Haptics, ImpactStyle } from '@capacitor/haptics';
+
 import { useRitualStore } from '@/store/useRitualStore';
 import { Moon, Shield, Check, ChevronDown, ChevronUp } from 'lucide-react';
 
@@ -15,7 +15,7 @@ export default function EveningRoutineCard() {
 
   const handleCloseDay = async () => {
     try {
-      await Haptics.impact({ style: ImpactStyle.Light });
+      await void 0;
     } catch (e) {}
     // We send empty strings because Win and Park are removed
     await completeEveningCheckIn('', '');

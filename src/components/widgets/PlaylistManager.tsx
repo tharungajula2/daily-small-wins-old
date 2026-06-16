@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRitualStore } from '@/store/useRitualStore';
-import { Haptics, ImpactStyle } from '@capacitor/haptics';
+
 import { 
   ANCHOR_NAME_SUGGESTIONS
 } from '@/utils/prompts';
@@ -38,7 +38,7 @@ export default function PlaylistManager({ onClose }: { onClose: () => void }) {
 
   const handleAdd = async () => {
     if (!newTitle.trim()) return;
-    try { await Haptics.impact({ style: ImpactStyle.Light }); } catch (e) {}
+    try { await void 0; } catch (e) {}
     
 
 
@@ -52,7 +52,7 @@ export default function PlaylistManager({ onClose }: { onClose: () => void }) {
   };
 
   const handleRemove = async (id: string) => {
-    try { await Haptics.impact({ style: ImpactStyle.Medium }); } catch (e) {}
+    try { await void 0; } catch (e) {}
     removePlaylist(id);
   };
 
@@ -63,7 +63,7 @@ export default function PlaylistManager({ onClose }: { onClose: () => void }) {
       alert("Up to 5 categories — keep it focused.");
       return;
     }
-    try { await Haptics.impact({ style: ImpactStyle.Light }); } catch (e) {}
+    try { await void 0; } catch (e) {}
     togglePlaylistActive(id);
   };
 
@@ -74,7 +74,7 @@ export default function PlaylistManager({ onClose }: { onClose: () => void }) {
 
   const handleSaveEdit = async (id: string) => {
     if (!editTitle.trim()) return;
-    try { await Haptics.impact({ style: ImpactStyle.Light }); } catch (e) {}
+    try { await void 0; } catch (e) {}
     
     renamePlaylist(id, editTitle.trim());
     setEditingPlaylistId(null);

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Haptics, ImpactStyle } from '@capacitor/haptics';
+
 import { useRitualStore } from '@/store/useRitualStore';
 
 export default function EveningCheckIn() {
@@ -15,7 +15,7 @@ export default function EveningCheckIn() {
     if (!win.trim()) return; // Win is mandatory
     
     try {
-      await Haptics.impact({ style: ImpactStyle.Light });
+      await void 0;
     } catch (e) {
       // web fallback
     }
