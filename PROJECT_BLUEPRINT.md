@@ -1,6 +1,6 @@
 # Trelis Life — Project Blueprint
 
-> This guide describes the checked-in application as inspected on 31 October 2026. Source code is the implementation evidence. Historical product documents are preserved, but some of their claims do not match the current source. No app runtime, build, lint, database, or deployment was exercised for this documentation review.
+> This guide describes the checked-in application as inspected on 31 October 2026. Source code is the implementation evidence. The project owner confirms that the original Supabase project has been deleted; Supabase code described here is historical implementation, not a currently available or verified service. Historical product documents are preserved, but some claims do not match the current source. No app runtime, build, lint, database, or deployment was exercised for this documentation review.
 
 ## Contents
 
@@ -9,10 +9,10 @@
 - [3. Technology and repository map](#3-technology-and-repository-map)
 - [4. Application architecture](#4-application-architecture)
 - [5. State and persistence](#5-state-and-persistence)
-- [6. Supabase model and sync](#6-supabase-model-and-sync)
+- [6. Historical Supabase model and sync](#6-historical-supabase-model-and-sync)
 - [7. Important logic](#7-important-logic)
 - [8. Routes and feature reference](#8-routes-and-feature-reference)
-- [9. Local setup](#9-local-setup)
+- [9. Local inspection and setup](#9-local-inspection-and-setup)
 - [10. Debugging guide](#10-debugging-guide)
 - [11. Security, privacy, and data boundaries](#11-security-privacy-and-data-boundaries)
 - [12. Limitations and review checklist](#12-limitations-and-review-checklist)
@@ -23,7 +23,7 @@
 
 Trelis Life is a personal routine and reflection web application. It explores using small, positively framed actions instead of an all-or-nothing habit checklist: a person checks in at the start and end of a day, captures a “win” in a named playlist, and can enable optional writing and task modules.
 
-**Maturity: substantial prototype / work in progress.** This is more than a static mock-up: the repository contains routed interfaces, interactive Zustand actions, browser persistence, email/password auth flows, Supabase query and mutation helpers, and SQL migrations. However, source inspection cannot establish that the current code builds, that the expected remote schema exists, or that authentication, sync, and hosting work together in a live environment. There is no checked-in automated test suite or test script. No production deployment was verified.
+**Maturity: substantial prototype / work in progress.** This is more than a static mock-up: the repository contains routed interfaces, interactive Zustand actions, browser persistence, email/password auth flows, prior Supabase query/mutation code, and SQL migrations. The original Supabase backend has been deleted, so those integration paths are historical and unavailable as a working service. There is no checked-in automated test suite or test script. No build, replacement backend, or production deployment was verified.
 
 The project is best presented as an implemented product experiment with a clear interface and several connected data paths, not as a verified production health product or a proven offline-first service.
 
@@ -50,14 +50,14 @@ flowchart LR
   U[Person uses a route] --> C[React client components]
   C --> A[Zustand actions]
   A --> S[Persisted browser state]
-  A --> E[Supabase sync helpers]
-  E --> Q[Supabase Auth and PostgREST]
-  Q --> D[(PostgreSQL tables and RLS)]
+  A --> E[Historical Supabase sync helpers]
+  E -. prior integration path .-> Q[Original Supabase project deleted]
+  Q -. unavailable .-> D[(Original database unavailable)]
   D --> P[Initial state pull after sign-in]
   P --> A
 ```
 
-This diagram describes code connections, not a verified live deployment. Local state updates occur before several remote writes, and sync helper errors are logged rather than placed in a durable retry queue.
+This diagram separates retained code from current availability. The original backend no longer exists. Local state updates occur before several remote writes in the historical code, and sync helper errors are logged rather than placed in a durable retry queue.
 
 ## 3. Technology and repository map
 
@@ -66,7 +66,7 @@ This diagram describes code connections, not a verified live deployment. Local s
 | Framework / routing | Next.js 16 App Router (`package.json`, `src/app/`) |
 | UI | React 19, TypeScript, Tailwind CSS 4, Framer Motion, Lucide icons |
 | Client state | Zustand 5 and `zustand/middleware` persistence |
-| Auth / cloud data | Supabase JS and `@supabase/ssr` browser client |
+| Historical auth / cloud integration | Supabase JS and `@supabase/ssr` browser client; original project deleted, no working service verified |
 | Dates | Native `Date` and `date-fns` in UI helpers |
 | Static/web metadata | `next.config.ts`, `public/manifest.json`, `vercel.json` |
 
@@ -96,8 +96,8 @@ The root `README.md` is now a concise portfolio entry point. [`USER_MANUAL.md`](
 1. **Route layer — `src/app/`:** each route composes client-side forms and feature components. The root route handles persisted-state hydration and Supabase auth state before showing the landing/dashboard flow.
 2. **Feature components — `src/components/`:** smaller units own UI interactions such as check-ins, playlist editing, quick logging, vision editing, theme changes, and partner presence.
 3. **State layer — `src/store/useRitualStore.ts`:** defines the product state and actions. Mutations generally update Zustand first, then call an imported sync helper for supported records.
-4. **Integration layer — `src/lib/supabase/`:** `client.ts` creates a browser Supabase client using public environment variables; `syncEngine.ts` performs per-user queries, upserts, and deletes.
-5. **Database layer — `supabase/migrations/`:** incremental SQL modifies an assumed existing schema, adds app tables and policies, and includes legacy triggers/policies. The full base schema and a reproducible local Supabase project configuration are not present in the inspected tree.
+4. **Historical integration layer — `src/lib/supabase/`:** `client.ts` contains browser-client setup using public environment variables; `syncEngine.ts` contains prior per-user queries, upserts, and deletes. These paths do not currently connect to the deleted original backend.
+5. **Historical database layer — `supabase/migrations/`:** incremental SQL records changes to an assumed existing schema, app tables, and policies. The full base schema and a reproducible local Supabase project configuration are not present in the inspected tree, and no active project was inspected.
 
 ### Root route lifecycle
 
@@ -123,21 +123,23 @@ At a high level, a user chooses a playlist and submits an optional label/tag fro
 
 1. The store creates a UUID, local date string, and Gem object.
 2. Zustand appends that Gem to the chosen playlist and persists the changed store.
-3. `syncPushGem` asks Supabase Auth for the current session.
+3. In the historical integration code, `syncPushGem` asks Supabase Auth for a session.
 4. If there is no session or an ID is not a UUID, the helper returns without a database write.
 5. Otherwise it upserts a row into `anchor_gathers` using the Gem ID as the conflict key.
 
 The write is best-effort. The store action does not await a durable outbox or surface a retry state.
 
-## 6. Supabase model and sync
+## 6. Historical Supabase model and sync
+
+The original Supabase project used by this application has been deleted. The table names, RLS policies, and data flows below document code and SQL history only; they do not describe an available backend or verified working service. No live Supabase project was accessed during this task.
 
 ### Client and credentials
 
-`src/lib/supabase/client.ts` calls `createBrowserClient` with `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`. It configures Auth session persistence in browser local storage, token refresh, PKCE, and URL-session detection off. No `.env.example` is checked in. The anon/publishable client key is intended for browser use; database access depends on correct Supabase RLS. Never put a service-role key in a `NEXT_PUBLIC_*` variable.
+`src/lib/supabase/client.ts` contains a `createBrowserClient` call that reads `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`. It configures Auth session persistence in browser local storage, token refresh, PKCE, and URL-session detection off. No `.env.example` is checked in. These settings describe the historical integration; values for the deleted project cannot restore it. Any intentionally recreated backend would be a separate project requiring its own owner-led setup and security review. Never put a service-role key in a `NEXT_PUBLIC_*` variable.
 
 ### Tables referenced by current code
 
-| Table | Use visible in code |
+| Table | Use visible in historical code |
 | --- | --- |
 | `daily_rituals` | Daily check-in values, reflections, and a pulse score; upserted by user/date. |
 | `user_anchors` | Playlist/category records and some metadata. |
@@ -148,7 +150,7 @@ The write is best-effort. The store action does not await a durable outbox or su
 | `quiet_partners`, `partner_nudges` | Partner links, activity indicators, and preset nudges. |
 | `anchor_keeps`, `anchor_logs`, `plus_waitlist` | Appearing in migrations or legacy code; not evidence that all related experiences are current or operational. |
 
-The migration directory is incremental and assumes a preexisting database. Files add `user_state` and anchor fields, archive-table policies, a trigger, partner/nudge and waitlist tables/policies, and newer `anchor_keeps`/`anchor_gathers` tables. They do not constitute a complete, clean-room schema or verify the deployed database. Some policy additions refer to tables created elsewhere or use authorization rules that require careful review.
+The migration directory is incremental and assumes a preexisting database. Files record additions to `user_state` and anchor fields, archive-table policies, a trigger, partner/nudge and waitlist tables/policies, and `anchor_keeps`/`anchor_gathers` tables. They do not constitute a complete, clean-room schema. The original backend is deleted, so these files do not establish a current database state. Some policy additions refer to tables created elsewhere or use authorization rules that would require careful review before any separate recreation.
 
 ### Pull and push behavior
 
@@ -160,11 +162,11 @@ The migration directory is incremental and assumes a preexisting database. Files
 - Gems are rebuilt when IDs/count differ.
 - Journal entries, todos, notes, and module flags can be assigned from the cloud response directly.
 
-This is a field-specific merge, not a general conflict-resolution system. Sync helpers generally use Supabase upserts for writes and scoped deletes for some record types. Playlist pushes upsert current rows but do not delete cloud rows removed locally. Error handling mostly writes to the browser console, and the application has no durable queue or clear sync-status UI.
+This is a field-specific merge in the retained code, not a general conflict-resolution system. Helpers contain Supabase upserts and scoped deletes, but the deleted original backend is unavailable, so none of these paths should be described as currently syncing. Playlist pushes in code upsert current rows but do not delete cloud rows removed locally. Error handling mostly writes to the browser console, and the application has no durable queue or clear sync-status UI.
 
 ### Migration and seed boundaries
 
-The migration SQL is source code only. This documentation audit did not execute SQL or connect to Supabase. [`supabase/seed_phase4_protocol.sql`](./supabase/seed_phase4_protocol.sql) is specifically flagged for **separate public-data review**: its contents may include personal data and include data-changing statements. Its provenance and safety are unresolved. Do not classify it as harmless or synthetic, and do not run or republish its records until an authorized review determines the appropriate handling.
+The migration and seed SQL are retained source files only. This documentation work did not execute SQL or connect to Supabase. [`supabase/seed_phase4_protocol.sql`](./supabase/seed_phase4_protocol.sql) remains flagged for **separate public-data review**: its contents may include personal data and include data-changing statements. Its provenance and safety are unresolved. Do not classify it as harmless or synthetic, and do not publish its records until an authorized review determines the appropriate handling. The original backend is deleted; this guide does not direct anyone to execute SQL or access another project.
 
 ## 7. Important logic
 
@@ -174,13 +176,13 @@ The app forms local date keys using `toLocaleDateString('en-CA')` in several pla
 
 ### Pulse and streak evaluation
 
-`syncPushDailyRitual` computes a score from two booleans (`feetOnFloorLogged` and `eveningCheckInDone`) and writes the resulting percentage. `evaluateYesterdayStreak` reads yesterday’s `pulse_score`; a score at or above 30 increments the streak, a lower score consumes an available pause token, and otherwise resets the streak. It updates `user_state` with an upsert. The dashboard also stores a per-user, per-day evaluation marker in browser local storage.
+In the retained integration code, `syncPushDailyRitual` computes a score from two booleans (`feetOnFloorLogged` and `eveningCheckInDone`) and attempts to write the resulting percentage. `evaluateYesterdayStreak` reads yesterday’s `pulse_score`; a score at or above 30 increments the streak, a lower score consumes an available pause token, and otherwise resets the streak. It attempts to update `user_state` with an upsert. The dashboard also stores a per-user, per-day evaluation marker in browser local storage. These remote operations are unavailable against the deleted backend.
 
 Interpret this as implemented logic, not a validated business rule: the client triggers the evaluation, date construction uses local time, failure is logged, and the dashboard marker is written after the attempted evaluation even if the call fails.
 
 ### Quiet Partner
 
-The component polls every 30 seconds. It queries active partner rows, the partner’s active anchors and today’s gathers, then renders up to six completion dots. It also loads unread nudges and supports sending/dismissing preset messages. The intended data boundary relies on database RLS, including partner read policies in the migrations. Neither policy correctness nor behavior with two real accounts was tested.
+The retained component code polls every 30 seconds. It attempts to query active partner rows, the partner’s active anchors and today’s gathers, then renders up to six completion dots. It also loads unread nudges and supports sending/dismissing preset messages. The historical design relies on database RLS, including partner read policies in migrations. The backend is deleted; neither policy correctness nor behavior with two real accounts was tested.
 
 ### “Total wins” label
 
@@ -198,50 +200,49 @@ The component polls every 30 seconds. It queries active partner rows, the partne
 | `/wins` | `src/app/wins/page.tsx` | Active playlist list, playlist management, and today’s win summary. |
 | `/debrief` | `src/app/debrief/page.tsx` | Sunday-gated reflection form; logs the combined text as a Gem. |
 | `/settings` | `src/app/settings/page.tsx` | Preferences, module toggles, partner actions, sign-out, and a destructive account-data reset. |
-| `/journal` | `src/app/journal/page.tsx` | Journal-entry UI backed by local store and sync helper. |
-| `/todo` | `src/app/todo/page.tsx` | To-do CRUD UI backed by local store and sync helper. |
-| `/notes` | `src/app/notes/page.tsx` | Notes CRUD UI backed by local store and sync helper. |
+| `/journal` | `src/app/journal/page.tsx` | Journal-entry UI backed by local store; historical sync helper calls are retained. |
+| `/todo` | `src/app/todo/page.tsx` | To-do CRUD UI backed by local store; historical sync helper calls are retained. |
+| `/notes` | `src/app/notes/page.tsx` | Notes CRUD UI backed by local store; historical sync helper calls are retained. |
 
 `/settings` contains a data-erasure path that deletes selected remote tables and calls `localStorage.clear()`. It should be treated as destructive and reviewed before use: source inspection does not show a comprehensive transaction across all app tables, and the browser storage clear is origin-wide. Do not use this control casually.
 
-## 9. Local setup
+## 9. Local inspection and setup
 
 ### Prerequisites
 
 - Node.js and npm compatible with the versions required by the installed Next.js release.
-- A Supabase project with Auth configured and the complete schema/policies expected by this source. The checked-in migrations are not a complete base schema.
-- Project-specific callback/redirect URLs configured in Supabase Auth for local development.
+- The original Supabase project has been deleted. No working Supabase backend is currently available for this repository.
+- To restore cloud-connected behavior, the owner would need to separately create and secure a replacement project. Do not point this app at an unrelated existing project. The checked-in migrations are not a complete base schema.
 
 ### Steps
 
 1. Clone the repository and install dependencies with `npm install`.
-2. Create an untracked `.env.local` in the repo root containing your own `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
-3. Ask the database owner to provision/verify the expected schema and RLS. Review migrations before applying them. Do not run the seed SQL while its data provenance is unresolved.
-4. Start the development server with `npm run dev` and open `http://localhost:3000`.
-5. Use a disposable test account and test database when validating authentication or CRUD flows.
+2. The original cloud features cannot authenticate or sync because their backend has been deleted. Do not configure this clone against another existing project.
+3. `npm run dev` is the repository’s development command, but successful startup and UI behavior without a configured backend have not been tested.
+4. Any future backend recreation requires separate owner-led planning, a complete schema, and security review. The seed’s public-data review remains unresolved; this guide does not instruct you to run it or any other SQL.
 
 Available package scripts are `dev`, `build`, `start`, `lint`, and `build:mobile`. This audit did not run any of them. `build:mobile` invokes Capacitor commands, while Capacitor packages/configuration are not present in the inspected manifest/tree; treat it as stale or unverified. `next.config.ts` requests static export while also declaring response headers; compatibility with the intended export/deployment path needs a real build and hosting check.
 
 ## 10. Debugging guide
 
 1. **Start with hydration:** inspect the browser console and verify Zustand has hydrated before diagnosing date resets or root-route state.
-2. **Check configuration:** confirm the two public Supabase environment variables are present and point to the intended development project. A missing URL/key prevents client initialization or remote requests.
-3. **Follow a write:** inspect the relevant store action, then its `syncPush…` helper, the Supabase response, and the table’s RLS policy. Helpers catch and log many errors instead of surfacing them in the UI.
-4. **Check IDs:** cloud sync helpers skip locally generated records unless their IDs are valid UUIDs. Check whether the parent playlist/record has already synced.
-5. **Check merge semantics:** `syncPullInitialState` does not apply one consistent “local always wins” rule. Compare the specific state field’s branch before treating a pull as a merge bug.
-6. **Check dates:** daily records use local date strings in several modules; compare device date/time zone with the database `date`/`log_date` values.
-7. **Check authorization:** validate RLS with a normal authenticated test user. A successful UI interaction alone does not prove the database policy is correctly scoped.
-8. **Separate local and remote state:** browser local storage can preserve an entry even when a cloud write fails. Verify both layers independently before concluding that data is synchronized.
+2. **Understand the backend boundary:** the original Supabase project is deleted. The following remote-sync steps apply only to code review or an owner-provisioned isolated replacement project, never to an unrelated live project.
+3. **Check configuration:** when reviewing a separately provisioned replacement, confirm the two public Supabase environment variables point to that project. A missing URL/key prevents client initialization or remote requests.
+4. **Follow a write:** inspect the relevant store action, then its historical `syncPush…` helper and expected table/policy. Helpers catch and log many errors instead of surfacing them in the UI.
+5. **Check IDs:** historical sync helpers skip locally generated records unless their IDs are valid UUIDs. Check whether the parent playlist/record was already expected to exist remotely.
+6. **Check merge semantics:** `syncPullInitialState` does not apply one consistent “local always wins” rule. Compare the specific state field’s branch before treating a pull as a merge bug.
+7. **Check dates:** daily records use local date strings in several modules; compare device date/time zone with the historical database `date`/`log_date` expectations.
+8. **Check authorization and persistence:** for a separately provisioned test backend, validate RLS with a test account. Browser local storage can preserve an entry even when a remote write fails; the current repository has no backend to synchronize with.
 
 No debug scenario above was executed as part of the documentation pass.
 
 ## 11. Security, privacy, and data boundaries
 
-- The Supabase browser client receives public environment values. RLS is the critical boundary for database rows; review policies and deployed schema rather than relying on hidden UI controls.
+- The historical Supabase browser client reads public environment values. RLS would be the critical boundary for rows in any separately recreated backend; no active project or policies were checked here.
 - Journal entries, notes, mood/sleep check-ins, reflections, and partner relationships are personal data categories. Treat both local storage and Supabase rows accordingly.
 - Local storage is accessible to scripts running in the origin and remains on the device until cleared. The settings reset clears all local storage, not just this application’s Zustand key.
 - The migration set contains owner-scoped RLS policies and partner exceptions. Verify that partner access reveals only the intended records and that query results respect the policy design.
-- No live Supabase connection, production key, external endpoint, or database state was accessed during this work.
+- The original Supabase project has been deleted. No Supabase CLI, API, dashboard, connection, migration, or SQL execution was used for this work; no other live project was accessed.
 - The seed script’s provenance is unresolved. Keep it out of public documentation content and do not execute it pending a separate public-data review.
 
 ## 12. Limitations and review checklist
@@ -263,7 +264,7 @@ No debug scenario above was executed as part of the documentation pass.
 ### Before calling this production-ready
 
 - Resolve the seed-file data review and decide whether it should remain public in its current form.
-- Provision a clean test Supabase project from documented, complete migrations and verify every RLS policy, including partner exceptions.
+- If the project is revived, have its owner plan an isolated replacement backend and complete schema/policy review. The current migrations are incomplete and the seed review must be resolved separately.
 - Add automated tests for core store logic, date boundaries, sync/merge behavior, auth, and destructive settings actions.
 - Add visible sync/error states and a retry/outbox strategy if offline use is a product requirement.
 - Verify responsive/accessibility behavior, password reset redirects, deployment output, and security headers on the intended host.
